@@ -2,37 +2,1036 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AENO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AENO - 世界育成 Alpha</title>
+  <style>
+    body {
+      margin: 0;
+      background: #070a10;
+      color: #e7f0ff;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+    }
+    header {
+      padding: 14px 14px;
+      background: #0d1420;
+      border-bottom: 1px solid #1c2b3d;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+    header .sub {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 6px;
+    }
+    .wrap {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    .card {
+      background: #0d1420;
+      border: 1px solid #1c2b3d;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.35);
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #2d7dff;
+      color: white;
+      font-size: 13px;
+      transition: 0.2s;
+    }
+    .btn:hover { transform: scale(1.02); }
+    .btn:active { opacity: 0.75; transform: scale(0.98); }
+    .btn2 {
+      background: #1b2638;
+      border: 1px solid #2b3e58;
+    }
+    .btnDanger {
+      background: #ff3b3b;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .grid3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .stat {
+      background: #0a101a;
+      border: 1px solid #1c2b3d;
+      border-radius: 14px;
+      padding: 10px;
+      font-size: 13px;
+    }
+    .stat b {
+      font-size: 12px;
+      opacity: 0.75;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .stat span {
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .log {
+      background: #070c14;
+      border: 1px solid #1c2b3d;
+      border-radius: 14px;
+      padding: 10px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 12px;
+      white-space: pre-line;
+    }
+    .map {
+      background: #070c14;
+      border: 1px solid #1c2b3d;
+      border-radius: 14px;
+      padding: 10px;
+      overflow-x: auto;
+    }
+    .mapGrid {
+      display: grid;
+      grid-template-columns: repeat(12, 44px);
+      grid-template-rows: repeat(12, 44px);
+      gap: 4px;
+      width: max-content;
+    }
+    .tile {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.15s;
+      user-select: none;
+      line-height: 1.1;
+    }
+    .tile:hover {
+      transform: scale(1.04);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .small {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 8px;
+    }
+    .entityList {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .entity {
+      background: #070c14;
+      border: 1px solid #1c2b3d;
+      border-radius: 14px;
+      padding: 10px;
+      font-size: 13px;
+    }
+    .entity .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .entity .dna {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 6px;
+      word-break: break-all;
+    }
+    .entity .tags {
+      margin-top: 6px;
+      font-size: 11px;
+      opacity: 0.85;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(45,125,255,0.2);
+      border: 1px solid rgba(45,125,255,0.25);
+      margin-right: 6px;
+      margin-top: 4px;
+    }
+    .tag2 {
+      background: rgba(255,210,60,0.14);
+      border: 1px solid rgba(255,210,60,0.2);
+    }
+    .tag3 {
+      background: rgba(255,70,70,0.12);
+      border: 1px solid rgba(255,70,70,0.2);
+    }
+    .tag4 {
+      background: rgba(70,255,160,0.12);
+      border: 1px solid rgba(70,255,160,0.2);
+    }
+    .footer {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 6px;
+      text-align: center;
+      padding-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #1c2b3d;
+      background: #070c14;
+      color: #e7f0ff;
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .title {
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>🌍 AENO 世界已啟動</h1>
-  <p id="status">Firebase 未連接</p>
+<header>
+  <h1>🌍 AENO 世界育成 Alpha 0.1</h1>
+  <div class="sub" id="status">連接中...</div>
+</header>
 
-  <script type="module">
-    // Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<div class="wrap">
 
-    // 你的 Firebase 設定
-    const firebaseConfig = {
-      apiKey: "AIzaSyCaO5K2VXrhK39qCxOiUdafP__yd8K6C8s",
-      authDomain: "aeno-9ac3b.firebaseapp.com",
-      projectId: "aeno-9ac3b",
-      storageBucket: "aeno-9ac3b.firebasestorage.app",
-      messagingSenderId: "419553504514",
-      appId: "1:419553504514:web:85d14cea41c55a3395261b",
-      measurementId: "G-6K7PEQ9FEF"
+  <div class="card">
+    <div class="title">⏳ 世界時間流速</div>
+    <div class="grid2">
+      <div class="stat">
+        <b>現實時間</b>
+        <span id="realTime">--</span>
+      </div>
+      <div class="stat">
+        <b>遊戲世界年份</b>
+        <span id="gameYear">--</span>
+      </div>
+    </div>
+
+    <div class="small">
+      初始流速：<b>1 現實日 = 100 遊戲年</b>（可動態調整）
+    </div>
+
+    <div class="row">
+      <button class="btn btn2" id="speedSlow">🐢 減慢流速</button>
+      <button class="btn btn2" id="speedFast">🚀 加快流速</button>
+      <button class="btn" id="saveNow">💾 手動存檔</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">💰 資源與 AENO 幣（總量 2000 萬）</div>
+    <div class="grid3">
+      <div class="stat"><b>木材</b><span id="resWood">0</span></div>
+      <div class="stat"><b>石</b><span id="resStone">0</span></div>
+      <div class="stat"><b>水</b><span id="resWater">0</span></div>
+      <div class="stat"><b>食物</b><span id="resFood">0</span></div>
+      <div class="stat"><b>能源</b><span id="resEnergy">0</span></div>
+      <div class="stat"><b>AENO 幣</b><span id="resAeno">0</span></div>
+    </div>
+
+    <div class="small">
+      AENO 幣挖掘釋放：模擬比特幣減半邏輯（越後期越難挖）。
+    </div>
+
+    <div class="row">
+      <button class="btn" id="mineAeno">⛏ 挖掘 AENO 幣</button>
+      <button class="btn btn2" id="watchAd">📺 看廣告賺資源</button>
+      <button class="btn btn2" id="listenSong">🎵 聽歌賺資源</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">🗺 世界地圖（12x12）</div>
+    <div class="map">
+      <div class="mapGrid" id="mapGrid"></div>
+    </div>
+    <div class="small" id="tileInfo">點擊格子查看內容</div>
+  </div>
+
+  <div class="card">
+    <div class="title">🧬 生命/地形/機器人（DNA 進化系統）</div>
+    <div class="row">
+      <button class="btn" id="createWorld">🌍 建立世界</button>
+      <button class="btn btn2" id="triggerEvent">⚡ 觸發事件（全世界變異）</button>
+      <button class="btn btn2" id="refresh">🔄 刷新</button>
+      <button class="btn btnDanger" id="wipe">☠ 清空世界（慎用）</button>
+    </div>
+
+    <div class="entityList" id="entityList"></div>
+  </div>
+
+  <div class="card">
+    <div class="title">🤖 AI 助手小動物（拉丁名）</div>
+    <div class="small" id="aiInfo">尚未生成 AI 助手</div>
+  </div>
+
+  <div class="card">
+    <div class="title">📜 世界事件日誌</div>
+    <div class="log" id="logBox"></div>
+  </div>
+
+  <div class="footer">
+    AENO Alpha 0.1 | Firebase Firestore 雲端同步 + 24 小時離線收益<br/>
+    你而家已經有「真正可玩骨架」，之後只係加更多內容。
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    doc,
+    setDoc,
+    getDocs,
+    getDoc,
+    updateDoc,
+    deleteDoc,
+    increment
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // =========================
+  // Firebase Config
+  // =========================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCaO5K2VXrhK39qCxOiUdafP__yd8K6C8s",
+    authDomain: "aeno-9ac3b.firebaseapp.com",
+    projectId: "aeno-9ac3b",
+    storageBucket: "aeno-9ac3b.firebasestorage.app",
+    messagingSenderId: "419553504514",
+    appId: "1:419553504514:web:85d14cea41c55a3395261b",
+    measurementId: "G-6K7PEQ9FEF"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // =========================
+  // UI Elements
+  // =========================
+  const statusEl = document.getElementById("status");
+  const logBox = document.getElementById("logBox");
+  const entityList = document.getElementById("entityList");
+  const mapGrid = document.getElementById("mapGrid");
+  const tileInfo = document.getElementById("tileInfo");
+
+  const realTimeEl = document.getElementById("realTime");
+  const gameYearEl = document.getElementById("gameYear");
+
+  const resWoodEl = document.getElementById("resWood");
+  const resStoneEl = document.getElementById("resStone");
+  const resWaterEl = document.getElementById("resWater");
+  const resFoodEl = document.getElementById("resFood");
+  const resEnergyEl = document.getElementById("resEnergy");
+  const resAenoEl = document.getElementById("resAeno");
+
+  const aiInfo = document.getElementById("aiInfo");
+
+  // =========================
+  // Constants
+  // =========================
+  const WORLD_DOC = "mainWorld";
+  const PLAYER_DOC = "player001"; // 暫時固定，日後再接 Authentication
+  const MAX_AENO_SUPPLY = 20000000;
+
+  // 初始：1 日現實 = 100 年遊戲
+  let speedYearsPerDay = 100;
+
+  // =========================
+  // Helpers
+  // =========================
+  function now() {
+    return Date.now();
+  }
+
+  function log(msg) {
+    const t = new Date().toLocaleTimeString();
+    logBox.innerText = `[${t}] ${msg}\n` + logBox.innerText;
+  }
+
+  function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randomDNA(len = 22) {
+    const letters = "ATCG";
+    let dna = "";
+    for (let i = 0; i < len; i++) {
+      dna += letters[Math.floor(Math.random() * letters.length)];
+    }
+    return dna;
+  }
+
+  function mutateDNA(dna) {
+    const letters = "ATCG";
+    let arr = dna.split("");
+    const mutations = rand(1, 3);
+    for (let i = 0; i < mutations; i++) {
+      const pos = rand(0, arr.length - 1);
+      arr[pos] = letters[rand(0, letters.length - 1)];
+    }
+    return arr.join("");
+  }
+
+  function dnaPower(dna) {
+    // 簡化：DNA 裡面 C/G 越多 = 越強
+    let score = 0;
+    for (const ch of dna) {
+      if (ch === "C" || ch === "G") score++;
+    }
+    return score;
+  }
+
+  function formatNumber(n) {
+    return Math.floor(n).toLocaleString();
+  }
+
+  // =========================
+  // Time System
+  // =========================
+  function calcGameYear(world) {
+    const elapsed = now() - world.createdAt;
+    const days = elapsed / (1000 * 60 * 60 * 24);
+    const years = days * world.speedYearsPerDay;
+    return Math.floor(world.startYear + years);
+  }
+
+  function updateTimeUI(world) {
+    realTimeEl.innerText = new Date().toLocaleString();
+    gameYearEl.innerText = calcGameYear(world);
+  }
+
+  // =========================
+  // World Generation
+  // =========================
+  const terrains = [
+    { type: "水域", icon: "🌊", res: "水" },
+    { type: "森林", icon: "🌲", res: "木材" },
+    { type: "山脈", icon: "⛰", res: "石" },
+    { type: "草原", icon: "🌾", res: "食物" },
+    { type: "沙漠", icon: "🏜", res: "能源" }
+  ];
+
+  const plants = [
+    { name: "靈木", icon: "🌱" },
+    { name: "光藤", icon: "🍀" },
+    { name: "赤焰草", icon: "🌿" },
+    { name: "冰藍花", icon: "🌸" }
+  ];
+
+  const animals = [
+    { name: "星狐", icon: "🦊" },
+    { name: "雷狼", icon: "🐺" },
+    { name: "雲鷹", icon: "🦅" },
+    { name: "石龜", icon: "🐢" }
+  ];
+
+  const robots = [
+    { name: "採集機", icon: "🤖" },
+    { name: "巡邏機", icon: "🛰" },
+    { name: "修復機", icon: "🛠" }
+  ];
+
+  const mines = [
+    { name: "Aeno晶礦脈", icon: "💎" },
+    { name: "黑鐵礦", icon: "⛏" },
+    { name: "能量核", icon: "⚡" }
+  ];
+
+  const latinAI = [
+    "Aurelius", "Silva", "Ferrum", "Lumen", "Natura", "Orbis", "Ignis", "Aqua",
+    "Vulpes", "Draco", "Caelum", "Terra", "Nox", "Lux", "Aeternum"
+  ];
+
+  function tileColor(type) {
+    if (type === "水域") return "#083c66";
+    if (type === "森林") return "#0f4b2a";
+    if (type === "山脈") return "#3a3a3a";
+    if (type === "草原") return "#465c1a";
+    if (type === "沙漠") return "#7a5a1d";
+    return "#111";
+  }
+
+  async function createWorld() {
+    const worldRef = doc(db, "world", WORLD_DOC);
+    const playerRef = doc(db, "players", PLAYER_DOC);
+
+    const existing = await getDoc(worldRef);
+    if (existing.exists()) {
+      log("⚠ 世界已存在，不會重複建立。");
+      return;
+    }
+
+    const worldData = {
+      createdAt: now(),
+      startYear: 2026,
+      speedYearsPerDay: speedYearsPerDay,
+      lastSavedAt: now(),
+      lastTickAt: now(),
+      mapSize: 12,
+      seed: rand(100000, 999999),
+      globalMutationLevel: 0
     };
 
-    // 初始化 Firebase
-    const app = initializeApp(firebaseConfig);
+    await setDoc(worldRef, worldData);
 
-    // Firestore
-    const db = getFirestore(app);
+    const playerData = {
+      createdAt: now(),
+      lastOnlineAt: now(),
+      resources: {
+        wood: 20,
+        stone: 20,
+        water: 20,
+        food: 20,
+        energy: 10,
+        aeno: 0
+      },
+      minedTotal: 0,
+      adViews: 0,
+      songPlays: 0,
+      aiAssistants: [],
+      offlineCapHours: 24
+    };
 
-    document.getElementById("status").innerText = "✅ Firebase Firestore 已連接成功";
-    console.log("Firebase connected!", db);
-  </script>
+    await setDoc(playerRef, playerData);
+
+    // generate tiles
+    for (let y = 0; y < 12; y++) {
+      for (let x = 0; x < 12; x++) {
+        const t = pick(terrains);
+        const tileId = `tile_${x}_${y}`;
+
+        await setDoc(doc(db, "tiles", tileId), {
+          x, y,
+          terrain: t.type,
+          icon: t.icon,
+          baseResource: t.res,
+          dna: randomDNA(),
+          mutationCount: 0,
+          level: 1,
+          createdAt: now()
+        });
+      }
+    }
+
+    // entities
+    const entitiesToCreate = [];
+
+    // 8 plants
+    for (let i = 0; i < 8; i++) {
+      const p = pick(plants);
+      entitiesToCreate.push({
+        id: `plant_${i}`,
+        type: "植物",
+        icon: p.icon,
+        name: p.name,
+        dna: randomDNA(),
+        mutationCount: 0,
+        level: 1,
+        produces: "食物",
+        createdAt: now()
+      });
+    }
+
+    // 6 animals
+    for (let i = 0; i < 6; i++) {
+      const a = pick(animals);
+      entitiesToCreate.push({
+        id: `animal_${i}`,
+        type: "動物",
+        icon: a.icon,
+        name: a.name,
+        dna: randomDNA(),
+        mutationCount: 0,
+        level: 1,
+        produces: "皮毛",
+        createdAt: now()
+      });
+    }
+
+    // 4 robots
+    for (let i = 0; i < 4; i++) {
+      const r = pick(robots);
+      entitiesToCreate.push({
+        id: `robot_${i}`,
+        type: "機器人",
+        icon: r.icon,
+        name: r.name,
+        dna: randomDNA(),
+        mutationCount: 0,
+        level: 1,
+        produces: "能源",
+        createdAt: now()
+      });
+    }
+
+    // 5 mines
+    for (let i = 0; i < 5; i++) {
+      const m = pick(mines);
+      entitiesToCreate.push({
+        id: `mine_${i}`,
+        type: "礦物",
+        icon: m.icon,
+        name: m.name,
+        dna: randomDNA(),
+        mutationCount: 0,
+        level: 1,
+        produces: "石",
+        createdAt: now()
+      });
+    }
+
+    // AI assistant
+    const aiName = pick(latinAI);
+    const aiEntity = {
+      id: `ai_001`,
+      type: "AI助手",
+      icon: "🦝",
+      name: aiName,
+      dna: randomDNA(),
+      mutationCount: 0,
+      level: 1,
+      produces: "任務",
+      createdAt: now()
+    };
+
+    entitiesToCreate.push(aiEntity);
+
+    for (const e of entitiesToCreate) {
+      await setDoc(doc(db, "entities", e.id), e);
+    }
+
+    await updateDoc(playerRef, {
+      aiAssistants: [aiName]
+    });
+
+    log("🌍 世界已建立：地圖/植物/動物/礦/機器人/AI助手 已生成。");
+    await refreshAll();
+  }
+
+  // =========================
+  // Resource System + Offline
+  // =========================
+  async function applyOfflineGain(player, world) {
+    const playerRef = doc(db, "players", PLAYER_DOC);
+
+    const lastOnline = player.lastOnlineAt || now();
+    const diffMs = now() - lastOnline;
+    const hours = diffMs / (1000 * 60 * 60);
+
+    const cap = player.offlineCapHours || 24;
+    const usedHours = Math.min(hours, cap);
+
+    if (usedHours < 0.02) return;
+
+    // 基礎離線收益（簡化）
+    const gainWood = Math.floor(usedHours * 3);
+    const gainStone = Math.floor(usedHours * 2);
+    const gainWater = Math.floor(usedHours * 2);
+    const gainFood = Math.floor(usedHours * 4);
+    const gainEnergy = Math.floor(usedHours * 1);
+
+    await updateDoc(playerRef, {
+      "resources.wood": increment(gainWood),
+      "resources.stone": increment(gainStone),
+      "resources.water": increment(gainWater),
+      "resources.food": increment(gainFood),
+      "resources.energy": increment(gainEnergy),
+      lastOnlineAt: now()
+    });
+
+    log(`🕒 離線收益結算：${usedHours.toFixed(1)} 小時 +木${gainWood} 石${gainStone} 水${gainWater} 食物${gainFood} 能源${gainEnergy}`);
+  }
+
+  // =========================
+  // AENO Mining (Bitcoin-like)
+  // =========================
+  function calcMiningReward(minedTotal) {
+    // 每挖 2,000,000 減半一次（簡化）
+    const halvings = Math.floor(minedTotal / 2000000);
+    let reward = 50 / Math.pow(2, halvings);
+    if (reward < 0.1) reward = 0.1;
+    return reward;
+  }
+
+  async function mineAeno() {
+    const playerRef = doc(db, "players", PLAYER_DOC);
+    const playerSnap = await getDoc(playerRef);
+    if (!playerSnap.exists()) {
+      log("❌ 未建立玩家資料。請先建立世界。");
+      return;
+    }
+
+    const player = playerSnap.data();
+    const minedTotal = player.minedTotal || 0;
+
+    if (player.resources.energy < 2) {
+      log("⚠ 能源不足，無法挖礦。");
+      return;
+    }
+
+    const reward = calcMiningReward(minedTotal);
+    const currentAeno = player.resources.aeno || 0;
+
+    if (currentAeno + minedTotal >= MAX_AENO_SUPPLY) {
+      log("⚠ AENO 幣已接近上限（2000萬），挖礦停止。");
+      return;
+    }
+
+    await updateDoc(playerRef, {
+      "resources.energy": increment(-2),
+      "resources.aeno": increment(reward),
+      minedTotal: increment(reward)
+    });
+
+    log(`⛏ 成功挖掘 AENO 幣 +${reward.toFixed(2)}（越後期越難挖）`);
+    await refreshPlayer();
+  }
+
+  // =========================
+  // Fake Ads / Songs Rewards
+  // =========================
+  async function watchAd() {
+    const playerRef = doc(db, "players", PLAYER_DOC);
+    const playerSnap = await getDoc(playerRef);
+    if (!playerSnap.exists()) {
+      log("❌ 未建立玩家資料。請先建立世界。");
+      return;
+    }
+
+    await updateDoc(playerRef, {
+      "resources.food": increment(rand(5, 12)),
+      "resources.wood": increment(rand(3, 8)),
+      "resources.energy": increment(rand(1, 4)),
+      adViews: increment(1)
+    });
+
+    log("📺 你觀看廣告：獲得食物/木材/能源獎勵（未來可接真廣告SDK）。");
+    await refreshPlayer();
+  }
+
+  async function listenSong() {
+    const playerRef = doc(db, "players", PLAYER_DOC);
+    const playerSnap = await getDoc(playerRef);
+    if (!playerSnap.exists()) {
+      log("❌ 未建立玩家資料。請先建立世界。");
+      return;
+    }
+
+    await updateDoc(playerRef, {
+      "resources.water": increment(rand(2, 8)),
+      "resources.food": increment(rand(2, 6)),
+      songPlays: increment(1)
+    });
+
+    log("🎵 你聽歌：獲得水/食物獎勵（未來可接音樂平台）。");
+    await refreshPlayer();
+  }
+
+  // =========================
+  // Event System + Evolution
+  // =========================
+  const events = [
+    "☄ 隕石撞擊：環境劇變，生物突變加速",
+    "🌪 超級風暴：森林減少，水域擴張",
+    "🔥 火山爆發：山脈變多，能源暴增",
+    "🦠 瘟疫蔓延：動物基因重組",
+    "🤖 AI覺醒：機器人進化速度提升",
+    "🌌 量子裂縫：DNA 出現未知序列"
+  ];
+
+  async function triggerEvent() {
+    const worldRef = doc(db, "world", WORLD_DOC);
+    const worldSnap = await getDoc(worldRef);
+
+    if (!worldSnap.exists()) {
+      log("❌ 世界未建立。");
+      return;
+    }
+
+    const eventText = pick(events);
+    log(eventText);
+
+    await updateDoc(worldRef, {
+      globalMutationLevel: increment(1)
+    });
+
+    // mutate all entities
+    const entSnap = await getDocs(collection(db, "entities"));
+    for (const d of entSnap.docs) {
+      const e = d.data();
+      const newDNA = mutateDNA(e.dna);
+      await updateDoc(doc(db, "entities", d.id), {
+        dna: newDNA,
+        mutationCount: increment(1),
+        level: increment(1)
+      });
+    }
+
+    // mutate all tiles slightly
+    const tileSnap = await getDocs(collection(db, "tiles"));
+    for (const t of tileSnap.docs) {
+      const tile = t.data();
+      if (Math.random() < 0.10) {
+        const newTerrain = pick(terrains);
+        await updateDoc(doc(db, "tiles", t.id), {
+          terrain: newTerrain.type,
+          icon: newTerrain.icon,
+          baseResource: newTerrain.res,
+          mutationCount: increment(1),
+          dna: mutateDNA(tile.dna),
+          level: increment(1)
+        });
+      }
+    }
+
+    // reward from event
+    const playerRef = doc(db, "players", PLAYER_DOC);
+    await updateDoc(playerRef, {
+      "resources.energy": increment(rand(3, 10)),
+      "resources.food": increment(rand(5, 15))
+    });
+
+    log("🧬 全世界 DNA 變異完成 + 世界格子部分改變。");
+    await refreshAll();
+  }
+
+  // =========================
+  // Load / Render
+  // =========================
+  async function refreshWorld() {
+    const worldRef = doc(db, "world", WORLD_DOC);
+    const snap = await getDoc(worldRef);
+    if (!snap.exists()) return null;
+    return snap.data();
+  }
+
+  async function refreshPlayer() {
+    const playerRef = doc(db, "players", PLAYER_DOC);
+    const snap = await getDoc(playerRef);
+    if (!snap.exists()) return null;
+
+    const p = snap.data();
+
+    resWoodEl.innerText = formatNumber(p.resources.wood || 0);
+    resStoneEl.innerText = formatNumber(p.resources.stone || 0);
+    resWaterEl.innerText = formatNumber(p.resources.water || 0);
+    resFoodEl.innerText = formatNumber(p.resources.food || 0);
+    resEnergyEl.innerText = formatNumber(p.resources.energy || 0);
+    resAenoEl.innerText = (p.resources.aeno || 0).toFixed(2);
+
+    if (p.aiAssistants && p.aiAssistants.length > 0) {
+      aiInfo.innerHTML = `你的 AI 助手：<b>${p.aiAssistants.join(", ")}</b><br/>它們會派任務、引導你進化世界（未來擴展任務系統）。`;
+    }
+
+    return p;
+  }
+
+  async function refreshEntities() {
+    entityList.innerHTML = "";
+    const snap = await getDocs(collection(db, "entities"));
+
+    if (snap.empty) {
+      entityList.innerHTML = `<div class="small">尚未生成任何生命或機器人。</div>`;
+      return;
+    }
+
+    snap.forEach((d) => {
+      const e = d.data();
+      const power = dnaPower(e.dna);
+
+      const div = document.createElement("div");
+      div.className = "entity";
+      div.innerHTML = `
+        <div class="top">
+          <div><b>${e.icon} ${e.type}：${e.name}</b></div>
+          <div style="opacity:0.75;font-size:12px;">Lv.${e.level}</div>
+        </div>
+        <div class="tags">
+          <span class="tag">DNA強度：${power}</span>
+          <span class="tag tag2">產出：${e.produces}</span>
+          <span class="tag tag4">變異：${e.mutationCount}</span>
+        </div>
+        <div class="dna">DNA：${e.dna}</div>
+      `;
+      entityList.appendChild(div);
+    });
+  }
+
+  async function refreshMap() {
+    mapGrid.innerHTML = "";
+    const snap = await getDocs(collection(db, "tiles"));
+
+    if (snap.empty) {
+      mapGrid.innerHTML = `<div class="small">尚未生成地圖。</div>`;
+      return;
+    }
+
+    // store by coordinates
+    const tiles = [];
+    snap.forEach(d => tiles.push(d.data()));
+
+    tiles.sort((a,b)=> (a.y - b.y) || (a.x - b.x));
+
+    for (const t of tiles) {
+      const div = document.createElement("div");
+      div.className = "tile";
+      div.style.background = tileColor(t.terrain);
+      div.innerHTML = `${t.icon}<br>${t.terrain}`;
+
+      div.onclick = () => {
+        tileInfo.innerHTML = `
+          📍 位置：(${t.x},${t.y})<br>
+          🌍 地形：<b>${t.terrain}</b><br>
+          🎁 基礎資源：<b>${t.baseResource}</b><br>
+          🧬 DNA：<span style="font-size:11px;opacity:0.85">${t.dna}</span><br>
+          🔥 等級：${t.level} | 變異：${t.mutationCount}
+        `;
+      };
+
+      mapGrid.appendChild(div);
+    }
+  }
+
+  async function refreshAll() {
+    const world = await refreshWorld();
+    const player = await refreshPlayer();
+    await refreshEntities();
+    await refreshMap();
+
+    if (world) updateTimeUI(world);
+    return { world, player };
+  }
+
+  // =========================
+  // Save
+  // =========================
+  async function saveNow() {
+    const worldRef = doc(db, "world", WORLD_DOC);
+    const snap = await getDoc(worldRef);
+    if (!snap.exists()) {
+      log("❌ 世界未建立，無法存檔。");
+      return;
+    }
+
+    await updateDoc(worldRef, {
+      lastSavedAt: now(),
+      speedYearsPerDay: speedYearsPerDay
+    });
+
+    log("💾 已手動存檔（雲端 Firestore）。");
+  }
+
+  // =========================
+  // Wipe World
+  // =========================
+  async function wipeWorld() {
+    if (!confirm("確定要清空世界？（會刪除 tiles/entities/world/player）")) return;
+
+    const entSnap = await getDocs(collection(db, "entities"));
+    for (const d of entSnap.docs) await deleteDoc(doc(db, "entities", d.id));
+
+    const tileSnap = await getDocs(collection(db, "tiles"));
+    for (const d of tileSnap.docs) await deleteDoc(doc(db, "tiles", d.id));
+
+    await deleteDoc(doc(db, "world", WORLD_DOC));
+    await deleteDoc(doc(db, "players", PLAYER_DOC));
+
+    log("☠ 世界已清空。你可以重新建立世界。");
+    await refreshAll();
+  }
+
+  // =========================
+  // Speed Control
+  // =========================
+  async function speedUp() {
+    speedYearsPerDay = Math.min(speedYearsPerDay + 50, 2000);
+    log(`🚀 流速提升：1日=${speedYearsPerDay}年`);
+    await saveNow();
+    await refreshAll();
+  }
+
+  async function speedDown() {
+    speedYearsPerDay = Math.max(speedYearsPerDay - 50, 10);
+    log(`🐢 流速降低：1日=${speedYearsPerDay}年`);
+    await saveNow();
+    await refreshAll();
+  }
+
+  // =========================
+  // Init
+  // =========================
+  statusEl.innerText = "✅ Firebase Firestore 已連接成功（AENO Alpha 運行中）";
+  log("AENO 世界引擎 Alpha 0.1 啟動。");
+
+  // Buttons
+  document.getElementById("createWorld").onclick = createWorld;
+  document.getElementById("triggerEvent").onclick = triggerEvent;
+  document.getElementById("refresh").onclick = refreshAll;
+  document.getElementById("mineAeno").onclick = mineAeno;
+  document.getElementById("watchAd").onclick = watchAd;
+  document.getElementById("listenSong").onclick = listenSong;
+  document.getElementById("wipe").onclick = wipeWorld;
+  document.getElementById("saveNow").onclick = saveNow;
+  document.getElementById("speedFast").onclick = speedUp;
+  document.getElementById("speedSlow").onclick = speedDown;
+
+  // Auto refresh
+  let worldCache = await refreshWorld();
+  if (worldCache) {
+    speedYearsPerDay = worldCache.speedYearsPerDay || speedYearsPerDay;
+  }
+
+  const playerRef = doc(db, "players", PLAYER_DOC);
+  const playerSnap = await getDoc(playerRef);
+  if (playerSnap.exists() && worldCache) {
+    await applyOfflineGain(playerSnap.data(), worldCache);
+  }
+
+  await refreshAll();
+
+  setInterval(async () => {
+    const world = await refreshWorld();
+    if (world) updateTimeUI(world);
+  }, 1000);
+
+</script>
+
 </body>
 </html>
