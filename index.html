@@ -1,13 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AENO</title>
 </head>
 <body>
-  <h1>AENO 世界已啟動</h1>
-  <p>如果你見到呢句，代表 GitHub Pages 成功。</p>
+  <h1>🌍 AENO 世界已啟動</h1>
+  <p id="status">Firebase 未連接</p>
+
+  <script type="module">
+    // Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // 你的 Firebase 設定
+    const firebaseConfig = {
+      apiKey: "AIzaSyCaO5K2VXrhK39qCxOiUdafP__yd8K6C8s",
+      authDomain: "aeno-9ac3b.firebaseapp.com",
+      projectId: "aeno-9ac3b",
+      storageBucket: "aeno-9ac3b.firebasestorage.app",
+      messagingSenderId: "419553504514",
+      appId: "1:419553504514:web:85d14cea41c55a3395261b",
+      measurementId: "G-6K7PEQ9FEF"
+    };
+
+    // 初始化 Firebase
+    const app = initializeApp(firebaseConfig);
+
+    // Firestore
+    const db = getFirestore(app);
+
+    document.getElementById("status").innerText = "✅ Firebase Firestore 已連接成功";
+    console.log("Firebase connected!", db);
+  </script>
 </body>
 </html>
-
