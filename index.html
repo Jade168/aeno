@@ -2,1036 +2,1427 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AENO - 世界育成 Alpha</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>AENO - Cartoon Empire Builder</title>
   <style>
-    body {
-      margin: 0;
-      background: #070a10;
-      color: #e7f0ff;
-      font-family: Arial, sans-serif;
-      overflow-x: hidden;
+    :root{
+      --ui-bg: rgba(255,255,255,0.92);
+      --ui-border: rgba(0,0,0,0.15);
+      --ui-shadow: 0 8px 30px rgba(0,0,0,0.18);
+      --text: #222;
+      --soft: rgba(0,0,0,0.07);
+      --btn: #ffffff;
+      --btn2: #f4f6ff;
+      --accent: #4c6fff;
+      --danger: #ff4c4c;
+      --good: #33c97a;
+      --gold: #ffcc4d;
+      --aeno: #8b5cf6;
     }
-    header {
-      padding: 14px 14px;
-      background: #0d1420;
-      border-bottom: 1px solid #1c2b3d;
+
+    *{box-sizing:border-box;}
+    html, body{
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background: linear-gradient(180deg, #c9f0ff 0%, #d6ffdd 40%, #f2ffd0 100%);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      color:var(--text);
     }
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-      letter-spacing: 1px;
+
+    /* Full screen game container */
+    #app{
+      position:relative;
+      width:100%;
+      height:100%;
+      overflow:hidden;
     }
-    header .sub {
-      font-size: 12px;
-      opacity: 0.8;
-      margin-top: 6px;
+
+    canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      touch-action:none;
     }
-    .wrap {
-      padding: 12px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      max-width: 1000px;
-      margin: auto;
+
+    /* TOP HUD */
+    #hud{
+      position:absolute;
+      top:10px;
+      left:10px;
+      right:10px;
+      display:flex;
+      gap:10px;
+      z-index:20;
+      align-items:flex-start;
+      justify-content:space-between;
+      pointer-events:none;
     }
-    .card {
-      background: #0d1420;
-      border: 1px solid #1c2b3d;
-      border-radius: 14px;
-      padding: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.35);
+
+    .hud-card{
+      pointer-events:auto;
+      background:var(--ui-bg);
+      border:2px solid var(--ui-border);
+      border-radius:18px;
+      box-shadow:var(--ui-shadow);
+      padding:10px 12px;
+      backdrop-filter: blur(10px);
     }
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+
+    #resPanel{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      max-width:75%;
+      align-items:center;
     }
-    .btn {
-      border: none;
-      padding: 10px 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: bold;
-      background: #2d7dff;
-      color: white;
-      font-size: 13px;
-      transition: 0.2s;
+
+    .res{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      background: rgba(0,0,0,0.05);
+      border-radius:14px;
+      padding:6px 10px;
+      font-weight:700;
+      font-size:13px;
     }
-    .btn:hover { transform: scale(1.02); }
-    .btn:active { opacity: 0.75; transform: scale(0.98); }
-    .btn2 {
-      background: #1b2638;
-      border: 1px solid #2b3e58;
+
+    .dot{
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:#999;
+      border:2px solid rgba(0,0,0,0.15);
     }
-    .btnDanger {
-      background: #ff3b3b;
+
+    .dot.wood{background:#a16207;}
+    .dot.stone{background:#6b7280;}
+    .dot.food{background:#22c55e;}
+    .dot.energy{background:#0ea5e9;}
+    .dot.coin{background:var(--gold);}
+    .dot.aeno{background:var(--aeno);}
+
+    #statusPanel{
+      min-width:160px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-weight:800;
+      font-size:13px;
     }
-    .grid2 {
-      display: grid;
+
+    .bar{
+      width:100%;
+      height:10px;
+      background:rgba(0,0,0,0.1);
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,0.15);
+    }
+    .bar > div{
+      height:100%;
+      width:100%;
+      background:linear-gradient(90deg, #34d399, #22c55e);
+      border-radius:999px;
+      transition: width 0.25s ease;
+    }
+
+    .bar.danger > div{
+      background:linear-gradient(90deg, #ff6b6b, #ff2d2d);
+    }
+
+    /* Bottom Menu */
+    #bottomMenu{
+      position:absolute;
+      left:12px;
+      right:12px;
+      bottom:12px;
+      z-index:30;
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      pointer-events:none;
+    }
+
+    .menuBtn{
+      pointer-events:auto;
+      flex:1;
+      background:var(--ui-bg);
+      border:2px solid var(--ui-border);
+      border-radius:18px;
+      box-shadow:var(--ui-shadow);
+      padding:12px 10px;
+      text-align:center;
+      font-weight:900;
+      font-size:14px;
+      user-select:none;
+      cursor:pointer;
+      transition: transform .08s ease;
+    }
+
+    .menuBtn:active{
+      transform: scale(0.97);
+    }
+
+    /* Side Panel */
+    #panel{
+      position:absolute;
+      top:72px;
+      left:12px;
+      right:12px;
+      bottom:90px;
+      z-index:25;
+      background:var(--ui-bg);
+      border:2px solid var(--ui-border);
+      border-radius:22px;
+      box-shadow:var(--ui-shadow);
+      padding:12px;
+      overflow:auto;
+      display:none;
+      backdrop-filter: blur(10px);
+    }
+
+    #panel h2{
+      margin:0 0 8px 0;
+      font-size:18px;
+      letter-spacing:0.3px;
+    }
+
+    .closeBtn{
+      float:right;
+      background:rgba(0,0,0,0.07);
+      border:2px solid rgba(0,0,0,0.1);
+      border-radius:14px;
+      padding:6px 10px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .gridList{
+      display:grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap:10px;
+      margin-top:10px;
     }
-    .grid3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
+
+    .card{
+      background:rgba(255,255,255,0.8);
+      border:2px solid rgba(0,0,0,0.12);
+      border-radius:18px;
+      padding:10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     }
-    .stat {
-      background: #0a101a;
-      border: 1px solid #1c2b3d;
-      border-radius: 14px;
-      padding: 10px;
-      font-size: 13px;
+
+    .card .title{
+      font-weight:1000;
+      font-size:15px;
+      margin-bottom:4px;
     }
-    .stat b {
-      font-size: 12px;
-      opacity: 0.75;
-      display: block;
-      margin-bottom: 4px;
+
+    .card .desc{
+      font-size:12px;
+      opacity:0.8;
+      line-height:1.25;
+      margin-bottom:8px;
     }
-    .stat span {
-      font-size: 15px;
-      font-weight: bold;
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      font-weight:800;
+      margin:4px 0;
     }
-    .log {
-      background: #070c14;
-      border: 1px solid #1c2b3d;
-      border-radius: 14px;
-      padding: 10px;
-      max-height: 250px;
-      overflow-y: auto;
-      font-size: 12px;
-      white-space: pre-line;
+
+    .buyBtn{
+      width:100%;
+      padding:10px;
+      border-radius:16px;
+      border:2px solid rgba(0,0,0,0.12);
+      background: linear-gradient(180deg, #ffffff, #f2f6ff);
+      font-weight:1000;
+      cursor:pointer;
+      user-select:none;
     }
-    .map {
-      background: #070c14;
-      border: 1px solid #1c2b3d;
-      border-radius: 14px;
-      padding: 10px;
-      overflow-x: auto;
+
+    .buyBtn:active{
+      transform: scale(0.985);
     }
-    .mapGrid {
-      display: grid;
-      grid-template-columns: repeat(12, 44px);
-      grid-template-rows: repeat(12, 44px);
-      gap: 4px;
-      width: max-content;
+
+    .buyBtn.disabled{
+      opacity:0.45;
+      pointer-events:none;
     }
-    .tile {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.06);
-      font-size: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      cursor: pointer;
-      transition: 0.15s;
-      user-select: none;
-      line-height: 1.1;
+
+    /* Tooltip / Floating */
+    .toast{
+      position:absolute;
+      z-index:50;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:120px;
+      background:rgba(0,0,0,0.7);
+      color:white;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:13px;
+      opacity:0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events:none;
     }
-    .tile:hover {
-      transform: scale(1.04);
-      border-color: rgba(255,255,255,0.18);
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-8px);
     }
-    .small {
-      font-size: 12px;
-      opacity: 0.85;
-      margin-top: 8px;
+
+    /* Cartoon assistant bubble */
+    #assistant{
+      position:absolute;
+      right:12px;
+      bottom:110px;
+      width:90px;
+      height:90px;
+      z-index:40;
+      pointer-events:auto;
+      user-select:none;
+      cursor:pointer;
     }
-    .entityList {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
+
+    #assistant .body{
+      width:100%;
+      height:100%;
+      border-radius:26px;
+      background:linear-gradient(180deg, #ffffff, #ffe8f5);
+      border:3px solid rgba(0,0,0,0.15);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+      animation: floaty 2.2s ease-in-out infinite;
     }
-    .entity {
-      background: #070c14;
-      border: 1px solid #1c2b3d;
-      border-radius: 14px;
-      padding: 10px;
-      font-size: 13px;
+
+    @keyframes floaty{
+      0%,100%{transform:translateY(0px);}
+      50%{transform:translateY(-6px);}
     }
-    .entity .top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
+
+    .face{
+      width:54px;
+      height:54px;
+      border-radius:50%;
+      background:linear-gradient(180deg, #fffbeb, #ffd1f1);
+      border:3px solid rgba(0,0,0,0.12);
+      position:relative;
     }
-    .entity .dna {
-      font-size: 11px;
-      opacity: 0.8;
-      margin-top: 6px;
-      word-break: break-all;
+
+    .eye{
+      width:8px;
+      height:10px;
+      background:#222;
+      border-radius:999px;
+      position:absolute;
+      top:18px;
+      animation: blink 4s infinite;
     }
-    .entity .tags {
-      margin-top: 6px;
-      font-size: 11px;
-      opacity: 0.85;
+    .eye.left{left:14px;}
+    .eye.right{right:14px;}
+
+    @keyframes blink{
+      0%,95%,100%{transform:scaleY(1);}
+      96%,98%{transform:scaleY(0.1);}
     }
-    .tag {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 8px;
-      background: rgba(45,125,255,0.2);
-      border: 1px solid rgba(45,125,255,0.25);
-      margin-right: 6px;
-      margin-top: 4px;
+
+    .mouth{
+      width:16px;
+      height:10px;
+      border-bottom:4px solid rgba(0,0,0,0.7);
+      border-radius:0 0 999px 999px;
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      top:30px;
     }
-    .tag2 {
-      background: rgba(255,210,60,0.14);
-      border: 1px solid rgba(255,210,60,0.2);
+
+    #assistantName{
+      position:absolute;
+      top:-20px;
+      right:0;
+      background:rgba(255,255,255,0.9);
+      border:2px solid rgba(0,0,0,0.12);
+      padding:4px 8px;
+      border-radius:999px;
+      font-weight:1000;
+      font-size:12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     }
-    .tag3 {
-      background: rgba(255,70,70,0.12);
-      border: 1px solid rgba(255,70,70,0.2);
+
+    /* small hint */
+    #hint{
+      position:absolute;
+      left:12px;
+      bottom:110px;
+      z-index:40;
+      background:rgba(255,255,255,0.9);
+      border:2px solid rgba(0,0,0,0.12);
+      border-radius:16px;
+      padding:10px 12px;
+      font-size:12px;
+      font-weight:900;
+      box-shadow:var(--ui-shadow);
+      max-width:55%;
+      line-height:1.25;
+      opacity:0.95;
     }
-    .tag4 {
-      background: rgba(70,255,160,0.12);
-      border: 1px solid rgba(70,255,160,0.2);
-    }
-    .footer {
-      font-size: 11px;
-      opacity: 0.6;
-      margin-top: 6px;
-      text-align: center;
-      padding-bottom: 20px;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 12px;
-      border: 1px solid #1c2b3d;
-      background: #070c14;
-      color: #e7f0ff;
-      font-size: 13px;
-      outline: none;
-      box-sizing: border-box;
-    }
-    .title {
-      font-size: 15px;
-      font-weight: bold;
-      margin-bottom: 10px;
+
+    /* Responsive for small phones */
+    @media (max-width:380px){
+      .menuBtn{font-size:12px;padding:10px 8px;}
+      #assistant{width:80px;height:80px;}
+      #panel{top:66px;}
     }
   </style>
 </head>
-
 <body>
-<header>
-  <h1>🌍 AENO 世界育成 Alpha 0.1</h1>
-  <div class="sub" id="status">連接中...</div>
-</header>
+<div id="app">
+  <canvas id="game"></canvas>
 
-<div class="wrap">
+  <div id="hud">
+    <div class="hud-card" id="resPanel">
+      <div class="res"><span class="dot wood"></span>木 <span id="wood">0</span></div>
+      <div class="res"><span class="dot stone"></span>石 <span id="stone">0</span></div>
+      <div class="res"><span class="dot food"></span>食 <span id="food">0</span></div>
+      <div class="res"><span class="dot energy"></span>能 <span id="energy">0</span></div>
+      <div class="res"><span class="dot coin"></span>金 <span id="coin">0</span></div>
+      <div class="res"><span class="dot aeno"></span>AENO <span id="aeno">0</span></div>
+    </div>
 
-  <div class="card">
-    <div class="title">⏳ 世界時間流速</div>
-    <div class="grid2">
-      <div class="stat">
-        <b>現實時間</b>
-        <span id="realTime">--</span>
+    <div class="hud-card" id="statusPanel">
+      <div style="display:flex;justify-content:space-between;">
+        <span>城牆</span>
+        <span id="wallText">100%</span>
       </div>
-      <div class="stat">
-        <b>遊戲世界年份</b>
-        <span id="gameYear">--</span>
+      <div class="bar" id="wallBar"><div></div></div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:6px;">
+        <span>人口</span>
+        <span id="popText">0</span>
       </div>
     </div>
-
-    <div class="small">
-      初始流速：<b>1 現實日 = 100 遊戲年</b>（可動態調整）
-    </div>
-
-    <div class="row">
-      <button class="btn btn2" id="speedSlow">🐢 減慢流速</button>
-      <button class="btn btn2" id="speedFast">🚀 加快流速</button>
-      <button class="btn" id="saveNow">💾 手動存檔</button>
-    </div>
   </div>
 
-  <div class="card">
-    <div class="title">💰 資源與 AENO 幣（總量 2000 萬）</div>
-    <div class="grid3">
-      <div class="stat"><b>木材</b><span id="resWood">0</span></div>
-      <div class="stat"><b>石</b><span id="resStone">0</span></div>
-      <div class="stat"><b>水</b><span id="resWater">0</span></div>
-      <div class="stat"><b>食物</b><span id="resFood">0</span></div>
-      <div class="stat"><b>能源</b><span id="resEnergy">0</span></div>
-      <div class="stat"><b>AENO 幣</b><span id="resAeno">0</span></div>
-    </div>
+  <div id="panel"></div>
 
-    <div class="small">
-      AENO 幣挖掘釋放：模擬比特幣減半邏輯（越後期越難挖）。
-    </div>
+  <div id="bottomMenu">
+    <div class="menuBtn" id="btnBuild">🏗 建設</div>
+    <div class="menuBtn" id="btnTech">🧠 科技</div>
+    <div class="menuBtn" id="btnRobot">🤖 機器人</div>
+    <div class="menuBtn" id="btnHunt">🐾 野外</div>
+  </div>
 
-    <div class="row">
-      <button class="btn" id="mineAeno">⛏ 挖掘 AENO 幣</button>
-      <button class="btn btn2" id="watchAd">📺 看廣告賺資源</button>
-      <button class="btn btn2" id="listenSong">🎵 聽歌賺資源</button>
+  <div id="assistant">
+    <div id="assistantName">Lupinus</div>
+    <div class="body">
+      <div class="face">
+        <div class="eye left"></div>
+        <div class="eye right"></div>
+        <div class="mouth"></div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="title">🗺 世界地圖（12x12）</div>
-    <div class="map">
-      <div class="mapGrid" id="mapGrid"></div>
-    </div>
-    <div class="small" id="tileInfo">點擊格子查看內容</div>
+  <div id="hint">
+    👉 拖動地圖移動<br/>
+    👉 雙指縮放 / 滾輪縮放<br/>
+    👉 點「建設」放置建築
   </div>
 
-  <div class="card">
-    <div class="title">🧬 生命/地形/機器人（DNA 進化系統）</div>
-    <div class="row">
-      <button class="btn" id="createWorld">🌍 建立世界</button>
-      <button class="btn btn2" id="triggerEvent">⚡ 觸發事件（全世界變異）</button>
-      <button class="btn btn2" id="refresh">🔄 刷新</button>
-      <button class="btn btnDanger" id="wipe">☠ 清空世界（慎用）</button>
-    </div>
-
-    <div class="entityList" id="entityList"></div>
-  </div>
-
-  <div class="card">
-    <div class="title">🤖 AI 助手小動物（拉丁名）</div>
-    <div class="small" id="aiInfo">尚未生成 AI 助手</div>
-  </div>
-
-  <div class="card">
-    <div class="title">📜 世界事件日誌</div>
-    <div class="log" id="logBox"></div>
-  </div>
-
-  <div class="footer">
-    AENO Alpha 0.1 | Firebase Firestore 雲端同步 + 24 小時離線收益<br/>
-    你而家已經有「真正可玩骨架」，之後只係加更多內容。
-  </div>
-
+  <div class="toast" id="toast">OK</div>
 </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    doc,
-    setDoc,
-    getDocs,
-    getDoc,
-    updateDoc,
-    deleteDoc,
-    increment
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script>
+/* ===========================================================
+   AENO Cartoon Empire Builder Demo (Offline)
+   - 30x30 tile world
+   - Drag / zoom
+   - Place buildings
+   - Upgrade buildings
+   - Resource generation
+   - Beast tide event (wall drops to 60% then retreats)
+   =========================================================== */
 
-  // =========================
-  // Firebase Config
-  // =========================
-  const firebaseConfig = {
-    apiKey: "AIzaSyCaO5K2VXrhK39qCxOiUdafP__yd8K6C8s",
-    authDomain: "aeno-9ac3b.firebaseapp.com",
-    projectId: "aeno-9ac3b",
-    storageBucket: "aeno-9ac3b.firebasestorage.app",
-    messagingSenderId: "419553504514",
-    appId: "1:419553504514:web:85d14cea41c55a3395261b",
-    measurementId: "G-6K7PEQ9FEF"
+(() => {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+
+  function resize(){
+    canvas.width = window.innerWidth * devicePixelRatio;
+    canvas.height = window.innerHeight * devicePixelRatio;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  // UI elements
+  const uiWood = document.getElementById("wood");
+  const uiStone = document.getElementById("stone");
+  const uiFood = document.getElementById("food");
+  const uiEnergy = document.getElementById("energy");
+  const uiCoin = document.getElementById("coin");
+  const uiAeno = document.getElementById("aeno");
+  const uiWallText = document.getElementById("wallText");
+  const uiWallBar = document.querySelector("#wallBar > div");
+  const uiPopText = document.getElementById("popText");
+  const toast = document.getElementById("toast");
+  const panel = document.getElementById("panel");
+
+  const GRID_SIZE = 30;
+  const TILE = 42; // base tile size (before zoom)
+
+  // Camera
+  let camX = GRID_SIZE * TILE * 0.5;
+  let camY = GRID_SIZE * TILE * 0.5;
+  let zoom = 1.0;
+
+  // Dragging
+  let isDragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  // Pinch zoom
+  let pinchDist = null;
+
+  // Resources
+  const state = {
+    wood: 80,
+    stone: 60,
+    food: 40,
+    energy: 20,
+    coin: 50,
+    aeno: 0,
+
+    wall: 100, // %
+    population: 0,
+
+    beastTideActive: false,
+    beastTideTimer: 0,
+
+    selectedBuildType: null,
+    placingMode: false,
+    selectedTile: null,
+
+    tick: 0,
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // =========================
-  // UI Elements
-  // =========================
-  const statusEl = document.getElementById("status");
-  const logBox = document.getElementById("logBox");
-  const entityList = document.getElementById("entityList");
-  const mapGrid = document.getElementById("mapGrid");
-  const tileInfo = document.getElementById("tileInfo");
-
-  const realTimeEl = document.getElementById("realTime");
-  const gameYearEl = document.getElementById("gameYear");
-
-  const resWoodEl = document.getElementById("resWood");
-  const resStoneEl = document.getElementById("resStone");
-  const resWaterEl = document.getElementById("resWater");
-  const resFoodEl = document.getElementById("resFood");
-  const resEnergyEl = document.getElementById("resEnergy");
-  const resAenoEl = document.getElementById("resAeno");
-
-  const aiInfo = document.getElementById("aiInfo");
-
-  // =========================
-  // Constants
-  // =========================
-  const WORLD_DOC = "mainWorld";
-  const PLAYER_DOC = "player001"; // 暫時固定，日後再接 Authentication
-  const MAX_AENO_SUPPLY = 20000000;
-
-  // 初始：1 日現實 = 100 年遊戲
-  let speedYearsPerDay = 100;
-
-  // =========================
-  // Helpers
-  // =========================
-  function now() {
-    return Date.now();
-  }
-
-  function log(msg) {
-    const t = new Date().toLocaleTimeString();
-    logBox.innerText = `[${t}] ${msg}\n` + logBox.innerText;
-  }
-
-  function rand(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  function pick(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  function randomDNA(len = 22) {
-    const letters = "ATCG";
-    let dna = "";
-    for (let i = 0; i < len; i++) {
-      dna += letters[Math.floor(Math.random() * letters.length)];
+  // Tile map
+  // type: grass, water, mountain, forest
+  const world = [];
+  for(let y=0;y<GRID_SIZE;y++){
+    const row = [];
+    for(let x=0;x<GRID_SIZE;x++){
+      const r = Math.random();
+      let type = "grass";
+      if(r < 0.07) type = "water";
+      else if(r < 0.12) type = "mountain";
+      else if(r < 0.25) type = "forest";
+      row.push({
+        type,
+        building: null
+      });
     }
-    return dna;
+    world.push(row);
   }
 
-  function mutateDNA(dna) {
-    const letters = "ATCG";
-    let arr = dna.split("");
-    const mutations = rand(1, 3);
-    for (let i = 0; i < mutations; i++) {
-      const pos = rand(0, arr.length - 1);
-      arr[pos] = letters[rand(0, letters.length - 1)];
+  // Make a central safe zone
+  for(let y=13;y<=16;y++){
+    for(let x=13;x<=16;x++){
+      world[y][x].type = "grass";
     }
-    return arr.join("");
   }
 
-  function dnaPower(dna) {
-    // 簡化：DNA 裡面 C/G 越多 = 越強
-    let score = 0;
-    for (const ch of dna) {
-      if (ch === "C" || ch === "G") score++;
+  // Building definitions
+  const BUILDINGS = {
+    lumber: {
+      name: "伐木場",
+      icon: "🌲",
+      desc: "每秒產木材。適合森林旁。",
+      cost: { wood: 15, stone: 5, coin: 5 },
+      baseProduction: { wood: 2 },
+      maxLevel: 10
+    },
+    quarry: {
+      name: "採石場",
+      icon: "🪨",
+      desc: "每秒產石頭。適合山附近。",
+      cost: { wood: 10, stone: 10, coin: 5 },
+      baseProduction: { stone: 2 },
+      maxLevel: 10
+    },
+    farm: {
+      name: "農田",
+      icon: "🌾",
+      desc: "每秒產食物。人口需要食物。",
+      cost: { wood: 12, stone: 4, coin: 4 },
+      baseProduction: { food: 2 },
+      maxLevel: 10
+    },
+    house: {
+      name: "民房",
+      icon: "🏠",
+      desc: "增加人口上限，人口會自動慢慢增加。",
+      cost: { wood: 20, stone: 8, coin: 10 },
+      baseProduction: { },
+      maxLevel: 10
+    },
+    factory: {
+      name: "工廠",
+      icon: "🏭",
+      desc: "消耗能量，生產機器人（未來可派去星球）。",
+      cost: { wood: 25, stone: 20, coin: 20 },
+      baseProduction: { coin: 1 },
+      maxLevel: 10
+    },
+    lab: {
+      name: "科研中心",
+      icon: "🧠",
+      desc: "科技點數（暫時用能量+金幣模擬）。",
+      cost: { wood: 30, stone: 25, coin: 25 },
+      baseProduction: { energy: 1 },
+      maxLevel: 10
+    },
+    mine: {
+      name: "晶體礦坑",
+      icon: "💎",
+      desc: "極低機率產出 AENO（Demo版）。",
+      cost: { wood: 35, stone: 30, coin: 30 },
+      baseProduction: { stone: 1 },
+      maxLevel: 10
     }
-    return score;
+  };
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1200);
   }
 
-  function formatNumber(n) {
-    return Math.floor(n).toLocaleString();
+  function clamp(v, a, b){
+    return Math.max(a, Math.min(b, v));
   }
 
-  // =========================
-  // Time System
-  // =========================
-  function calcGameYear(world) {
-    const elapsed = now() - world.createdAt;
-    const days = elapsed / (1000 * 60 * 60 * 24);
-    const years = days * world.speedYearsPerDay;
-    return Math.floor(world.startYear + years);
+  function format(n){
+    if(n < 1000) return Math.floor(n);
+    if(n < 1000000) return (n/1000).toFixed(1)+"K";
+    return (n/1000000).toFixed(2)+"M";
   }
 
-  function updateTimeUI(world) {
-    realTimeEl.innerText = new Date().toLocaleString();
-    gameYearEl.innerText = calcGameYear(world);
+  function canAfford(cost){
+    for(const k in cost){
+      if(state[k] < cost[k]) return false;
+    }
+    return true;
   }
 
-  // =========================
-  // World Generation
-  // =========================
-  const terrains = [
-    { type: "水域", icon: "🌊", res: "水" },
-    { type: "森林", icon: "🌲", res: "木材" },
-    { type: "山脈", icon: "⛰", res: "石" },
-    { type: "草原", icon: "🌾", res: "食物" },
-    { type: "沙漠", icon: "🏜", res: "能源" }
-  ];
-
-  const plants = [
-    { name: "靈木", icon: "🌱" },
-    { name: "光藤", icon: "🍀" },
-    { name: "赤焰草", icon: "🌿" },
-    { name: "冰藍花", icon: "🌸" }
-  ];
-
-  const animals = [
-    { name: "星狐", icon: "🦊" },
-    { name: "雷狼", icon: "🐺" },
-    { name: "雲鷹", icon: "🦅" },
-    { name: "石龜", icon: "🐢" }
-  ];
-
-  const robots = [
-    { name: "採集機", icon: "🤖" },
-    { name: "巡邏機", icon: "🛰" },
-    { name: "修復機", icon: "🛠" }
-  ];
-
-  const mines = [
-    { name: "Aeno晶礦脈", icon: "💎" },
-    { name: "黑鐵礦", icon: "⛏" },
-    { name: "能量核", icon: "⚡" }
-  ];
-
-  const latinAI = [
-    "Aurelius", "Silva", "Ferrum", "Lumen", "Natura", "Orbis", "Ignis", "Aqua",
-    "Vulpes", "Draco", "Caelum", "Terra", "Nox", "Lux", "Aeternum"
-  ];
-
-  function tileColor(type) {
-    if (type === "水域") return "#083c66";
-    if (type === "森林") return "#0f4b2a";
-    if (type === "山脈") return "#3a3a3a";
-    if (type === "草原") return "#465c1a";
-    if (type === "沙漠") return "#7a5a1d";
-    return "#111";
+  function pay(cost){
+    for(const k in cost){
+      state[k] -= cost[k];
+    }
   }
 
-  async function createWorld() {
-    const worldRef = doc(db, "world", WORLD_DOC);
-    const playerRef = doc(db, "players", PLAYER_DOC);
+  function tileToWorld(x, y){
+    return { wx: x*TILE, wy: y*TILE };
+  }
 
-    const existing = await getDoc(worldRef);
-    if (existing.exists()) {
-      log("⚠ 世界已存在，不會重複建立。");
+  function screenToWorld(px, py){
+    const x = (px*devicePixelRatio)/zoom + camX - (canvas.width/(2*zoom));
+    const y = (py*devicePixelRatio)/zoom + camY - (canvas.height/(2*zoom));
+    return { x, y };
+  }
+
+  function worldToTile(wx, wy){
+    return {
+      tx: Math.floor(wx / TILE),
+      ty: Math.floor(wy / TILE)
+    };
+  }
+
+  function isInside(tx, ty){
+    return tx>=0 && ty>=0 && tx<GRID_SIZE && ty<GRID_SIZE;
+  }
+
+  // Build placement rule
+  function canPlaceBuilding(tx, ty, type){
+    if(!isInside(tx,ty)) return false;
+    const tile = world[ty][tx];
+    if(tile.building) return false;
+    if(tile.type === "water") return false;
+
+    // simple theme rules
+    if(type === "lumber" && tile.type !== "forest") return false;
+    if(type === "quarry" && tile.type !== "mountain") return false;
+    if(type === "mine" && tile.type !== "mountain") return false;
+
+    return true;
+  }
+
+  function placeBuilding(tx, ty, bType){
+    const def = BUILDINGS[bType];
+    if(!def) return;
+
+    if(!canPlaceBuilding(tx, ty, bType)){
+      showToast("❌ 不能放置（地形不適合）");
       return;
     }
 
-    const worldData = {
-      createdAt: now(),
-      startYear: 2026,
-      speedYearsPerDay: speedYearsPerDay,
-      lastSavedAt: now(),
-      lastTickAt: now(),
-      mapSize: 12,
-      seed: rand(100000, 999999),
-      globalMutationLevel: 0
-    };
-
-    await setDoc(worldRef, worldData);
-
-    const playerData = {
-      createdAt: now(),
-      lastOnlineAt: now(),
-      resources: {
-        wood: 20,
-        stone: 20,
-        water: 20,
-        food: 20,
-        energy: 10,
-        aeno: 0
-      },
-      minedTotal: 0,
-      adViews: 0,
-      songPlays: 0,
-      aiAssistants: [],
-      offlineCapHours: 24
-    };
-
-    await setDoc(playerRef, playerData);
-
-    // generate tiles
-    for (let y = 0; y < 12; y++) {
-      for (let x = 0; x < 12; x++) {
-        const t = pick(terrains);
-        const tileId = `tile_${x}_${y}`;
-
-        await setDoc(doc(db, "tiles", tileId), {
-          x, y,
-          terrain: t.type,
-          icon: t.icon,
-          baseResource: t.res,
-          dna: randomDNA(),
-          mutationCount: 0,
-          level: 1,
-          createdAt: now()
-        });
-      }
+    if(!canAfford(def.cost)){
+      showToast("❌ 資源不足");
+      return;
     }
 
-    // entities
-    const entitiesToCreate = [];
+    pay(def.cost);
 
-    // 8 plants
-    for (let i = 0; i < 8; i++) {
-      const p = pick(plants);
-      entitiesToCreate.push({
-        id: `plant_${i}`,
-        type: "植物",
-        icon: p.icon,
-        name: p.name,
-        dna: randomDNA(),
-        mutationCount: 0,
-        level: 1,
-        produces: "食物",
-        createdAt: now()
-      });
-    }
-
-    // 6 animals
-    for (let i = 0; i < 6; i++) {
-      const a = pick(animals);
-      entitiesToCreate.push({
-        id: `animal_${i}`,
-        type: "動物",
-        icon: a.icon,
-        name: a.name,
-        dna: randomDNA(),
-        mutationCount: 0,
-        level: 1,
-        produces: "皮毛",
-        createdAt: now()
-      });
-    }
-
-    // 4 robots
-    for (let i = 0; i < 4; i++) {
-      const r = pick(robots);
-      entitiesToCreate.push({
-        id: `robot_${i}`,
-        type: "機器人",
-        icon: r.icon,
-        name: r.name,
-        dna: randomDNA(),
-        mutationCount: 0,
-        level: 1,
-        produces: "能源",
-        createdAt: now()
-      });
-    }
-
-    // 5 mines
-    for (let i = 0; i < 5; i++) {
-      const m = pick(mines);
-      entitiesToCreate.push({
-        id: `mine_${i}`,
-        type: "礦物",
-        icon: m.icon,
-        name: m.name,
-        dna: randomDNA(),
-        mutationCount: 0,
-        level: 1,
-        produces: "石",
-        createdAt: now()
-      });
-    }
-
-    // AI assistant
-    const aiName = pick(latinAI);
-    const aiEntity = {
-      id: `ai_001`,
-      type: "AI助手",
-      icon: "🦝",
-      name: aiName,
-      dna: randomDNA(),
-      mutationCount: 0,
+    world[ty][tx].building = {
+      type: bType,
       level: 1,
-      produces: "任務",
-      createdAt: now()
+      buildProgress: 0,
+      built: false,
+      hp: 100
     };
 
-    entitiesToCreate.push(aiEntity);
-
-    for (const e of entitiesToCreate) {
-      await setDoc(doc(db, "entities", e.id), e);
-    }
-
-    await updateDoc(playerRef, {
-      aiAssistants: [aiName]
-    });
-
-    log("🌍 世界已建立：地圖/植物/動物/礦/機器人/AI助手 已生成。");
-    await refreshAll();
+    showToast("🏗 開始建造 " + def.name);
   }
 
-  // =========================
-  // Resource System + Offline
-  // =========================
-  async function applyOfflineGain(player, world) {
-    const playerRef = doc(db, "players", PLAYER_DOC);
+  function upgradeBuilding(tx, ty){
+    const tile = world[ty][tx];
+    if(!tile.building) return;
 
-    const lastOnline = player.lastOnlineAt || now();
-    const diffMs = now() - lastOnline;
-    const hours = diffMs / (1000 * 60 * 60);
+    const b = tile.building;
+    const def = BUILDINGS[b.type];
+    if(!def) return;
 
-    const cap = player.offlineCapHours || 24;
-    const usedHours = Math.min(hours, cap);
-
-    if (usedHours < 0.02) return;
-
-    // 基礎離線收益（簡化）
-    const gainWood = Math.floor(usedHours * 3);
-    const gainStone = Math.floor(usedHours * 2);
-    const gainWater = Math.floor(usedHours * 2);
-    const gainFood = Math.floor(usedHours * 4);
-    const gainEnergy = Math.floor(usedHours * 1);
-
-    await updateDoc(playerRef, {
-      "resources.wood": increment(gainWood),
-      "resources.stone": increment(gainStone),
-      "resources.water": increment(gainWater),
-      "resources.food": increment(gainFood),
-      "resources.energy": increment(gainEnergy),
-      lastOnlineAt: now()
-    });
-
-    log(`🕒 離線收益結算：${usedHours.toFixed(1)} 小時 +木${gainWood} 石${gainStone} 水${gainWater} 食物${gainFood} 能源${gainEnergy}`);
-  }
-
-  // =========================
-  // AENO Mining (Bitcoin-like)
-  // =========================
-  function calcMiningReward(minedTotal) {
-    // 每挖 2,000,000 減半一次（簡化）
-    const halvings = Math.floor(minedTotal / 2000000);
-    let reward = 50 / Math.pow(2, halvings);
-    if (reward < 0.1) reward = 0.1;
-    return reward;
-  }
-
-  async function mineAeno() {
-    const playerRef = doc(db, "players", PLAYER_DOC);
-    const playerSnap = await getDoc(playerRef);
-    if (!playerSnap.exists()) {
-      log("❌ 未建立玩家資料。請先建立世界。");
+    if(!b.built){
+      showToast("⏳ 建築未完成");
       return;
     }
 
-    const player = playerSnap.data();
-    const minedTotal = player.minedTotal || 0;
-
-    if (player.resources.energy < 2) {
-      log("⚠ 能源不足，無法挖礦。");
+    if(b.level >= def.maxLevel){
+      showToast("⭐ 已達最高等級");
       return;
     }
 
-    const reward = calcMiningReward(minedTotal);
-    const currentAeno = player.resources.aeno || 0;
+    const cost = {
+      wood: Math.floor(def.cost.wood * (0.7 + b.level*0.35)),
+      stone: Math.floor(def.cost.stone * (0.7 + b.level*0.35)),
+      coin: Math.floor(def.cost.coin * (0.7 + b.level*0.35)),
+    };
 
-    if (currentAeno + minedTotal >= MAX_AENO_SUPPLY) {
-      log("⚠ AENO 幣已接近上限（2000萬），挖礦停止。");
+    if(!canAfford(cost)){
+      showToast("❌ 升級資源不足");
       return;
     }
 
-    await updateDoc(playerRef, {
-      "resources.energy": increment(-2),
-      "resources.aeno": increment(reward),
-      minedTotal: increment(reward)
-    });
-
-    log(`⛏ 成功挖掘 AENO 幣 +${reward.toFixed(2)}（越後期越難挖）`);
-    await refreshPlayer();
+    pay(cost);
+    b.level++;
+    showToast("⬆ 升級成功 Lv." + b.level);
   }
 
-  // =========================
-  // Fake Ads / Songs Rewards
-  // =========================
-  async function watchAd() {
-    const playerRef = doc(db, "players", PLAYER_DOC);
-    const playerSnap = await getDoc(playerRef);
-    if (!playerSnap.exists()) {
-      log("❌ 未建立玩家資料。請先建立世界。");
-      return;
-    }
-
-    await updateDoc(playerRef, {
-      "resources.food": increment(rand(5, 12)),
-      "resources.wood": increment(rand(3, 8)),
-      "resources.energy": increment(rand(1, 4)),
-      adViews: increment(1)
-    });
-
-    log("📺 你觀看廣告：獲得食物/木材/能源獎勵（未來可接真廣告SDK）。");
-    await refreshPlayer();
+  // Panel UI
+  function openPanel(html){
+    panel.innerHTML = html;
+    panel.style.display = "block";
   }
 
-  async function listenSong() {
-    const playerRef = doc(db, "players", PLAYER_DOC);
-    const playerSnap = await getDoc(playerRef);
-    if (!playerSnap.exists()) {
-      log("❌ 未建立玩家資料。請先建立世界。");
-      return;
-    }
-
-    await updateDoc(playerRef, {
-      "resources.water": increment(rand(2, 8)),
-      "resources.food": increment(rand(2, 6)),
-      songPlays: increment(1)
-    });
-
-    log("🎵 你聽歌：獲得水/食物獎勵（未來可接音樂平台）。");
-    await refreshPlayer();
+  function closePanel(){
+    panel.style.display = "none";
+    panel.innerHTML = "";
   }
 
-  // =========================
-  // Event System + Evolution
-  // =========================
-  const events = [
-    "☄ 隕石撞擊：環境劇變，生物突變加速",
-    "🌪 超級風暴：森林減少，水域擴張",
-    "🔥 火山爆發：山脈變多，能源暴增",
-    "🦠 瘟疫蔓延：動物基因重組",
-    "🤖 AI覺醒：機器人進化速度提升",
-    "🌌 量子裂縫：DNA 出現未知序列"
-  ];
-
-  async function triggerEvent() {
-    const worldRef = doc(db, "world", WORLD_DOC);
-    const worldSnap = await getDoc(worldRef);
-
-    if (!worldSnap.exists()) {
-      log("❌ 世界未建立。");
-      return;
-    }
-
-    const eventText = pick(events);
-    log(eventText);
-
-    await updateDoc(worldRef, {
-      globalMutationLevel: increment(1)
-    });
-
-    // mutate all entities
-    const entSnap = await getDocs(collection(db, "entities"));
-    for (const d of entSnap.docs) {
-      const e = d.data();
-      const newDNA = mutateDNA(e.dna);
-      await updateDoc(doc(db, "entities", d.id), {
-        dna: newDNA,
-        mutationCount: increment(1),
-        level: increment(1)
-      });
-    }
-
-    // mutate all tiles slightly
-    const tileSnap = await getDocs(collection(db, "tiles"));
-    for (const t of tileSnap.docs) {
-      const tile = t.data();
-      if (Math.random() < 0.10) {
-        const newTerrain = pick(terrains);
-        await updateDoc(doc(db, "tiles", t.id), {
-          terrain: newTerrain.type,
-          icon: newTerrain.icon,
-          baseResource: newTerrain.res,
-          mutationCount: increment(1),
-          dna: mutateDNA(tile.dna),
-          level: increment(1)
-        });
-      }
-    }
-
-    // reward from event
-    const playerRef = doc(db, "players", PLAYER_DOC);
-    await updateDoc(playerRef, {
-      "resources.energy": increment(rand(3, 10)),
-      "resources.food": increment(rand(5, 15))
-    });
-
-    log("🧬 全世界 DNA 變異完成 + 世界格子部分改變。");
-    await refreshAll();
-  }
-
-  // =========================
-  // Load / Render
-  // =========================
-  async function refreshWorld() {
-    const worldRef = doc(db, "world", WORLD_DOC);
-    const snap = await getDoc(worldRef);
-    if (!snap.exists()) return null;
-    return snap.data();
-  }
-
-  async function refreshPlayer() {
-    const playerRef = doc(db, "players", PLAYER_DOC);
-    const snap = await getDoc(playerRef);
-    if (!snap.exists()) return null;
-
-    const p = snap.data();
-
-    resWoodEl.innerText = formatNumber(p.resources.wood || 0);
-    resStoneEl.innerText = formatNumber(p.resources.stone || 0);
-    resWaterEl.innerText = formatNumber(p.resources.water || 0);
-    resFoodEl.innerText = formatNumber(p.resources.food || 0);
-    resEnergyEl.innerText = formatNumber(p.resources.energy || 0);
-    resAenoEl.innerText = (p.resources.aeno || 0).toFixed(2);
-
-    if (p.aiAssistants && p.aiAssistants.length > 0) {
-      aiInfo.innerHTML = `你的 AI 助手：<b>${p.aiAssistants.join(", ")}</b><br/>它們會派任務、引導你進化世界（未來擴展任務系統）。`;
-    }
-
-    return p;
-  }
-
-  async function refreshEntities() {
-    entityList.innerHTML = "";
-    const snap = await getDocs(collection(db, "entities"));
-
-    if (snap.empty) {
-      entityList.innerHTML = `<div class="small">尚未生成任何生命或機器人。</div>`;
-      return;
-    }
-
-    snap.forEach((d) => {
-      const e = d.data();
-      const power = dnaPower(e.dna);
-
-      const div = document.createElement("div");
-      div.className = "entity";
-      div.innerHTML = `
-        <div class="top">
-          <div><b>${e.icon} ${e.type}：${e.name}</b></div>
-          <div style="opacity:0.75;font-size:12px;">Lv.${e.level}</div>
+  function buildMenu(){
+    const list = Object.keys(BUILDINGS).map(key => {
+      const b = BUILDINGS[key];
+      const afford = canAfford(b.cost);
+      return `
+        <div class="card">
+          <div class="title">${b.icon} ${b.name}</div>
+          <div class="desc">${b.desc}</div>
+          <div class="row"><span>成本</span><span>木${b.cost.wood} 石${b.cost.stone} 金${b.cost.coin}</span></div>
+          <button class="buyBtn ${afford ? "" : "disabled"}" data-build="${key}">
+            ${afford ? "選擇放置" : "資源不足"}
+          </button>
         </div>
-        <div class="tags">
-          <span class="tag">DNA強度：${power}</span>
-          <span class="tag tag2">產出：${e.produces}</span>
-          <span class="tag tag4">變異：${e.mutationCount}</span>
-        </div>
-        <div class="dna">DNA：${e.dna}</div>
       `;
-      entityList.appendChild(div);
-    });
-  }
+    }).join("");
 
-  async function refreshMap() {
-    mapGrid.innerHTML = "";
-    const snap = await getDocs(collection(db, "tiles"));
+    openPanel(`
+      <div>
+        <div class="closeBtn" id="closePanel">關閉 ✖</div>
+        <h2>🏗 建設清單</h2>
+        <div style="font-size:12px;font-weight:900;opacity:0.85;">
+          選擇建築後，點地圖放置。<br/>
+          伐木場必須放森林，採石場必須放山。
+        </div>
+        <div class="gridList">${list}</div>
+      </div>
+    `);
 
-    if (snap.empty) {
-      mapGrid.innerHTML = `<div class="small">尚未生成地圖。</div>`;
-      return;
-    }
-
-    // store by coordinates
-    const tiles = [];
-    snap.forEach(d => tiles.push(d.data()));
-
-    tiles.sort((a,b)=> (a.y - b.y) || (a.x - b.x));
-
-    for (const t of tiles) {
-      const div = document.createElement("div");
-      div.className = "tile";
-      div.style.background = tileColor(t.terrain);
-      div.innerHTML = `${t.icon}<br>${t.terrain}`;
-
-      div.onclick = () => {
-        tileInfo.innerHTML = `
-          📍 位置：(${t.x},${t.y})<br>
-          🌍 地形：<b>${t.terrain}</b><br>
-          🎁 基礎資源：<b>${t.baseResource}</b><br>
-          🧬 DNA：<span style="font-size:11px;opacity:0.85">${t.dna}</span><br>
-          🔥 等級：${t.level} | 變異：${t.mutationCount}
-        `;
+    document.getElementById("closePanel").onclick = closePanel;
+    document.querySelectorAll("[data-build]").forEach(btn => {
+      btn.onclick = () => {
+        state.selectedBuildType = btn.getAttribute("data-build");
+        state.placingMode = true;
+        closePanel();
+        showToast("🟩 請點選地圖放置建築");
       };
-
-      mapGrid.appendChild(div);
-    }
-  }
-
-  async function refreshAll() {
-    const world = await refreshWorld();
-    const player = await refreshPlayer();
-    await refreshEntities();
-    await refreshMap();
-
-    if (world) updateTimeUI(world);
-    return { world, player };
-  }
-
-  // =========================
-  // Save
-  // =========================
-  async function saveNow() {
-    const worldRef = doc(db, "world", WORLD_DOC);
-    const snap = await getDoc(worldRef);
-    if (!snap.exists()) {
-      log("❌ 世界未建立，無法存檔。");
-      return;
-    }
-
-    await updateDoc(worldRef, {
-      lastSavedAt: now(),
-      speedYearsPerDay: speedYearsPerDay
     });
-
-    log("💾 已手動存檔（雲端 Firestore）。");
   }
 
-  // =========================
-  // Wipe World
-  // =========================
-  async function wipeWorld() {
-    if (!confirm("確定要清空世界？（會刪除 tiles/entities/world/player）")) return;
+  function techMenu(){
+    openPanel(`
+      <div>
+        <div class="closeBtn" id="closePanel">關閉 ✖</div>
+        <h2>🧠 科技樹（Demo）</h2>
 
-    const entSnap = await getDocs(collection(db, "entities"));
-    for (const d of entSnap.docs) await deleteDoc(doc(db, "entities", d.id));
+        <div class="card">
+          <div class="title">⚡ 能量效率 Lv.1</div>
+          <div class="desc">提升能量產出速度（Demo先顯示UI）</div>
+          <div class="row"><span>成本</span><span>金 60</span></div>
+          <button class="buyBtn" id="buyTech1">研究</button>
+        </div>
 
-    const tileSnap = await getDocs(collection(db, "tiles"));
-    for (const d of tileSnap.docs) await deleteDoc(doc(db, "tiles", d.id));
+        <div class="card">
+          <div class="title">🏭 工業化 Lv.1</div>
+          <div class="desc">工廠效率提升（Demo先顯示UI）</div>
+          <div class="row"><span>成本</span><span>木 80 石 50 金 80</span></div>
+          <button class="buyBtn" id="buyTech2">研究</button>
+        </div>
 
-    await deleteDoc(doc(db, "world", WORLD_DOC));
-    await deleteDoc(doc(db, "players", PLAYER_DOC));
+        <div class="card">
+          <div class="title">💎 晶體探測 Lv.1</div>
+          <div class="desc">提升 AENO 出現機率（Demo先顯示UI）</div>
+          <div class="row"><span>成本</span><span>金 120</span></div>
+          <button class="buyBtn" id="buyTech3">研究</button>
+        </div>
+      </div>
+    `);
 
-    log("☠ 世界已清空。你可以重新建立世界。");
-    await refreshAll();
+    document.getElementById("closePanel").onclick = closePanel;
+
+    document.getElementById("buyTech1").onclick = () => {
+      if(state.coin < 60) return showToast("❌ 金幣不足");
+      state.coin -= 60;
+      showToast("✅ 科技完成：能量效率");
+    };
+
+    document.getElementById("buyTech2").onclick = () => {
+      if(state.wood < 80 || state.stone < 50 || state.coin < 80) return showToast("❌ 資源不足");
+      state.wood -= 80; state.stone -= 50; state.coin -= 80;
+      showToast("✅ 科技完成：工業化");
+    };
+
+    document.getElementById("buyTech3").onclick = () => {
+      if(state.coin < 120) return showToast("❌ 金幣不足");
+      state.coin -= 120;
+      showToast("✅ 科技完成：晶體探測");
+    };
   }
 
-  // =========================
-  // Speed Control
-  // =========================
-  async function speedUp() {
-    speedYearsPerDay = Math.min(speedYearsPerDay + 50, 2000);
-    log(`🚀 流速提升：1日=${speedYearsPerDay}年`);
-    await saveNow();
-    await refreshAll();
+  function robotMenu(){
+    openPanel(`
+      <div>
+        <div class="closeBtn" id="closePanel">關閉 ✖</div>
+        <h2>🤖 機器人中心（Demo）</h2>
+
+        <div class="card">
+          <div class="title">🚀 派遣探索</div>
+          <div class="desc">
+            你可以派機器人去其他星球採資源。<br/>
+            （Demo 先顯示功能UI）
+          </div>
+          <div class="row"><span>成本</span><span>能 10 金 20</span></div>
+          <button class="buyBtn" id="dispatchBot">派遣</button>
+        </div>
+
+        <div class="card">
+          <div class="title">🛡 防守機器人</div>
+          <div class="desc">獸潮來襲時可減少城牆損失（Demo）</div>
+          <div class="row"><span>成本</span><span>木 30 石 30 金 40</span></div>
+          <button class="buyBtn" id="defBot">製造</button>
+        </div>
+      </div>
+    `);
+
+    document.getElementById("closePanel").onclick = closePanel;
+
+    document.getElementById("dispatchBot").onclick = () => {
+      if(state.energy < 10 || state.coin < 20) return showToast("❌ 資源不足");
+      state.energy -= 10;
+      state.coin -= 20;
+
+      // reward
+      const gainWood = 15 + Math.floor(Math.random()*20);
+      const gainStone = 10 + Math.floor(Math.random()*15);
+      const gainCoin = 5 + Math.floor(Math.random()*10);
+
+      state.wood += gainWood;
+      state.stone += gainStone;
+      state.coin += gainCoin;
+
+      // small chance aeno
+      if(Math.random() < 0.04){
+        state.aeno += 1;
+        showToast("💎 機器人帶回：AENO +1");
+      }else{
+        showToast("🤖 探索成功：木+"+gainWood+" 石+"+gainStone+" 金+"+gainCoin);
+      }
+    };
+
+    document.getElementById("defBot").onclick = () => {
+      if(state.wood < 30 || state.stone < 30 || state.coin < 40) return showToast("❌ 資源不足");
+      state.wood -= 30;
+      state.stone -= 30;
+      state.coin -= 40;
+      showToast("🛡 防守機器人已部署（Demo）");
+    };
   }
 
-  async function speedDown() {
-    speedYearsPerDay = Math.max(speedYearsPerDay - 50, 10);
-    log(`🐢 流速降低：1日=${speedYearsPerDay}年`);
-    await saveNow();
-    await refreshAll();
-  }
+  function huntMenu(){
+    openPanel(`
+      <div>
+        <div class="closeBtn" id="closePanel">關閉 ✖</div>
+        <h2>🐾 野外探索（Demo）</h2>
 
-  // =========================
-  // Init
-  // =========================
-  statusEl.innerText = "✅ Firebase Firestore 已連接成功（AENO Alpha 運行中）";
-  log("AENO 世界引擎 Alpha 0.1 啟動。");
+        <div class="card">
+          <div class="title">🐗 打野狩獵</div>
+          <div class="desc">
+            點擊後會出現野獸屍體。<br/>
+            你必須手動收取才有掉落。
+          </div>
+          <div class="row"><span>冷卻</span><span>10 秒</span></div>
+          <button class="buyBtn" id="huntBtn">出動</button>
+        </div>
+
+        <div class="card">
+          <div class="title">🌊 獸潮事件</div>
+          <div class="desc">
+            獸潮會攻擊城牆，但不會摧毀。<br/>
+            當城牆降到約 60% 會自動退潮。
+          </div>
+          <div class="row"><span>觸發</span><span>立即</span></div>
+          <button class="buyBtn" id="tideBtn">引發獸潮</button>
+        </div>
+      </div>
+    `);
+
+    document.getElementById("closePanel").onclick = closePanel;
+
+    document.getElementById("huntBtn").onclick = () => {
+      closePanel();
+      spawnLoot("野獸屍體", 2);
+      showToast("🐾 野獸已被擊倒，請點擊收取");
+    };
+
+    document.getElementById("tideBtn").onclick = () => {
+      closePanel();
+      startBeastTide();
+    };
+  }
 
   // Buttons
-  document.getElementById("createWorld").onclick = createWorld;
-  document.getElementById("triggerEvent").onclick = triggerEvent;
-  document.getElementById("refresh").onclick = refreshAll;
-  document.getElementById("mineAeno").onclick = mineAeno;
-  document.getElementById("watchAd").onclick = watchAd;
-  document.getElementById("listenSong").onclick = listenSong;
-  document.getElementById("wipe").onclick = wipeWorld;
-  document.getElementById("saveNow").onclick = saveNow;
-  document.getElementById("speedFast").onclick = speedUp;
-  document.getElementById("speedSlow").onclick = speedDown;
+  document.getElementById("btnBuild").onclick = buildMenu;
+  document.getElementById("btnTech").onclick = techMenu;
+  document.getElementById("btnRobot").onclick = robotMenu;
+  document.getElementById("btnHunt").onclick = huntMenu;
 
-  // Auto refresh
-  let worldCache = await refreshWorld();
-  if (worldCache) {
-    speedYearsPerDay = worldCache.speedYearsPerDay || speedYearsPerDay;
+  document.getElementById("assistant").onclick = () => {
+    const lines = [
+      "我係 Lupinus 🐾 你的AI助手！",
+      "建設越多，資源越快！",
+      "獸潮會掉落稀有資源！",
+      "礦坑有機會產出 AENO 💎",
+      "未來你可移民黑洞 🌌"
+    ];
+    showToast(lines[Math.floor(Math.random()*lines.length)]);
+  };
+
+  // Loot objects
+  const loots = [];
+
+  function spawnLoot(label, tier){
+    // spawn near center of camera
+    const wx = camX + (Math.random()*300-150);
+    const wy = camY + (Math.random()*300-150);
+
+    loots.push({
+      wx, wy,
+      label,
+      tier,
+      life: 25,
+      collected: false
+    });
   }
 
-  const playerRef = doc(db, "players", PLAYER_DOC);
-  const playerSnap = await getDoc(playerRef);
-  if (playerSnap.exists() && worldCache) {
-    await applyOfflineGain(playerSnap.data(), worldCache);
+  function collectLoot(loot){
+    if(loot.collected) return;
+    loot.collected = true;
+
+    const base = 10 + loot.tier*10;
+    const foodGain = base + Math.floor(Math.random()*20);
+    const coinGain = 5 + Math.floor(Math.random()*10);
+
+    state.food += foodGain;
+    state.coin += coinGain;
+
+    if(Math.random() < 0.05){
+      state.aeno += 1;
+      showToast("💎 收取成功：AENO +1");
+    }else{
+      showToast("🎁 收取成功：食物+"+foodGain+" 金幣+"+coinGain);
+    }
   }
 
-  await refreshAll();
+  // Beast tide
+  function startBeastTide(){
+    if(state.beastTideActive){
+      showToast("⚠️ 獸潮已經進行中");
+      return;
+    }
+    state.beastTideActive = true;
+    state.beastTideTimer = 0;
+    showToast("🌊 獸潮來襲！");
+  }
 
-  setInterval(async () => {
-    const world = await refreshWorld();
-    if (world) updateTimeUI(world);
-  }, 1000);
+  // Input handlers
+  canvas.addEventListener("pointerdown", (e) => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
 
+  canvas.addEventListener("pointermove", (e) => {
+    if(!isDragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    camX -= dx * devicePixelRatio / zoom;
+    camY -= dy * devicePixelRatio / zoom;
+  });
+
+  canvas.addEventListener("pointerup", () => {
+    isDragging = false;
+  });
+
+  canvas.addEventListener("pointercancel", () => {
+    isDragging = false;
+  });
+
+  // Mouse wheel zoom (I/O
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const delta = -e.deltaY * 0.001;
+    zoom = clamp(zoom + delta, 0.55, 2.4);
+  }, { passive:false });
+
+  // Touch pinch zoom
+  canvas.addEventListener("touchmove", (e) => {
+    if(e.touches.length === 2){
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if(pinchDist === null) pinchDist = dist;
+      const diff = dist - pinchDist;
+      zoom = clamp(zoom + diff*0.003, 0.55, 2.4);
+      pinchDist = dist;
+    }
+  }, { passive:true });
+
+  canvas.addEventListener("touchend", () => {
+    pinchDist = null;
+  });
+
+  // Tap to place building / upgrade / collect loot
+  canvas.addEventListener("click", (e) => {
+    const w = screenToWorld(e.clientX, e.clientY);
+    const t = worldToTile(w.x, w.y);
+
+    // loot collection
+    for(const loot of loots){
+      if(loot.collected) continue;
+      const dx = loot.wx - w.x;
+      const dy = loot.wy - w.y;
+      if(Math.sqrt(dx*dx + dy*dy) < 40){
+        collectLoot(loot);
+        return;
+      }
+    }
+
+    if(!isInside(t.tx, t.ty)) return;
+
+    const tile = world[t.ty][t.tx];
+
+    // placing
+    if(state.placingMode && state.selectedBuildType){
+      placeBuilding(t.tx, t.ty, state.selectedBuildType);
+      state.placingMode = false;
+      state.selectedBuildType = null;
+      return;
+    }
+
+    // upgrade
+    if(tile.building){
+      upgradeBuilding(t.tx, t.ty);
+      return;
+    }
+
+    // show tile info
+    showToast("📍 地形：" + tile.type);
+  });
+
+  // Draw helpers
+  function drawRoundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawTile(tx, ty, tile){
+    const wx = tx*TILE;
+    const wy = ty*TILE;
+
+    // base color
+    let c = "#8dff8d";
+    if(tile.type === "water") c = "#46b7ff";
+    if(tile.type === "forest") c = "#4ade80";
+    if(tile.type === "mountain") c = "#cbd5e1";
+
+    // soft shadow grid
+    ctx.fillStyle = c;
+    ctx.fillRect(wx, wy, TILE, TILE);
+
+    ctx.strokeStyle = "rgba(0,0,0,0.08)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(wx, wy, TILE, TILE);
+
+    // small details
+    if(tile.type === "forest"){
+      ctx.fillStyle = "rgba(0,0,0,0.15)";
+      ctx.beginPath();
+      ctx.arc(wx+TILE*0.35, wy+TILE*0.35, 4, 0, Math.PI*2);
+      ctx.arc(wx+TILE*0.7, wy+TILE*0.6, 3, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    if(tile.type === "mountain"){
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      ctx.beginPath();
+      ctx.moveTo(wx+10, wy+TILE-10);
+      ctx.lineTo(wx+TILE*0.5, wy+10);
+      ctx.lineTo(wx+TILE-10, wy+TILE-10);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if(tile.type === "water"){
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.beginPath();
+      ctx.arc(wx+TILE*0.4, wy+TILE*0.55, 6, 0, Math.PI*2);
+      ctx.arc(wx+TILE*0.7, wy+TILE*0.4, 4, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // placing highlight
+    if(state.placingMode && state.selectedBuildType){
+      const ok = canPlaceBuilding(tx, ty, state.selectedBuildType);
+      ctx.fillStyle = ok ? "rgba(34,197,94,0.18)" : "rgba(255,0,0,0.15)";
+      ctx.fillRect(wx, wy, TILE, TILE);
+    }
+
+    // building
+    if(tile.building){
+      drawBuilding(wx, wy, tile.building);
+    }
+  }
+
+  function drawBuilding(wx, wy, b){
+    const def = BUILDINGS[b.type];
+
+    // base
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    drawRoundRect(wx+5, wy+6, TILE-10, TILE-10, 10);
+    ctx.fill();
+
+    // body
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    drawRoundRect(wx+6, wy+4, TILE-12, TILE-12, 12);
+    ctx.fill();
+
+    // icon
+    ctx.font = "20px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#111";
+    ctx.fillText(def.icon, wx+TILE/2, wy+TILE/2 - 3);
+
+    // level badge
+    ctx.font = "10px system-ui";
+    ctx.fillStyle = "rgba(0,0,0,0.65)";
+    ctx.fillText("Lv."+b.level, wx+TILE/2, wy+TILE-10);
+
+    // build progress bar
+    if(!b.built){
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
+      ctx.fillRect(wx+8, wy+TILE-8, TILE-16, 5);
+
+      ctx.fillStyle = "rgba(34,197,94,0.9)";
+      ctx.fillRect(wx+8, wy+TILE-8, (TILE-16)*(b.buildProgress/100), 5);
+    }
+  }
+
+  function drawLoot(loot){
+    if(loot.collected) return;
+
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath();
+    ctx.arc(loot.wx, loot.wy, 16, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.beginPath();
+    ctx.arc(loot.wx, loot.wy-2, 16, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#111";
+    ctx.font = "12px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🦴", loot.wx, loot.wy-2);
+
+    ctx.font = "10px system-ui";
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillText("點我收取", loot.wx, loot.wy+18);
+  }
+
+  // Update loop
+  let lastTime = performance.now();
+
+  function update(dt){
+    state.tick += dt;
+
+    // building construction & production
+    for(let y=0;y<GRID_SIZE;y++){
+      for(let x=0;x<GRID_SIZE;x++){
+        const tile = world[y][x];
+        if(!tile.building) continue;
+
+        const b = tile.building;
+        const def = BUILDINGS[b.type];
+
+        // build progress
+        if(!b.built){
+          b.buildProgress += dt * 8; // build speed
+          if(b.buildProgress >= 100){
+            b.buildProgress = 100;
+            b.built = true;
+            showToast("✅ 建築完成：" + def.name);
+          }
+          continue;
+        }
+
+        // production per second
+        const mult = 1 + (b.level-1)*0.35;
+
+        if(def.baseProduction.wood) state.wood += def.baseProduction.wood * mult * dt;
+        if(def.baseProduction.stone) state.stone += def.baseProduction.stone * mult * dt;
+        if(def.baseProduction.food) state.food += def.baseProduction.food * mult * dt;
+        if(def.baseProduction.energy) state.energy += def.baseProduction.energy * mult * dt;
+        if(def.baseProduction.coin) state.coin += def.baseProduction.coin * mult * dt;
+
+        // AENO mining chance (demo)
+        if(b.type === "mine"){
+          // low probability, but visible
+          const chance = 0.0007 * mult * dt;
+          if(Math.random() < chance){
+            state.aeno += 1;
+            showToast("💎 你挖到 AENO +1");
+          }
+        }
+
+        // house increases population slowly
+        if(b.type === "house"){
+          // population grows over time
+          const popGain = 0.03 * mult * dt;
+          state.population += popGain;
+        }
+      }
+    }
+
+    // clamp resources
+    state.wood = clamp(state.wood, 0, 999999999);
+    state.stone = clamp(state.stone, 0, 999999999);
+    state.food = clamp(state.food, 0, 999999999);
+    state.energy = clamp(state.energy, 0, 999999999);
+    state.coin = clamp(state.coin, 0, 999999999);
+    state.aeno = clamp(state.aeno, 0, 20000000);
+
+    // Beast tide logic
+    if(state.beastTideActive){
+      state.beastTideTimer += dt;
+
+      // reduce wall until around 60%
+      if(state.wall > 60){
+        state.wall -= dt * 3.5; // attack speed
+      }else{
+        // retreat
+        if(state.beastTideTimer > 10){
+          state.beastTideActive = false;
+          showToast("🌊 獸潮退去！");
+          spawnLoot("獸潮屍體", 3);
+        }
+      }
+    }else{
+      // auto repair
+      if(state.wall < 100){
+        state.wall += dt * 2.2;
+      }
+    }
+
+    state.wall = clamp(state.wall, 0, 100);
+
+    // occasionally auto random tide
+    if(!state.beastTideActive && Math.random() < 0.00003 * dt){
+      startBeastTide();
+    }
+
+    // loot decay
+    for(const loot of loots){
+      if(loot.collected) continue;
+      loot.life -= dt;
+      if(loot.life <= 0){
+        loot.collected = true;
+      }
+    }
+  }
+
+  function render(){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // camera transform
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-camX, -camY);
+
+    // background soft cloud
+    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    ctx.beginPath();
+    ctx.arc(camX-400, camY-250, 180, 0, Math.PI*2);
+    ctx.arc(camX+500, camY-300, 220, 0, Math.PI*2);
+    ctx.fill();
+
+    // draw map
+    for(let y=0;y<GRID_SIZE;y++){
+      for(let x=0;x<GRID_SIZE;x++){
+        drawTile(x,y,world[y][x]);
+      }
+    }
+
+    // draw loot
+    for(const loot of loots){
+      drawLoot(loot);
+    }
+
+    // center marker (player base)
+    ctx.fillStyle = "rgba(0,0,0,0.12)";
+    ctx.beginPath();
+    ctx.arc(GRID_SIZE*TILE/2, GRID_SIZE*TILE/2, 12, 0, Math.PI*2);
+    ctx.fill();
+
+    // Beast tide effect overlay
+    if(state.beastTideActive){
+      ctx.fillStyle = "rgba(255,0,0,0.08)";
+      ctx.fillRect(0,0,GRID_SIZE*TILE,GRID_SIZE*TILE);
+
+      // beast tide waves
+      ctx.fillStyle = "rgba(255,80,80,0.25)";
+      ctx.font = "28px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🐺🐺🐺", camX, camY-120);
+    }
+
+    // placing mode indicator
+    if(state.placingMode && state.selectedBuildType){
+      const def = BUILDINGS[state.selectedBuildType];
+      ctx.fillStyle = "rgba(0,0,0,0.65)";
+      ctx.font = "18px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("放置：" + def.icon + " " + def.name, camX, camY+160);
+    }
+  }
+
+  function syncUI(){
+    uiWood.textContent = format(state.wood);
+    uiStone.textContent = format(state.stone);
+    uiFood.textContent = format(state.food);
+    uiEnergy.textContent = format(state.energy);
+    uiCoin.textContent = format(state.coin);
+    uiAeno.textContent = format(state.aeno);
+
+    uiWallText.textContent = Math.floor(state.wall) + "%";
+    uiWallBar.style.width = state.wall + "%";
+
+    if(state.wall < 70){
+      document.getElementById("wallBar").classList.add("danger");
+    }else{
+      document.getElementById("wallBar").classList.remove("danger");
+    }
+
+    uiPopText.textContent = Math.floor(state.population);
+  }
+
+  function loop(now){
+    const dt = Math.min(0.05, (now - lastTime)/1000);
+    lastTime = now;
+
+    update(dt);
+    render();
+    syncUI();
+
+    requestAnimationFrame(loop);
+  }
+
+  // initial base buildings to feel alive
+  placeBuilding(15, 15, "house");
+  placeBuilding(14, 15, "farm");
+
+  // Force finish those starter buildings quickly
+  world[15][15].building.built = true;
+  world[15][15].building.buildProgress = 100;
+
+  world[15][14].building.built = true;
+  world[15][14].building.buildProgress = 100;
+
+  showToast("🌍 AENO 主城已啟動！");
+
+  requestAnimationFrame(loop);
+
+})();
 </script>
-
 </body>
 </html>
