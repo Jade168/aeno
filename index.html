@@ -2,1427 +2,864 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>AENO - Cartoon Empire Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>AENO - Cartoon Civilization V1</title>
   <style>
-    :root{
-      --ui-bg: rgba(255,255,255,0.92);
-      --ui-border: rgba(0,0,0,0.15);
-      --ui-shadow: 0 8px 30px rgba(0,0,0,0.18);
-      --text: #222;
-      --soft: rgba(0,0,0,0.07);
-      --btn: #ffffff;
-      --btn2: #f4f6ff;
-      --accent: #4c6fff;
-      --danger: #ff4c4c;
-      --good: #33c97a;
-      --gold: #ffcc4d;
-      --aeno: #8b5cf6;
+    * { box-sizing: border-box; margin:0; padding:0; font-family: "Arial", "Microsoft JhengHei", sans-serif; }
+    body {
+      background: linear-gradient(#7dd3fc, #d9f99d);
+      overflow: hidden;
     }
 
-    *{box-sizing:border-box;}
-    html, body{
-      margin:0;
-      padding:0;
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      background: linear-gradient(180deg, #c9f0ff 0%, #d6ffdd 40%, #f2ffd0 100%);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-      color:var(--text);
+    /* ===== Phone Screen Container ===== */
+    #phone {
+      width: 100vw;
+      height: 100vh;
+      max-width: 520px;
+      margin: auto;
+      background: #9ae6b4;
+      position: relative;
+      overflow: hidden;
+      border-left: 2px solid rgba(0,0,0,0.08);
+      border-right: 2px solid rgba(0,0,0,0.08);
     }
 
-    /* Full screen game container */
-    #app{
-      position:relative;
-      width:100%;
-      height:100%;
-      overflow:hidden;
+    /* ===== Top HUD ===== */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      border-bottom: 2px solid rgba(0,0,0,0.08);
     }
 
-    canvas{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      touch-action:none;
+    #hud h1 {
+      font-size: 16px;
+      font-weight: 900;
+      color: #14532d;
+      margin-bottom: 6px;
     }
 
-    /* TOP HUD */
-    #hud{
-      position:absolute;
-      top:10px;
-      left:10px;
-      right:10px;
-      display:flex;
-      gap:10px;
-      z-index:20;
-      align-items:flex-start;
-      justify-content:space-between;
-      pointer-events:none;
+    #resources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 12px;
     }
 
-    .hud-card{
-      pointer-events:auto;
-      background:var(--ui-bg);
-      border:2px solid var(--ui-border);
-      border-radius:18px;
-      box-shadow:var(--ui-shadow);
-      padding:10px 12px;
-      backdrop-filter: blur(10px);
+    .res {
+      background: rgba(0,0,0,0.06);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      color: #0f172a;
     }
 
-    #resPanel{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      max-width:75%;
-      align-items:center;
+    .res span {
+      color: #0f766e;
+      font-weight: 900;
     }
 
-    .res{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      background: rgba(0,0,0,0.05);
-      border-radius:14px;
-      padding:6px 10px;
-      font-weight:700;
-      font-size:13px;
+    /* ===== Game World ===== */
+    #world {
+      position: absolute;
+      top: 88px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 170px);
+      background: linear-gradient(#86efac, #bbf7d0);
+      overflow: hidden;
     }
 
-    .dot{
-      width:12px;
-      height:12px;
-      border-radius:50%;
-      background:#999;
-      border:2px solid rgba(0,0,0,0.15);
+    /* ===== Ground decorations ===== */
+    .tree {
+      position: absolute;
+      width: 30px;
+      height: 40px;
+      background: radial-gradient(circle at 50% 20%, #166534, #14532d);
+      border-radius: 50% 50% 40% 40%;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    }
+    .tree::after {
+      content:"";
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 15px;
+      background: #7c2d12;
+      border-radius: 4px;
     }
 
-    .dot.wood{background:#a16207;}
-    .dot.stone{background:#6b7280;}
-    .dot.food{background:#22c55e;}
-    .dot.energy{background:#0ea5e9;}
-    .dot.coin{background:var(--gold);}
-    .dot.aeno{background:var(--aeno);}
-
-    #statusPanel{
-      min-width:160px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      font-weight:800;
-      font-size:13px;
+    .rock {
+      position: absolute;
+      width: 28px;
+      height: 18px;
+      background: #94a3b8;
+      border-radius: 40% 40% 50% 50%;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12);
     }
 
-    .bar{
-      width:100%;
-      height:10px;
-      background:rgba(0,0,0,0.1);
-      border-radius:999px;
-      overflow:hidden;
-      border:1px solid rgba(0,0,0,0.15);
-    }
-    .bar > div{
-      height:100%;
-      width:100%;
-      background:linear-gradient(90deg, #34d399, #22c55e);
-      border-radius:999px;
-      transition: width 0.25s ease;
-    }
-
-    .bar.danger > div{
-      background:linear-gradient(90deg, #ff6b6b, #ff2d2d);
+    /* ===== Building Slots ===== */
+    .slot {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.4);
+      border: 2px dashed rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: rgba(0,0,0,0.6);
     }
 
-    /* Bottom Menu */
-    #bottomMenu{
-      position:absolute;
-      left:12px;
-      right:12px;
-      bottom:12px;
-      z-index:30;
-      display:flex;
-      gap:10px;
-      justify-content:space-between;
-      pointer-events:none;
+    /* ===== Buildings ===== */
+    .building {
+      width: 66px;
+      height: 66px;
+      border-radius: 16px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      font-size: 10px;
+      font-weight: 900;
+      color: #0f172a;
+      box-shadow: 0 5px 0 rgba(0,0,0,0.12);
+      border: 2px solid rgba(0,0,0,0.15);
     }
 
-    .menuBtn{
-      pointer-events:auto;
-      flex:1;
-      background:var(--ui-bg);
-      border:2px solid var(--ui-border);
-      border-radius:18px;
-      box-shadow:var(--ui-shadow);
-      padding:12px 10px;
-      text-align:center;
-      font-weight:900;
-      font-size:14px;
-      user-select:none;
-      cursor:pointer;
-      transition: transform .08s ease;
+    .building .lv {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #facc15;
+      padding: 4px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 2px solid rgba(0,0,0,0.15);
     }
 
-    .menuBtn:active{
-      transform: scale(0.97);
+    .house { background: linear-gradient(#fde68a, #fbbf24); }
+    .farm { background: linear-gradient(#bef264, #65a30d); }
+    .mine { background: linear-gradient(#cbd5e1, #64748b); }
+    .factory { background: linear-gradient(#93c5fd, #2563eb); }
+    .lab { background: linear-gradient(#fbcfe8, #db2777); }
+    .wall { background: linear-gradient(#fecaca, #dc2626); }
+
+    /* ===== Characters ===== */
+    .char {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: white;
+      user-select: none;
     }
 
-    /* Side Panel */
-    #panel{
-      position:absolute;
-      top:72px;
-      left:12px;
-      right:12px;
-      bottom:90px;
-      z-index:25;
-      background:var(--ui-bg);
-      border:2px solid var(--ui-border);
-      border-radius:22px;
-      box-shadow:var(--ui-shadow);
-      padding:12px;
-      overflow:auto;
-      display:none;
-      backdrop-filter: blur(10px);
+    #player {
+      background: radial-gradient(circle at 30% 30%, #fb7185, #be123c);
+      z-index: 10;
     }
 
-    #panel h2{
-      margin:0 0 8px 0;
-      font-size:18px;
-      letter-spacing:0.3px;
+    #assistant {
+      background: radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8);
+      z-index: 9;
     }
 
-    .closeBtn{
-      float:right;
-      background:rgba(0,0,0,0.07);
-      border:2px solid rgba(0,0,0,0.1);
-      border-radius:14px;
-      padding:6px 10px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
+    .animal {
+      background: radial-gradient(circle at 30% 30%, #fbbf24, #b45309);
+      z-index: 5;
+      width: 22px;
+      height: 22px;
+      font-size: 12px;
     }
 
-    .gridList{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-      margin-top:10px;
+    /* ===== Bottom Menu ===== */
+    #menu {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 82px;
+      background: rgba(255,255,255,0.9);
+      border-top: 2px solid rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 60;
+      backdrop-filter: blur(8px);
     }
 
-    .card{
-      background:rgba(255,255,255,0.8);
-      border:2px solid rgba(0,0,0,0.12);
-      border-radius:18px;
-      padding:10px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    .btn {
+      background: #0f766e;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-weight: 900;
+      font-size: 12px;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+      cursor: pointer;
+    }
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.15);
     }
 
-    .card .title{
-      font-weight:1000;
-      font-size:15px;
-      margin-bottom:4px;
+    .btn2 {
+      background: #7c3aed;
     }
 
-    .card .desc{
-      font-size:12px;
-      opacity:0.8;
-      line-height:1.25;
-      margin-bottom:8px;
+    .btnDanger {
+      background: #dc2626;
     }
 
-    .row{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-      font-size:12px;
-      font-weight:800;
-      margin:4px 0;
+    /* ===== Popups ===== */
+    #popup {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      width: 92%;
+      max-width: 440px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 22px;
+      border: 2px solid rgba(0,0,0,0.12);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      padding: 14px;
+      z-index: 100;
+      display: none;
     }
 
-    .buyBtn{
-      width:100%;
-      padding:10px;
-      border-radius:16px;
-      border:2px solid rgba(0,0,0,0.12);
-      background: linear-gradient(180deg, #ffffff, #f2f6ff);
-      font-weight:1000;
-      cursor:pointer;
-      user-select:none;
+    #popup h2 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #0f172a;
     }
 
-    .buyBtn:active{
-      transform: scale(0.985);
+    #popup p {
+      font-size: 13px;
+      color: #334155;
+      margin-bottom: 10px;
+      line-height: 1.4;
     }
 
-    .buyBtn.disabled{
-      opacity:0.45;
-      pointer-events:none;
+    #popup .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    /* Tooltip / Floating */
-    .toast{
-      position:absolute;
-      z-index:50;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:120px;
-      background:rgba(0,0,0,0.7);
-      color:white;
-      padding:10px 14px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:13px;
-      opacity:0;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      pointer-events:none;
+    #popup .closeBtn {
+      margin-top: 10px;
+      width: 100%;
+      background: #334155;
     }
 
-    .toast.show{
-      opacity:1;
-      transform:translateX(-50%) translateY(-8px);
+    /* ===== AI Speech Bubble ===== */
+    #bubble {
+      position: absolute;
+      bottom: 95px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92%;
+      max-width: 460px;
+      background: rgba(255,255,255,0.92);
+      padding: 10px 12px;
+      border-radius: 20px;
+      border: 2px solid rgba(0,0,0,0.12);
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+      z-index: 55;
+      display: none;
     }
 
-    /* Cartoon assistant bubble */
-    #assistant{
-      position:absolute;
-      right:12px;
-      bottom:110px;
-      width:90px;
-      height:90px;
-      z-index:40;
-      pointer-events:auto;
-      user-select:none;
-      cursor:pointer;
+    #bubble span {
+      color: #2563eb;
     }
 
-    #assistant .body{
-      width:100%;
-      height:100%;
-      border-radius:26px;
-      background:linear-gradient(180deg, #ffffff, #ffe8f5);
-      border:3px solid rgba(0,0,0,0.15);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      position:relative;
-      overflow:hidden;
-      animation: floaty 2.2s ease-in-out infinite;
+    /* ===== Build Button list ===== */
+    .buildOption {
+      flex: 1;
+      min-width: 120px;
+      background: #f1f5f9;
+      padding: 10px;
+      border-radius: 18px;
+      border: 2px solid rgba(0,0,0,0.08);
+      font-weight: 900;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
     }
 
-    @keyframes floaty{
-      0%,100%{transform:translateY(0px);}
-      50%{transform:translateY(-6px);}
+    .buildOption small {
+      display:block;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.8;
+      margin-top: 4px;
     }
 
-    .face{
-      width:54px;
-      height:54px;
-      border-radius:50%;
-      background:linear-gradient(180deg, #fffbeb, #ffd1f1);
-      border:3px solid rgba(0,0,0,0.12);
-      position:relative;
-    }
-
-    .eye{
-      width:8px;
-      height:10px;
-      background:#222;
-      border-radius:999px;
-      position:absolute;
-      top:18px;
-      animation: blink 4s infinite;
-    }
-    .eye.left{left:14px;}
-    .eye.right{right:14px;}
-
-    @keyframes blink{
-      0%,95%,100%{transform:scaleY(1);}
-      96%,98%{transform:scaleY(0.1);}
-    }
-
-    .mouth{
-      width:16px;
-      height:10px;
-      border-bottom:4px solid rgba(0,0,0,0.7);
-      border-radius:0 0 999px 999px;
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      top:30px;
-    }
-
-    #assistantName{
-      position:absolute;
-      top:-20px;
-      right:0;
-      background:rgba(255,255,255,0.9);
-      border:2px solid rgba(0,0,0,0.12);
-      padding:4px 8px;
-      border-radius:999px;
-      font-weight:1000;
-      font-size:12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-    }
-
-    /* small hint */
-    #hint{
-      position:absolute;
-      left:12px;
-      bottom:110px;
-      z-index:40;
-      background:rgba(255,255,255,0.9);
-      border:2px solid rgba(0,0,0,0.12);
-      border-radius:16px;
-      padding:10px 12px;
-      font-size:12px;
-      font-weight:900;
-      box-shadow:var(--ui-shadow);
-      max-width:55%;
-      line-height:1.25;
-      opacity:0.95;
-    }
-
-    /* Responsive for small phones */
-    @media (max-width:380px){
-      .menuBtn{font-size:12px;padding:10px 8px;}
-      #assistant{width:80px;height:80px;}
-      #panel{top:66px;}
-    }
   </style>
 </head>
+
 <body>
-<div id="app">
-  <canvas id="game"></canvas>
+<div id="phone">
 
   <div id="hud">
-    <div class="hud-card" id="resPanel">
-      <div class="res"><span class="dot wood"></span>木 <span id="wood">0</span></div>
-      <div class="res"><span class="dot stone"></span>石 <span id="stone">0</span></div>
-      <div class="res"><span class="dot food"></span>食 <span id="food">0</span></div>
-      <div class="res"><span class="dot energy"></span>能 <span id="energy">0</span></div>
-      <div class="res"><span class="dot coin"></span>金 <span id="coin">0</span></div>
-      <div class="res"><span class="dot aeno"></span>AENO <span id="aeno">0</span></div>
-    </div>
-
-    <div class="hud-card" id="statusPanel">
-      <div style="display:flex;justify-content:space-between;">
-        <span>城牆</span>
-        <span id="wallText">100%</span>
-      </div>
-      <div class="bar" id="wallBar"><div></div></div>
-
-      <div style="display:flex;justify-content:space-between;margin-top:6px;">
-        <span>人口</span>
-        <span id="popText">0</span>
-      </div>
+    <h1>🌍 AENO 世界 - 育成文明（V1）</h1>
+    <div id="resources">
+      <div class="res">木材: <span id="wood">0</span></div>
+      <div class="res">石材: <span id="stone">0</span></div>
+      <div class="res">食物: <span id="food">0</span></div>
+      <div class="res">金幣: <span id="gold">0</span></div>
+      <div class="res">AENO: <span id="aeno">0</span></div>
+      <div class="res">人口: <span id="pop">0</span></div>
     </div>
   </div>
 
-  <div id="panel"></div>
+  <div id="world"></div>
 
-  <div id="bottomMenu">
-    <div class="menuBtn" id="btnBuild">🏗 建設</div>
-    <div class="menuBtn" id="btnTech">🧠 科技</div>
-    <div class="menuBtn" id="btnRobot">🤖 機器人</div>
-    <div class="menuBtn" id="btnHunt">🐾 野外</div>
+  <div id="bubble"></div>
+
+  <div id="menu">
+    <button class="btn" onclick="openBuildMenu()">🏗 建築</button>
+    <button class="btn btn2" onclick="collectAll()">💰 收取</button>
+    <button class="btn" onclick="openUpgradeMenu()">⬆ 升級</button>
+    <button class="btn btnDanger" onclick="toggleAI()">🤖 AI</button>
   </div>
 
-  <div id="assistant">
-    <div id="assistantName">Lupinus</div>
-    <div class="body">
-      <div class="face">
-        <div class="eye left"></div>
-        <div class="eye right"></div>
-        <div class="mouth"></div>
-      </div>
-    </div>
-  </div>
+  <div id="popup"></div>
 
-  <div id="hint">
-    👉 拖動地圖移動<br/>
-    👉 雙指縮放 / 滾輪縮放<br/>
-    👉 點「建設」放置建築
-  </div>
-
-  <div class="toast" id="toast">OK</div>
 </div>
 
 <script>
-/* ===========================================================
-   AENO Cartoon Empire Builder Demo (Offline)
-   - 30x30 tile world
-   - Drag / zoom
-   - Place buildings
-   - Upgrade buildings
-   - Resource generation
-   - Beast tide event (wall drops to 60% then retreats)
-   =========================================================== */
+/* =========================================================
+   AENO V1 - Cartoon Civilization Core
+   - Offline Save
+   - Animated world
+   - AI assistant semi-auto build (50% resource cap)
+========================================================= */
 
-(() => {
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
+const SAVE_KEY = "AENO_V1_SAVE";
 
-  function resize(){
-    canvas.width = window.innerWidth * devicePixelRatio;
-    canvas.height = window.innerHeight * devicePixelRatio;
-  }
-  window.addEventListener("resize", resize);
-  resize();
+/* ===== Game State ===== */
+let state = {
+  wood: 120,
+  stone: 80,
+  food: 90,
+  gold: 50,
+  aeno: 0,
+  pop: 5,
 
-  // UI elements
-  const uiWood = document.getElementById("wood");
-  const uiStone = document.getElementById("stone");
-  const uiFood = document.getElementById("food");
-  const uiEnergy = document.getElementById("energy");
-  const uiCoin = document.getElementById("coin");
-  const uiAeno = document.getElementById("aeno");
-  const uiWallText = document.getElementById("wallText");
-  const uiWallBar = document.querySelector("#wallBar > div");
-  const uiPopText = document.getElementById("popText");
-  const toast = document.getElementById("toast");
-  const panel = document.getElementById("panel");
+  aiEnabled: true,
+  lastAIMove: 0,
+  lastAIAction: 0,
 
-  const GRID_SIZE = 30;
-  const TILE = 42; // base tile size (before zoom)
+  buildings: {
+    house: { lv: 0 },
+    farm: { lv: 0 },
+    mine: { lv: 0 },
+    factory: { lv: 0 },
+    lab: { lv: 0 },
+    wall: { lv: 0 },
+  },
 
-  // Camera
-  let camX = GRID_SIZE * TILE * 0.5;
-  let camY = GRID_SIZE * TILE * 0.5;
-  let zoom = 1.0;
+  slots: [
+    { id:"S1", x: 30, y: 40, built: null },
+    { id:"S2", x: 140, y: 40, built: null },
+    { id:"S3", x: 250, y: 40, built: null },
 
-  // Dragging
-  let isDragging = false;
-  let lastX = 0;
-  let lastY = 0;
+    { id:"S4", x: 30, y: 140, built: null },
+    { id:"S5", x: 140, y: 140, built: null },
+    { id:"S6", x: 250, y: 140, built: null },
 
-  // Pinch zoom
-  let pinchDist = null;
+    { id:"S7", x: 30, y: 240, built: null },
+    { id:"S8", x: 140, y: 240, built: null },
+    { id:"S9", x: 250, y: 240, built: null },
+  ]
+};
 
-  // Resources
-  const state = {
-    wood: 80,
-    stone: 60,
-    food: 40,
-    energy: 20,
-    coin: 50,
-    aeno: 0,
-
-    wall: 100, // %
-    population: 0,
-
-    beastTideActive: false,
-    beastTideTimer: 0,
-
-    selectedBuildType: null,
-    placingMode: false,
-    selectedTile: null,
-
-    tick: 0,
-  };
-
-  // Tile map
-  // type: grass, water, mountain, forest
-  const world = [];
-  for(let y=0;y<GRID_SIZE;y++){
-    const row = [];
-    for(let x=0;x<GRID_SIZE;x++){
-      const r = Math.random();
-      let type = "grass";
-      if(r < 0.07) type = "water";
-      else if(r < 0.12) type = "mountain";
-      else if(r < 0.25) type = "forest";
-      row.push({
-        type,
-        building: null
-      });
-    }
-    world.push(row);
-  }
-
-  // Make a central safe zone
-  for(let y=13;y<=16;y++){
-    for(let x=13;x<=16;x++){
-      world[y][x].type = "grass";
-    }
-  }
-
-  // Building definitions
-  const BUILDINGS = {
-    lumber: {
-      name: "伐木場",
-      icon: "🌲",
-      desc: "每秒產木材。適合森林旁。",
-      cost: { wood: 15, stone: 5, coin: 5 },
-      baseProduction: { wood: 2 },
-      maxLevel: 10
-    },
-    quarry: {
-      name: "採石場",
-      icon: "🪨",
-      desc: "每秒產石頭。適合山附近。",
-      cost: { wood: 10, stone: 10, coin: 5 },
-      baseProduction: { stone: 2 },
-      maxLevel: 10
-    },
-    farm: {
-      name: "農田",
-      icon: "🌾",
-      desc: "每秒產食物。人口需要食物。",
-      cost: { wood: 12, stone: 4, coin: 4 },
-      baseProduction: { food: 2 },
-      maxLevel: 10
-    },
-    house: {
-      name: "民房",
-      icon: "🏠",
-      desc: "增加人口上限，人口會自動慢慢增加。",
-      cost: { wood: 20, stone: 8, coin: 10 },
-      baseProduction: { },
-      maxLevel: 10
-    },
-    factory: {
-      name: "工廠",
-      icon: "🏭",
-      desc: "消耗能量，生產機器人（未來可派去星球）。",
-      cost: { wood: 25, stone: 20, coin: 20 },
-      baseProduction: { coin: 1 },
-      maxLevel: 10
-    },
-    lab: {
-      name: "科研中心",
-      icon: "🧠",
-      desc: "科技點數（暫時用能量+金幣模擬）。",
-      cost: { wood: 30, stone: 25, coin: 25 },
-      baseProduction: { energy: 1 },
-      maxLevel: 10
-    },
-    mine: {
-      name: "晶體礦坑",
-      icon: "💎",
-      desc: "極低機率產出 AENO（Demo版）。",
-      cost: { wood: 35, stone: 30, coin: 30 },
-      baseProduction: { stone: 1 },
-      maxLevel: 10
-    }
-  };
-
-  function showToast(msg){
-    toast.textContent = msg;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 1200);
-  }
-
-  function clamp(v, a, b){
-    return Math.max(a, Math.min(b, v));
-  }
-
-  function format(n){
-    if(n < 1000) return Math.floor(n);
-    if(n < 1000000) return (n/1000).toFixed(1)+"K";
-    return (n/1000000).toFixed(2)+"M";
-  }
-
-  function canAfford(cost){
-    for(const k in cost){
-      if(state[k] < cost[k]) return false;
-    }
-    return true;
-  }
-
-  function pay(cost){
-    for(const k in cost){
-      state[k] -= cost[k];
-    }
-  }
-
-  function tileToWorld(x, y){
-    return { wx: x*TILE, wy: y*TILE };
-  }
-
-  function screenToWorld(px, py){
-    const x = (px*devicePixelRatio)/zoom + camX - (canvas.width/(2*zoom));
-    const y = (py*devicePixelRatio)/zoom + camY - (canvas.height/(2*zoom));
-    return { x, y };
-  }
-
-  function worldToTile(wx, wy){
-    return {
-      tx: Math.floor(wx / TILE),
-      ty: Math.floor(wy / TILE)
-    };
-  }
-
-  function isInside(tx, ty){
-    return tx>=0 && ty>=0 && tx<GRID_SIZE && ty<GRID_SIZE;
-  }
-
-  // Build placement rule
-  function canPlaceBuilding(tx, ty, type){
-    if(!isInside(tx,ty)) return false;
-    const tile = world[ty][tx];
-    if(tile.building) return false;
-    if(tile.type === "water") return false;
-
-    // simple theme rules
-    if(type === "lumber" && tile.type !== "forest") return false;
-    if(type === "quarry" && tile.type !== "mountain") return false;
-    if(type === "mine" && tile.type !== "mountain") return false;
-
-    return true;
-  }
-
-  function placeBuilding(tx, ty, bType){
-    const def = BUILDINGS[bType];
-    if(!def) return;
-
-    if(!canPlaceBuilding(tx, ty, bType)){
-      showToast("❌ 不能放置（地形不適合）");
-      return;
-    }
-
-    if(!canAfford(def.cost)){
-      showToast("❌ 資源不足");
-      return;
-    }
-
-    pay(def.cost);
-
-    world[ty][tx].building = {
-      type: bType,
-      level: 1,
-      buildProgress: 0,
-      built: false,
-      hp: 100
-    };
-
-    showToast("🏗 開始建造 " + def.name);
-  }
-
-  function upgradeBuilding(tx, ty){
-    const tile = world[ty][tx];
-    if(!tile.building) return;
-
-    const b = tile.building;
-    const def = BUILDINGS[b.type];
-    if(!def) return;
-
-    if(!b.built){
-      showToast("⏳ 建築未完成");
-      return;
-    }
-
-    if(b.level >= def.maxLevel){
-      showToast("⭐ 已達最高等級");
-      return;
-    }
-
-    const cost = {
-      wood: Math.floor(def.cost.wood * (0.7 + b.level*0.35)),
-      stone: Math.floor(def.cost.stone * (0.7 + b.level*0.35)),
-      coin: Math.floor(def.cost.coin * (0.7 + b.level*0.35)),
-    };
-
-    if(!canAfford(cost)){
-      showToast("❌ 升級資源不足");
-      return;
-    }
-
-    pay(cost);
-    b.level++;
-    showToast("⬆ 升級成功 Lv." + b.level);
-  }
-
-  // Panel UI
-  function openPanel(html){
-    panel.innerHTML = html;
-    panel.style.display = "block";
-  }
-
-  function closePanel(){
-    panel.style.display = "none";
-    panel.innerHTML = "";
-  }
-
-  function buildMenu(){
-    const list = Object.keys(BUILDINGS).map(key => {
-      const b = BUILDINGS[key];
-      const afford = canAfford(b.cost);
-      return `
-        <div class="card">
-          <div class="title">${b.icon} ${b.name}</div>
-          <div class="desc">${b.desc}</div>
-          <div class="row"><span>成本</span><span>木${b.cost.wood} 石${b.cost.stone} 金${b.cost.coin}</span></div>
-          <button class="buyBtn ${afford ? "" : "disabled"}" data-build="${key}">
-            ${afford ? "選擇放置" : "資源不足"}
-          </button>
-        </div>
-      `;
-    }).join("");
-
-    openPanel(`
-      <div>
-        <div class="closeBtn" id="closePanel">關閉 ✖</div>
-        <h2>🏗 建設清單</h2>
-        <div style="font-size:12px;font-weight:900;opacity:0.85;">
-          選擇建築後，點地圖放置。<br/>
-          伐木場必須放森林，採石場必須放山。
-        </div>
-        <div class="gridList">${list}</div>
-      </div>
-    `);
-
-    document.getElementById("closePanel").onclick = closePanel;
-    document.querySelectorAll("[data-build]").forEach(btn => {
-      btn.onclick = () => {
-        state.selectedBuildType = btn.getAttribute("data-build");
-        state.placingMode = true;
-        closePanel();
-        showToast("🟩 請點選地圖放置建築");
-      };
-    });
-  }
-
-  function techMenu(){
-    openPanel(`
-      <div>
-        <div class="closeBtn" id="closePanel">關閉 ✖</div>
-        <h2>🧠 科技樹（Demo）</h2>
-
-        <div class="card">
-          <div class="title">⚡ 能量效率 Lv.1</div>
-          <div class="desc">提升能量產出速度（Demo先顯示UI）</div>
-          <div class="row"><span>成本</span><span>金 60</span></div>
-          <button class="buyBtn" id="buyTech1">研究</button>
-        </div>
-
-        <div class="card">
-          <div class="title">🏭 工業化 Lv.1</div>
-          <div class="desc">工廠效率提升（Demo先顯示UI）</div>
-          <div class="row"><span>成本</span><span>木 80 石 50 金 80</span></div>
-          <button class="buyBtn" id="buyTech2">研究</button>
-        </div>
-
-        <div class="card">
-          <div class="title">💎 晶體探測 Lv.1</div>
-          <div class="desc">提升 AENO 出現機率（Demo先顯示UI）</div>
-          <div class="row"><span>成本</span><span>金 120</span></div>
-          <button class="buyBtn" id="buyTech3">研究</button>
-        </div>
-      </div>
-    `);
-
-    document.getElementById("closePanel").onclick = closePanel;
-
-    document.getElementById("buyTech1").onclick = () => {
-      if(state.coin < 60) return showToast("❌ 金幣不足");
-      state.coin -= 60;
-      showToast("✅ 科技完成：能量效率");
-    };
-
-    document.getElementById("buyTech2").onclick = () => {
-      if(state.wood < 80 || state.stone < 50 || state.coin < 80) return showToast("❌ 資源不足");
-      state.wood -= 80; state.stone -= 50; state.coin -= 80;
-      showToast("✅ 科技完成：工業化");
-    };
-
-    document.getElementById("buyTech3").onclick = () => {
-      if(state.coin < 120) return showToast("❌ 金幣不足");
-      state.coin -= 120;
-      showToast("✅ 科技完成：晶體探測");
-    };
-  }
-
-  function robotMenu(){
-    openPanel(`
-      <div>
-        <div class="closeBtn" id="closePanel">關閉 ✖</div>
-        <h2>🤖 機器人中心（Demo）</h2>
-
-        <div class="card">
-          <div class="title">🚀 派遣探索</div>
-          <div class="desc">
-            你可以派機器人去其他星球採資源。<br/>
-            （Demo 先顯示功能UI）
-          </div>
-          <div class="row"><span>成本</span><span>能 10 金 20</span></div>
-          <button class="buyBtn" id="dispatchBot">派遣</button>
-        </div>
-
-        <div class="card">
-          <div class="title">🛡 防守機器人</div>
-          <div class="desc">獸潮來襲時可減少城牆損失（Demo）</div>
-          <div class="row"><span>成本</span><span>木 30 石 30 金 40</span></div>
-          <button class="buyBtn" id="defBot">製造</button>
-        </div>
-      </div>
-    `);
-
-    document.getElementById("closePanel").onclick = closePanel;
-
-    document.getElementById("dispatchBot").onclick = () => {
-      if(state.energy < 10 || state.coin < 20) return showToast("❌ 資源不足");
-      state.energy -= 10;
-      state.coin -= 20;
-
-      // reward
-      const gainWood = 15 + Math.floor(Math.random()*20);
-      const gainStone = 10 + Math.floor(Math.random()*15);
-      const gainCoin = 5 + Math.floor(Math.random()*10);
-
-      state.wood += gainWood;
-      state.stone += gainStone;
-      state.coin += gainCoin;
-
-      // small chance aeno
-      if(Math.random() < 0.04){
-        state.aeno += 1;
-        showToast("💎 機器人帶回：AENO +1");
-      }else{
-        showToast("🤖 探索成功：木+"+gainWood+" 石+"+gainStone+" 金+"+gainCoin);
+/* ===== Load Save ===== */
+function loadGame(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const saved = JSON.parse(raw);
+      if(saved && typeof saved === "object"){
+        state = saved;
       }
-    };
+    }
+  } catch(e){}
+}
 
-    document.getElementById("defBot").onclick = () => {
-      if(state.wood < 30 || state.stone < 30 || state.coin < 40) return showToast("❌ 資源不足");
-      state.wood -= 30;
-      state.stone -= 30;
-      state.coin -= 40;
-      showToast("🛡 防守機器人已部署（Demo）");
-    };
+/* ===== Save Game ===== */
+function saveGame(){
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch(e){}
+}
+
+/* ===== UI Update ===== */
+function updateHUD(){
+  document.getElementById("wood").innerText = Math.floor(state.wood);
+  document.getElementById("stone").innerText = Math.floor(state.stone);
+  document.getElementById("food").innerText = Math.floor(state.food);
+  document.getElementById("gold").innerText = Math.floor(state.gold);
+  document.getElementById("aeno").innerText = state.aeno.toFixed(4);
+  document.getElementById("pop").innerText = Math.floor(state.pop);
+}
+
+/* ===== World Setup ===== */
+const world = document.getElementById("world");
+
+function spawnDecor(){
+  for(let i=0;i<8;i++){
+    const t = document.createElement("div");
+    t.className = "tree";
+    t.style.left = Math.random()*90 + "%";
+    t.style.top = Math.random()*90 + "%";
+    world.appendChild(t);
   }
 
-  function huntMenu(){
-    openPanel(`
-      <div>
-        <div class="closeBtn" id="closePanel">關閉 ✖</div>
-        <h2>🐾 野外探索（Demo）</h2>
+  for(let i=0;i<6;i++){
+    const r = document.createElement("div");
+    r.className = "rock";
+    r.style.left = Math.random()*90 + "%";
+    r.style.top = Math.random()*90 + "%";
+    world.appendChild(r);
+  }
+}
 
-        <div class="card">
-          <div class="title">🐗 打野狩獵</div>
-          <div class="desc">
-            點擊後會出現野獸屍體。<br/>
-            你必須手動收取才有掉落。
-          </div>
-          <div class="row"><span>冷卻</span><span>10 秒</span></div>
-          <button class="buyBtn" id="huntBtn">出動</button>
-        </div>
+/* ===== Building Slots Render ===== */
+function renderSlots(){
+  world.querySelectorAll(".slot").forEach(s => s.remove());
 
-        <div class="card">
-          <div class="title">🌊 獸潮事件</div>
-          <div class="desc">
-            獸潮會攻擊城牆，但不會摧毀。<br/>
-            當城牆降到約 60% 會自動退潮。
-          </div>
-          <div class="row"><span>觸發</span><span>立即</span></div>
-          <button class="buyBtn" id="tideBtn">引發獸潮</button>
-        </div>
-      </div>
-    `);
+  state.slots.forEach(slot => {
+    const div = document.createElement("div");
+    div.className = "slot";
+    div.style.left = slot.x + "px";
+    div.style.top = slot.y + "px";
+    div.dataset.slot = slot.id;
 
-    document.getElementById("closePanel").onclick = closePanel;
+    if(slot.built){
+      div.innerHTML = "";
+      const b = document.createElement("div");
+      b.className = "building " + slot.built;
+      const lv = state.buildings[slot.built].lv;
+      b.innerHTML = `${slot.built.toUpperCase()} <div class="lv">Lv${lv}</div>`;
+      div.appendChild(b);
+    }else{
+      div.innerText = "空地";
+    }
 
-    document.getElementById("huntBtn").onclick = () => {
-      closePanel();
-      spawnLoot("野獸屍體", 2);
-      showToast("🐾 野獸已被擊倒，請點擊收取");
-    };
+    div.onclick = ()=> slotClicked(slot.id);
+    world.appendChild(div);
+  });
+}
 
-    document.getElementById("tideBtn").onclick = () => {
-      closePanel();
-      startBeastTide();
-    };
+/* ===== Player & Assistant ===== */
+const player = document.createElement("div");
+player.id = "player";
+player.className = "char";
+player.innerText = "🙂";
+world.appendChild(player);
+
+const assistant = document.createElement("div");
+assistant.id = "assistant";
+assistant.className = "char";
+assistant.innerText = "🐾";
+world.appendChild(assistant);
+
+/* ===== Animals ===== */
+let animals = [];
+
+function spawnAnimals(){
+  for(let i=0;i<5;i++){
+    const a = document.createElement("div");
+    a.className = "char animal";
+    a.innerText = (Math.random() > 0.5) ? "🐦" : "🐿️";
+    a.style.left = (Math.random()*280+20) + "px";
+    a.style.top = (Math.random()*280+30) + "px";
+    world.appendChild(a);
+    animals.push({ el:a, vx:(Math.random()*0.6-0.3), vy:(Math.random()*0.6-0.3) });
+  }
+}
+
+/* ===== Movement ===== */
+let playerPos = { x: 180, y: 240 };
+let assistantPos = { x: 140, y: 270 };
+
+function clamp(val, min, max){ return Math.max(min, Math.min(max,val)); }
+
+function movePlayerTo(x,y){
+  playerPos.x = clamp(x, 0, world.clientWidth-34);
+  playerPos.y = clamp(y, 0, world.clientHeight-34);
+}
+
+/* Tap to move player */
+world.addEventListener("click", (e)=>{
+  const rect = world.getBoundingClientRect();
+  const x = e.clientX - rect.left - 17;
+  const y = e.clientY - rect.top - 17;
+  movePlayerTo(x,y);
+});
+
+/* ===== Speech Bubble ===== */
+function say(text){
+  const bubble = document.getElementById("bubble");
+  bubble.style.display = "block";
+  bubble.innerHTML = "🐾 AI助手：<span>" + text + "</span>";
+  setTimeout(()=>{ bubble.style.display="none"; }, 5000);
+}
+
+/* ===== Popup ===== */
+function openPopup(title, html){
+  const p = document.getElementById("popup");
+  p.style.display = "block";
+  p.innerHTML = `
+    <h2>${title}</h2>
+    <div>${html}</div>
+    <button class="btn closeBtn" onclick="closePopup()">關閉</button>
+  `;
+}
+
+function closePopup(){
+  document.getElementById("popup").style.display = "none";
+}
+
+/* ===== Slot Click ===== */
+function slotClicked(slotId){
+  const slot = state.slots.find(s=>s.id===slotId);
+  if(!slot) return;
+
+  if(slot.built){
+    say("呢度係 " + slot.built.toUpperCase() + "，你可以用【升級】提升等級。");
+  }else{
+    say("呢塊地係空地，可以起民房/農田/礦場/工廠。");
+  }
+}
+
+/* ===== Build Menu ===== */
+function openBuildMenu(){
+  let html = `
+    <p>選擇你想起嘅建築：</p>
+    <div class="row">
+      <div class="buildOption" onclick="build('house')">🏠 民房<br><small>木 60 / 石 20</small></div>
+      <div class="buildOption" onclick="build('farm')">🌾 農田<br><small>木 40 / 食 10</small></div>
+      <div class="buildOption" onclick="build('mine')">⛏ 礦場<br><small>木 30 / 石 60</small></div>
+      <div class="buildOption" onclick="build('factory')">🏭 工廠<br><small>木 80 / 石 80 / 金 40</small></div>
+      <div class="buildOption" onclick="build('lab')">🧪 研究所<br><small>木 100 / 石 50 / 金 80</small></div>
+      <div class="buildOption" onclick="build('wall')">🧱 城牆<br><small>石 120 / 金 20</small></div>
+    </div>
+  `;
+  openPopup("🏗 建築菜單", html);
+}
+
+/* ===== Build Costs ===== */
+const COSTS = {
+  house: { wood:60, stone:20, food:0, gold:0 },
+  farm: { wood:40, stone:0, food:10, gold:0 },
+  mine: { wood:30, stone:60, food:0, gold:0 },
+  factory: { wood:80, stone:80, food:0, gold:40 },
+  lab: { wood:100, stone:50, food:0, gold:80 },
+  wall: { wood:0, stone:120, food:0, gold:20 },
+};
+
+/* ===== Build Logic ===== */
+function build(type){
+  const emptySlot = state.slots.find(s=>!s.built);
+  if(!emptySlot){
+    say("冇空地啦！升級建築先。");
+    return;
   }
 
-  // Buttons
-  document.getElementById("btnBuild").onclick = buildMenu;
-  document.getElementById("btnTech").onclick = techMenu;
-  document.getElementById("btnRobot").onclick = robotMenu;
-  document.getElementById("btnHunt").onclick = huntMenu;
+  const c = COSTS[type];
+  if(state.wood < c.wood || state.stone < c.stone || state.food < c.food || state.gold < c.gold){
+    say("資源不足，未能建築。");
+    return;
+  }
 
-  document.getElementById("assistant").onclick = () => {
-    const lines = [
-      "我係 Lupinus 🐾 你的AI助手！",
-      "建設越多，資源越快！",
-      "獸潮會掉落稀有資源！",
-      "礦坑有機會產出 AENO 💎",
-      "未來你可移民黑洞 🌌"
-    ];
-    showToast(lines[Math.floor(Math.random()*lines.length)]);
+  state.wood -= c.wood;
+  state.stone -= c.stone;
+  state.food -= c.food;
+  state.gold -= c.gold;
+
+  emptySlot.built = type;
+  state.buildings[type].lv = Math.max(1, state.buildings[type].lv);
+
+  say("成功建造 " + type.toUpperCase() + "！🎉");
+  renderSlots();
+  updateHUD();
+  saveGame();
+  closePopup();
+}
+
+/* ===== Upgrade Menu ===== */
+function openUpgradeMenu(){
+  let html = `<p>你已有建築：</p><div class="row">`;
+
+  for(const k in state.buildings){
+    const lv = state.buildings[k].lv;
+    if(lv > 0){
+      html += `<div class="buildOption" onclick="upgrade('${k}')">
+        ⬆ ${k.toUpperCase()}<br><small>Lv ${lv}</small>
+      </div>`;
+    }
+  }
+
+  html += `</div>`;
+  openPopup("⬆ 升級建築", html);
+}
+
+/* ===== Upgrade Costs ===== */
+function upgradeCost(type){
+  const lv = state.buildings[type].lv;
+  return {
+    wood: Math.floor((COSTS[type].wood*0.8) + lv*20),
+    stone: Math.floor((COSTS[type].stone*0.8) + lv*18),
+    food: Math.floor((COSTS[type].food*0.6) + lv*10),
+    gold: Math.floor((COSTS[type].gold*0.8) + lv*12)
+  };
+}
+
+/* ===== Upgrade Logic ===== */
+function upgrade(type){
+  const lv = state.buildings[type].lv;
+  if(lv <= 0){
+    say("你未起呢個建築。");
+    return;
+  }
+
+  const cost = upgradeCost(type);
+
+  if(state.wood < cost.wood || state.stone < cost.stone || state.food < cost.food || state.gold < cost.gold){
+    say("資源不足，未能升級。");
+    return;
+  }
+
+  state.wood -= cost.wood;
+  state.stone -= cost.stone;
+  state.food -= cost.food;
+  state.gold -= cost.gold;
+
+  state.buildings[type].lv += 1;
+
+  say(type.toUpperCase() + " 升級成功！✨ Lv " + state.buildings[type].lv);
+
+  renderSlots();
+  updateHUD();
+  saveGame();
+  closePopup();
+}
+
+/* ===== Collect Resources ===== */
+function collectAll(){
+  // production based on building levels
+  const houseLv = state.buildings.house.lv;
+  const farmLv = state.buildings.farm.lv;
+  const mineLv = state.buildings.mine.lv;
+  const factoryLv = state.buildings.factory.lv;
+
+  state.pop += houseLv * 0.2;
+
+  state.food += farmLv * 6;
+  state.wood += farmLv * 2;
+
+  state.stone += mineLv * 4;
+  state.wood += mineLv * 1;
+
+  state.gold += factoryLv * 3;
+
+  // chance to get tiny AENO from mine
+  if(mineLv > 0 && Math.random() < (0.03 + mineLv*0.01)){
+    const gain = 0.0001 * mineLv;
+    state.aeno += gain;
+    say("你挖到少量 AENO 晶體！+" + gain.toFixed(4));
+  }else{
+    say("資源已收取！🌱");
+  }
+
+  updateHUD();
+  saveGame();
+}
+
+/* ===== AI Toggle ===== */
+function toggleAI(){
+  state.aiEnabled = !state.aiEnabled;
+  if(state.aiEnabled){
+    say("AI助手已啟動！我會半自動幫你發展文明。");
+  }else{
+    say("AI助手已停止。你而家完全手動控制。");
+  }
+  saveGame();
+}
+
+/* ===== AI Semi-Auto Build/Upgrade ===== */
+function aiLogic(){
+  if(!state.aiEnabled) return;
+
+  const now = Date.now();
+
+  // AI only acts every 20 seconds (cooldown)
+  if(now - state.lastAIAction < 20000) return;
+
+  // AI can only use 50% of resources
+  const allowed = {
+    wood: state.wood * 0.5,
+    stone: state.stone * 0.5,
+    food: state.food * 0.5,
+    gold: state.gold * 0.5,
   };
 
-  // Loot objects
-  const loots = [];
+  // AI decides priority (basic)
+  let priority = "farm";
+  if(state.food < 60) priority = "farm";
+  else if(state.wood < 60) priority = "farm";
+  else if(state.stone < 80) priority = "mine";
+  else if(state.gold < 80) priority = "factory";
+  else priority = "house";
 
-  function spawnLoot(label, tier){
-    // spawn near center of camera
-    const wx = camX + (Math.random()*300-150);
-    const wy = camY + (Math.random()*300-150);
+  // If there is empty slot -> build
+  const emptySlot = state.slots.find(s=>!s.built);
+  if(emptySlot){
+    const c = COSTS[priority];
 
-    loots.push({
-      wx, wy,
-      label,
-      tier,
-      life: 25,
-      collected: false
-    });
-  }
+    if(allowed.wood >= c.wood && allowed.stone >= c.stone && allowed.food >= c.food && allowed.gold >= c.gold){
+      state.wood -= c.wood;
+      state.stone -= c.stone;
+      state.food -= c.food;
+      state.gold -= c.gold;
 
-  function collectLoot(loot){
-    if(loot.collected) return;
-    loot.collected = true;
+      emptySlot.built = priority;
+      state.buildings[priority].lv = Math.max(1, state.buildings[priority].lv);
 
-    const base = 10 + loot.tier*10;
-    const foodGain = base + Math.floor(Math.random()*20);
-    const coinGain = 5 + Math.floor(Math.random()*10);
-
-    state.food += foodGain;
-    state.coin += coinGain;
-
-    if(Math.random() < 0.05){
-      state.aeno += 1;
-      showToast("💎 收取成功：AENO +1");
-    }else{
-      showToast("🎁 收取成功：食物+"+foodGain+" 金幣+"+coinGain);
-    }
-  }
-
-  // Beast tide
-  function startBeastTide(){
-    if(state.beastTideActive){
-      showToast("⚠️ 獸潮已經進行中");
+      state.lastAIAction = now;
+      say("我幫你建造咗：" + priority.toUpperCase() + "（只用咗 50% 可用資源）");
+      renderSlots();
+      updateHUD();
+      saveGame();
       return;
     }
-    state.beastTideActive = true;
-    state.beastTideTimer = 0;
-    showToast("🌊 獸潮來襲！");
   }
 
-  // Input handlers
-  canvas.addEventListener("pointerdown", (e) => {
-    isDragging = true;
-    lastX = e.clientX;
-    lastY = e.clientY;
-  });
+  // Otherwise upgrade a building
+  const candidates = ["farm","mine","factory","house","lab","wall"];
+  for(const b of candidates){
+    if(state.buildings[b].lv > 0){
+      const cost = upgradeCost(b);
+      if(allowed.wood >= cost.wood && allowed.stone >= cost.stone && allowed.food >= cost.food && allowed.gold >= cost.gold){
+        state.wood -= cost.wood;
+        state.stone -= cost.stone;
+        state.food -= cost.food;
+        state.gold -= cost.gold;
 
-  canvas.addEventListener("pointermove", (e) => {
-    if(!isDragging) return;
-    const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
-    lastX = e.clientX;
-    lastY = e.clientY;
+        state.buildings[b].lv += 1;
+        state.lastAIAction = now;
 
-    camX -= dx * devicePixelRatio / zoom;
-    camY -= dy * devicePixelRatio / zoom;
-  });
-
-  canvas.addEventListener("pointerup", () => {
-    isDragging = false;
-  });
-
-  canvas.addEventListener("pointercancel", () => {
-    isDragging = false;
-  });
-
-  // Mouse wheel zoom (I/O
-  canvas.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    const delta = -e.deltaY * 0.001;
-    zoom = clamp(zoom + delta, 0.55, 2.4);
-  }, { passive:false });
-
-  // Touch pinch zoom
-  canvas.addEventListener("touchmove", (e) => {
-    if(e.touches.length === 2){
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-
-      if(pinchDist === null) pinchDist = dist;
-      const diff = dist - pinchDist;
-      zoom = clamp(zoom + diff*0.003, 0.55, 2.4);
-      pinchDist = dist;
-    }
-  }, { passive:true });
-
-  canvas.addEventListener("touchend", () => {
-    pinchDist = null;
-  });
-
-  // Tap to place building / upgrade / collect loot
-  canvas.addEventListener("click", (e) => {
-    const w = screenToWorld(e.clientX, e.clientY);
-    const t = worldToTile(w.x, w.y);
-
-    // loot collection
-    for(const loot of loots){
-      if(loot.collected) continue;
-      const dx = loot.wx - w.x;
-      const dy = loot.wy - w.y;
-      if(Math.sqrt(dx*dx + dy*dy) < 40){
-        collectLoot(loot);
+        say("我幫你升級咗：" + b.toUpperCase() + " → Lv " + state.buildings[b].lv);
+        renderSlots();
+        updateHUD();
+        saveGame();
         return;
       }
     }
+  }
 
-    if(!isInside(t.tx, t.ty)) return;
+  // If cannot act
+  state.lastAIAction = now;
+  say("我暫時唔夠資源去建設/升級，我建議你先收取資源。");
+}
 
-    const tile = world[t.ty][t.tx];
+/* ===== Animate Movement ===== */
+function animate(){
+  // player render
+  player.style.left = playerPos.x + "px";
+  player.style.top = playerPos.y + "px";
 
-    // placing
-    if(state.placingMode && state.selectedBuildType){
-      placeBuilding(t.tx, t.ty, state.selectedBuildType);
-      state.placingMode = false;
-      state.selectedBuildType = null;
-      return;
+  // assistant follow player slowly
+  const dx = playerPos.x - assistantPos.x;
+  const dy = playerPos.y - assistantPos.y;
+
+  assistantPos.x += dx * 0.02;
+  assistantPos.y += dy * 0.02;
+
+  assistant.style.left = assistantPos.x + "px";
+  assistant.style.top = assistantPos.y + "px";
+
+  // animals random move
+  animals.forEach(a=>{
+    let x = parseFloat(a.el.style.left);
+    let y = parseFloat(a.el.style.top);
+
+    x += a.vx;
+    y += a.vy;
+
+    if(Math.random() < 0.02){
+      a.vx = (Math.random()*1.0 - 0.5);
+      a.vy = (Math.random()*1.0 - 0.5);
     }
 
-    // upgrade
-    if(tile.building){
-      upgradeBuilding(t.tx, t.ty);
-      return;
-    }
+    x = clamp(x, 0, world.clientWidth-22);
+    y = clamp(y, 0, world.clientHeight-22);
 
-    // show tile info
-    showToast("📍 地形：" + tile.type);
+    a.el.style.left = x + "px";
+    a.el.style.top = y + "px";
   });
 
-  // Draw helpers
-  function drawRoundRect(x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.closePath();
-  }
+  // AI logic
+  aiLogic();
 
-  function drawTile(tx, ty, tile){
-    const wx = tx*TILE;
-    const wy = ty*TILE;
+  requestAnimationFrame(animate);
+}
 
-    // base color
-    let c = "#8dff8d";
-    if(tile.type === "water") c = "#46b7ff";
-    if(tile.type === "forest") c = "#4ade80";
-    if(tile.type === "mountain") c = "#cbd5e1";
+/* ===== Game Tick ===== */
+function tick(){
+  // passive growth
+  state.food += 0.3;
+  state.wood += 0.15;
+  state.gold += 0.08;
 
-    // soft shadow grid
-    ctx.fillStyle = c;
-    ctx.fillRect(wx, wy, TILE, TILE);
+  // population consumes food
+  state.food -= state.pop * 0.03;
+  if(state.food < 0) state.food = 0;
 
-    ctx.strokeStyle = "rgba(0,0,0,0.08)";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(wx, wy, TILE, TILE);
+  updateHUD();
+  saveGame();
+}
 
-    // small details
-    if(tile.type === "forest"){
-      ctx.fillStyle = "rgba(0,0,0,0.15)";
-      ctx.beginPath();
-      ctx.arc(wx+TILE*0.35, wy+TILE*0.35, 4, 0, Math.PI*2);
-      ctx.arc(wx+TILE*0.7, wy+TILE*0.6, 3, 0, Math.PI*2);
-      ctx.fill();
-    }
+/* ===== Tutorial ===== */
+function tutorial(){
+  say("歡迎來到 AENO 世界！點擊地圖可以移動🙂。按【建築】開始起文明！");
+}
 
-    if(tile.type === "mountain"){
-      ctx.fillStyle = "rgba(0,0,0,0.12)";
-      ctx.beginPath();
-      ctx.moveTo(wx+10, wy+TILE-10);
-      ctx.lineTo(wx+TILE*0.5, wy+10);
-      ctx.lineTo(wx+TILE-10, wy+TILE-10);
-      ctx.closePath();
-      ctx.fill();
-    }
+/* ===== Init ===== */
+loadGame();
+spawnDecor();
+spawnAnimals();
+renderSlots();
+updateHUD();
+tutorial();
 
-    if(tile.type === "water"){
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.beginPath();
-      ctx.arc(wx+TILE*0.4, wy+TILE*0.55, 6, 0, Math.PI*2);
-      ctx.arc(wx+TILE*0.7, wy+TILE*0.4, 4, 0, Math.PI*2);
-      ctx.fill();
-    }
+setInterval(tick, 3000);
+requestAnimationFrame(animate);
 
-    // placing highlight
-    if(state.placingMode && state.selectedBuildType){
-      const ok = canPlaceBuilding(tx, ty, state.selectedBuildType);
-      ctx.fillStyle = ok ? "rgba(34,197,94,0.18)" : "rgba(255,0,0,0.15)";
-      ctx.fillRect(wx, wy, TILE, TILE);
-    }
-
-    // building
-    if(tile.building){
-      drawBuilding(wx, wy, tile.building);
-    }
-  }
-
-  function drawBuilding(wx, wy, b){
-    const def = BUILDINGS[b.type];
-
-    // base
-    ctx.fillStyle = "rgba(0,0,0,0.15)";
-    drawRoundRect(wx+5, wy+6, TILE-10, TILE-10, 10);
-    ctx.fill();
-
-    // body
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    drawRoundRect(wx+6, wy+4, TILE-12, TILE-12, 12);
-    ctx.fill();
-
-    // icon
-    ctx.font = "20px system-ui";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#111";
-    ctx.fillText(def.icon, wx+TILE/2, wy+TILE/2 - 3);
-
-    // level badge
-    ctx.font = "10px system-ui";
-    ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillText("Lv."+b.level, wx+TILE/2, wy+TILE-10);
-
-    // build progress bar
-    if(!b.built){
-      ctx.fillStyle = "rgba(0,0,0,0.2)";
-      ctx.fillRect(wx+8, wy+TILE-8, TILE-16, 5);
-
-      ctx.fillStyle = "rgba(34,197,94,0.9)";
-      ctx.fillRect(wx+8, wy+TILE-8, (TILE-16)*(b.buildProgress/100), 5);
-    }
-  }
-
-  function drawLoot(loot){
-    if(loot.collected) return;
-
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.beginPath();
-    ctx.arc(loot.wx, loot.wy, 16, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
-    ctx.beginPath();
-    ctx.arc(loot.wx, loot.wy-2, 16, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "#111";
-    ctx.font = "12px system-ui";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🦴", loot.wx, loot.wy-2);
-
-    ctx.font = "10px system-ui";
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillText("點我收取", loot.wx, loot.wy+18);
-  }
-
-  // Update loop
-  let lastTime = performance.now();
-
-  function update(dt){
-    state.tick += dt;
-
-    // building construction & production
-    for(let y=0;y<GRID_SIZE;y++){
-      for(let x=0;x<GRID_SIZE;x++){
-        const tile = world[y][x];
-        if(!tile.building) continue;
-
-        const b = tile.building;
-        const def = BUILDINGS[b.type];
-
-        // build progress
-        if(!b.built){
-          b.buildProgress += dt * 8; // build speed
-          if(b.buildProgress >= 100){
-            b.buildProgress = 100;
-            b.built = true;
-            showToast("✅ 建築完成：" + def.name);
-          }
-          continue;
-        }
-
-        // production per second
-        const mult = 1 + (b.level-1)*0.35;
-
-        if(def.baseProduction.wood) state.wood += def.baseProduction.wood * mult * dt;
-        if(def.baseProduction.stone) state.stone += def.baseProduction.stone * mult * dt;
-        if(def.baseProduction.food) state.food += def.baseProduction.food * mult * dt;
-        if(def.baseProduction.energy) state.energy += def.baseProduction.energy * mult * dt;
-        if(def.baseProduction.coin) state.coin += def.baseProduction.coin * mult * dt;
-
-        // AENO mining chance (demo)
-        if(b.type === "mine"){
-          // low probability, but visible
-          const chance = 0.0007 * mult * dt;
-          if(Math.random() < chance){
-            state.aeno += 1;
-            showToast("💎 你挖到 AENO +1");
-          }
-        }
-
-        // house increases population slowly
-        if(b.type === "house"){
-          // population grows over time
-          const popGain = 0.03 * mult * dt;
-          state.population += popGain;
-        }
-      }
-    }
-
-    // clamp resources
-    state.wood = clamp(state.wood, 0, 999999999);
-    state.stone = clamp(state.stone, 0, 999999999);
-    state.food = clamp(state.food, 0, 999999999);
-    state.energy = clamp(state.energy, 0, 999999999);
-    state.coin = clamp(state.coin, 0, 999999999);
-    state.aeno = clamp(state.aeno, 0, 20000000);
-
-    // Beast tide logic
-    if(state.beastTideActive){
-      state.beastTideTimer += dt;
-
-      // reduce wall until around 60%
-      if(state.wall > 60){
-        state.wall -= dt * 3.5; // attack speed
-      }else{
-        // retreat
-        if(state.beastTideTimer > 10){
-          state.beastTideActive = false;
-          showToast("🌊 獸潮退去！");
-          spawnLoot("獸潮屍體", 3);
-        }
-      }
-    }else{
-      // auto repair
-      if(state.wall < 100){
-        state.wall += dt * 2.2;
-      }
-    }
-
-    state.wall = clamp(state.wall, 0, 100);
-
-    // occasionally auto random tide
-    if(!state.beastTideActive && Math.random() < 0.00003 * dt){
-      startBeastTide();
-    }
-
-    // loot decay
-    for(const loot of loots){
-      if(loot.collected) continue;
-      loot.life -= dt;
-      if(loot.life <= 0){
-        loot.collected = true;
-      }
-    }
-  }
-
-  function render(){
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // camera transform
-    ctx.translate(canvas.width/2, canvas.height/2);
-    ctx.scale(zoom, zoom);
-    ctx.translate(-camX, -camY);
-
-    // background soft cloud
-    ctx.fillStyle = "rgba(255,255,255,0.15)";
-    ctx.beginPath();
-    ctx.arc(camX-400, camY-250, 180, 0, Math.PI*2);
-    ctx.arc(camX+500, camY-300, 220, 0, Math.PI*2);
-    ctx.fill();
-
-    // draw map
-    for(let y=0;y<GRID_SIZE;y++){
-      for(let x=0;x<GRID_SIZE;x++){
-        drawTile(x,y,world[y][x]);
-      }
-    }
-
-    // draw loot
-    for(const loot of loots){
-      drawLoot(loot);
-    }
-
-    // center marker (player base)
-    ctx.fillStyle = "rgba(0,0,0,0.12)";
-    ctx.beginPath();
-    ctx.arc(GRID_SIZE*TILE/2, GRID_SIZE*TILE/2, 12, 0, Math.PI*2);
-    ctx.fill();
-
-    // Beast tide effect overlay
-    if(state.beastTideActive){
-      ctx.fillStyle = "rgba(255,0,0,0.08)";
-      ctx.fillRect(0,0,GRID_SIZE*TILE,GRID_SIZE*TILE);
-
-      // beast tide waves
-      ctx.fillStyle = "rgba(255,80,80,0.25)";
-      ctx.font = "28px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("🐺🐺🐺", camX, camY-120);
-    }
-
-    // placing mode indicator
-    if(state.placingMode && state.selectedBuildType){
-      const def = BUILDINGS[state.selectedBuildType];
-      ctx.fillStyle = "rgba(0,0,0,0.65)";
-      ctx.font = "18px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("放置：" + def.icon + " " + def.name, camX, camY+160);
-    }
-  }
-
-  function syncUI(){
-    uiWood.textContent = format(state.wood);
-    uiStone.textContent = format(state.stone);
-    uiFood.textContent = format(state.food);
-    uiEnergy.textContent = format(state.energy);
-    uiCoin.textContent = format(state.coin);
-    uiAeno.textContent = format(state.aeno);
-
-    uiWallText.textContent = Math.floor(state.wall) + "%";
-    uiWallBar.style.width = state.wall + "%";
-
-    if(state.wall < 70){
-      document.getElementById("wallBar").classList.add("danger");
-    }else{
-      document.getElementById("wallBar").classList.remove("danger");
-    }
-
-    uiPopText.textContent = Math.floor(state.population);
-  }
-
-  function loop(now){
-    const dt = Math.min(0.05, (now - lastTime)/1000);
-    lastTime = now;
-
-    update(dt);
-    render();
-    syncUI();
-
-    requestAnimationFrame(loop);
-  }
-
-  // initial base buildings to feel alive
-  placeBuilding(15, 15, "house");
-  placeBuilding(14, 15, "farm");
-
-  // Force finish those starter buildings quickly
-  world[15][15].building.built = true;
-  world[15][15].building.buildProgress = 100;
-
-  world[15][14].building.built = true;
-  world[15][14].building.buildProgress = 100;
-
-  showToast("🌍 AENO 主城已啟動！");
-
-  requestAnimationFrame(loop);
-
-})();
 </script>
 </body>
 </html>
