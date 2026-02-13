@@ -1,320 +1,60 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>AENO - 卡通育成簡潔版 V3.1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>AENO</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0b1220;overflow:hidden;font-family:Arial, sans-serif;}
+#game{width:100vw;height:100vh;}
+#ui{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;}
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e293b">
+.res{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;pointer-events:auto;}
+.res-item{background:rgba(255,255,255,0.9);border-radius:12px;padding:8px 10px;font-size:14px;font-weight:bold;flex:1;text-align:center;}
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #0b1220;
-      overflow: hidden;
-      font-family: Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
-    }
+.btns{position:absolute;left:10px;top:100px;display:flex;flex-direction:column;gap:8px;pointer-events:auto;}
+.btn{background:#fff;border-radius:12px;padding:10px;border:none;font-weight:bold;}
 
-    #game-wrap {
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-    }
+.ai-panel{position:absolute;bottom:20px;left:10px;right:10px;background:#fff;border-radius:16px;padding:12px;display:none;pointer-events:auto;}
+#chat{max-height:120px;overflow-y:auto;font-size:13px;margin-bottom:8px;}
+.chat{margin:4px 0;}
+input{width:100%;padding:6px;border-radius:8px;border:1px solid #ccc;}
 
-    /* 手遊風 HUD */
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      z-index: 50;
-      pointer-events: none;
-    }
-
-    .hud-box {
-      background: rgba(255,255,255,0.90);
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 10px 14px;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.15);
-      pointer-events: auto;
-    }
-
-    .hud-title {
-      font-size: 12px;
-      font-weight: 900;
-      opacity: 0.7;
-    }
-
-    .hud-value {
-      font-size: 16px;
-      font-weight: 900;
-      margin-top: 2px;
-    }
-
-    /* 左側功能列 */
-    #sideBar {
-      position: absolute;
-      top: 100px;
-      left: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 60;
-    }
-
-    .btn {
-      background: rgba(255,255,255,0.95);
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 10px 12px;
-      font-weight: 900;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.2);
-      user-select: none;
-      min-width: 92px;
-      text-align: center;
-    }
-
-    .btn:active {
-      transform: translateY(3px);
-      box-shadow: 0 5px 0 rgba(0,0,0,0.2);
-    }
-
-    /* AI助手泡泡 */
-    #assistantPanel {
-      position: absolute;
-      bottom: 20px;
-      left: 15px;
-      right: 15px;
-      z-index: 80;
-      background: rgba(255,255,255,0.95);
-      border: 3px solid #111827;
-      border-radius: 20px;
-      padding: 12px 12px;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
-      display: none;
-    }
-
-    #assistantPanel .title {
-      font-weight: 900;
-      font-size: 14px;
-    }
-
-    #aiChatLog {
-      max-height: 120px;
-      overflow-y: auto;
-      margin: 8px 0;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .chat-item {
-      margin: 4px 0;
-    }
-
-    #aiChatInput {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      box-sizing: border-box;
-    }
-
-    #assistantPanel .row {
-      margin-top: 10px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .smallBtn {
-      border-radius: 14px;
-      border: 2px solid #111827;
-      background: #fef3c7;
-      font-weight: 900;
-      padding: 8px 10px;
-      cursor: pointer;
-    }
-
-    .smallBtn:active {
-      transform: scale(0.98);
-    }
-
-    /* 建築選單 */
-    #buildMenu {
-      position: absolute;
-      right: 12px;
-      top: 100px;
-      z-index: 70;
-      background: rgba(255,255,255,0.96);
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 12px;
-      width: 180px;
-      display: none;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
-    }
-
-    #buildMenu h3 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 900;
-    }
-
-    .buildItem {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 14px;
-      border: 2px solid #111827;
-      cursor: pointer;
-      font-weight: 900;
-      background: #dbeafe;
-    }
-
-    .buildItem:hover {
-      filter: brightness(1.03);
-    }
-
-    .hint {
-      font-size: 12px;
-      opacity: 0.75;
-      margin-top: 6px;
-      line-height: 1.3;
-    }
-
-    /* 更新提示 */
-    #updateBanner {
-      position: absolute;
-      top: 55px;
-      left: 15px;
-      right: 15px;
-      z-index: 99;
-      background: #22c55e;
-      color: white;
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 10px 12px;
-      font-weight: 900;
-      display: none;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
-      cursor: pointer;
-      text-align: center;
-    }
-
-  </style>
+.build-menu{position:absolute;right:10px;top:100px;background:#fff;border-radius:16px;padding:10px;display:none;pointer-events:auto;}
+.build-btn{display:block;width:100%;margin:6px 0;padding:8px;border-radius:8px;border:none;background:#dbeafe;font-weight:bold;}
+</style>
 </head>
 <body>
-  <div id="game-wrap">
-
-    <div id="updateBanner">🚀 有新版本！點我刷新更新</div>
-
-    <div id="hud">
-      <div class="hud-box">
-        <div class="hud-title">🌲 木材</div>
-        <div class="hud-value" id="wood">0</div>
-      </div>
-
-      <div class="hud-box">
-        <div class="hud-title">⛏️ 石材</div>
-        <div class="hud-value" id="stone">0</div>
-      </div>
-
-      <div class="hud-box">
-        <div class="hud-title">⚡ 能量</div>
-        <div class="hud-value" id="energy">0</div>
-      </div>
-
-      <div class="hud-box">
-        <div class="hud-title">🪙 金幣</div>
-        <div class="hud-value" id="gold">0</div>
-      </div>
-
-      <div class="hud-box">
-        <div class="hud-title">💎 AENO</div>
-        <div class="hud-value" id="aeno">0</div>
-      </div>
-    </div>
-
-    <div id="sideBar">
-      <div class="btn" onclick="toggleBuildMenu()">🏗 建築</div>
-      <div class="btn" onclick="toggleAIPanel()">🐾 助手</div>
-      <div class="btn" id="aiToggleBtn" onclick="toggleAI()">🤖 AI建設</div>
-      <div class="btn" onclick="manualSave()">💾 保存</div>
-    </div>
-
-    <div id="buildMenu">
-      <h3>🏗 建築選單</h3>
-      <div class="hint">點選建築後，再點地圖空地放置。</div>
-
-      <div class="buildItem" onclick="selectBuild('house')">🏠 民房</div>
-      <div class="buildItem" onclick="selectBuild('farm')">🌾 農田</div>
-      <div class="buildItem" onclick="selectBuild('lumber')">🌲 伐木場</div>
-      <div class="buildItem" onclick="selectBuild('quarry')">⛏️ 礦場</div>
-      <div class="buildItem" onclick="selectBuild('power')">⚡ 發電站</div>
-      <div class="buildItem" onclick="selectBuild('market')">🏦 市場</div>
-      <div class="buildItem" onclick="selectBuild('wall')">🧱 城牆</div>
-
-      <div class="hint" style="margin-top:10px;">
-        📌 你可以拖動地圖、雙指縮放。<br>
-        AI助手會半自動幫你建設（最多用50%資源）。
-      </div>
-    </div>
-
-    <div id="assistantPanel">
-      <div class="title">🐾 AI助手：Lupus Minor</div>
-      <div id="aiChatLog"></div>
-      <input type="text" id="aiChatInput" placeholder="同我傾計啦..." onkeydown="if(event.key==='Enter') sendAIChat()">
-      <div class="row">
-        <button class="smallBtn" onclick="assistantAsk('what')">點玩？</button>
-        <button class="smallBtn" onclick="assistantAsk('build')">點起建築？</button>
-        <button class="smallBtn" onclick="assistantAsk('aeno')">點挖AENO？</button>
-        <button class="smallBtn" onclick="assistantAsk('beast')">獸潮係乜？</button>
-        <button class="smallBtn" onclick="toggleAIPanel()">關閉</button>
-      </div>
-    </div>
-
-    <div id="phaser-container"></div>
+<div id="game"></div>
+<div id="ui">
+  <div class="res">
+    <div class="res-item">🌲<span id="wood">0</span></div>
+    <div class="res-item">⛏️<span id="stone">0</span></div>
+    <div class="res-item">⚡<span id="energy">0</span></div>
+    <div class="res-item">💰<span id="gold">0</span></div>
+    <div class="res-item">💎<span id="aeno">0</span></div>
   </div>
-
-  <!-- Phaser 3 CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-  <script src="game.js"></script>
-
-  <script>
-    // PWA 安裝 & Service Worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").then(reg => {
-        console.log("SW registered", reg);
-
-        reg.addEventListener("updatefound", () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener("statechange", () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              document.getElementById("updateBanner").style.display = "block";
-            }
-          });
-        });
-
-      }).catch(err => console.error("SW error", err));
-    }
-
-    document.getElementById("updateBanner").onclick = () => {
-      location.reload();
-    };
-
-    // 兼容舊版函數名
-    function toggleAssistant() {
-      toggleAIPanel();
-    }
-  </script>
-
+  <div class="btns">
+    <button class="btn" onclick="toggleBuild()">🏗️建築</button>
+    <button class="btn" onclick="toggleAIpanel()">🐾AI</button>
+    <button class="btn" id="aiBtn" onclick="toggleAI()">啟動AI</button>
+  </div>
+  <div class="ai-panel" id="aiPanel">
+    <div id="chat"></div>
+    <input id="input" placeholder="講嘢啦..." onkeydown="if(event.key=='Enter')sendChat()">
+  </div>
+  <div class="build-menu" id="buildMenu">
+    <button class="build-btn" onclick="b('lumber')">🌲伐木場</button>
+    <button class="build-btn" onclick="b('quarry')">⛏️礦場</button>
+    <button class="build-btn" onclick="b('farm')">🌾農田</button>
+    <button class="build-btn" onclick="b('house')">🏠民房</button>
+    <button class="build-btn" onclick="b('power')">⚡發電站</button>
+    <button class="build-btn" onclick="b('market')">🏦市場</button>
+    <button class="build-btn" onclick="b('wall')">🧱城牆</button>
+  </div>
+</div>
+<script src="game.js"></script>
 </body>
 </html>
