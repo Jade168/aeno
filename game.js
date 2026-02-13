@@ -161,6 +161,10 @@
   let villagers = [];
   let robotSprite = null;
 
+  // 角色管理器
+  let characterManager;
+  let player;
+
   // UI
   const ui = {
     wood: document.getElementById("wood"),
@@ -745,10 +749,17 @@
       super("MainScene");
     }
 
-    preload() {}
+    preload() {
+      // 預載角色貼圖（模擬動漫角色）
+      this.load.baseURL = 'https://labs.phaser.io/assets/';
+      this.load.image('animeChar', 'sprites/player.png');
+    }
 
     create() {
       sceneMain = this;
+
+      // 初始化角色管理器
+      characterManager = new CharacterManager(this);
 
       // 地形
       worldLayer = generateTerrain(this);
@@ -793,4 +804,119 @@
         const wy = p.worldY;
 
         if (buildMode) {
-       
+          placeBuilding(this, wx, wy, buildMode);
+          buildMode = null;
+        }
+      });
+
+      // 生成動物
+      for (let i = 0; i < 15; i++) {
+        const x = Phaser.Math.Between(100, WORLD_W - 100);
+        const y = Phaser.Math.Between(100, WORLD_H - 100);
+        animals.push(createCartoonAnimal(this, x, y));
+      }
+
+      // 生成村民
+      for (let i = 0; i < 8; i++) {
+        const x = Phaser.Math.Between(200, WORLD_W - 200);
+        const y = Phaser.Math.Between(200, WORLD_H - 200);
+        villagers.push(createVillager(this, x, y));
+      }
+
+      // 創建主角（動漫角色）
+      player = characterManager.createAnimeCharacter('animeChar', WORLD_W / 2, WORLD_H / 2, '主角');
+
+      // 載入存檔
+      if (!loadGame()) {
+        // 新遊戲：初始建築
+        placeBuilding(this, WORLD_W / 2 - 100, WORLD_H / 2, "house");
+        placeBuilding(this, WORLD_W / 2 + 100, WORLD_H / 2, "farm");
+      } else {
+        // 重建存檔建築
+        state.buildings.forEach(b => spawnBuilding(this, b));
+      }
+
+      // 初始化 HUD
+      updateHUD();
+
+      // 顯示新手提示
+      if (!state.tutorialShown) {
+        showAssistantMessage("👋 歡迎來到 AENO！先起幾個伐木場同礦場，收集資源發展基地。");
+        state.tutorialShown = true;
+        saveGame();
+      }
+
+      // 鍵盤控制主角
+      this.cursors = this.input.keyboard.createCursorKeys();
+    }
+
+    update(time, delta) {
+      const dtSec = delta / 1000;
+      state.time += dtSec;
+
+      // 資源產出
+      produceResources(dtSec);
+
+      // 角色移動
+      moveEntities(dtSec);
+
+      // AI助手
+      if (Math.floor(state.time) % AI_HELPER.intervalSec === 0) {
+        aiHelperTick();
+      }
+
+      // 獸潮
+      beastTick(dtSec);
+
+      // 機器人
+      robotTick();
+
+      // 更新 HUD
+      updateHUD();
+
+      // 主角移動控制
+      if (this.cursors.left.isDown) {
+        player.x -= 3;
+        player.flipX = true;
+      } else if (this.cursors.right.isDown) {
+        player.x += 3;
+        player.flipX = false;
+      }
+
+      if (this.cursors.up.isDown) {
+        player.y -= 3;
+      } else if (this.cursors.down.isDown) {
+        player.y += 3;
+      }
+    }
+  }
+
+  // -------------------------
+  // 遊戲初始化
+  // -------------------------
+  const config = {
+    type: Phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    parent: "phaser-container",
+    backgroundColor: "#0b1220",
+    scene: MainScene,
+    physics: {
+      default: "arcade",
+      arcade: {
+        gravity: { y: 0 },
+        debug: false
+      }
+    }
+  };
+
+  game = new Phaser.Game(config);
+
+  // 視窗調整
+  window.addEventListener("resize", () => {
+    if (game) {
+      game.resize(window.innerWidth, window.innerHeight);
+    }
+  });
+
+})();
