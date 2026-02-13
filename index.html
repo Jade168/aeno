@@ -1,253 +1,639 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>AENO - 手遊卡通育成版 V3</title>
-
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e293b">
-
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #0b1220;
-      overflow: hidden;
-      font-family: Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
-    }
-
-    #game-wrap {
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-    }
-
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      z-index: 50;
-      pointer-events: none;
-    }
-
-    .hud-box {
-      background: rgba(255,255,255,0.90);
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 10px 14px;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.15);
-      pointer-events: auto;
-    }
-
-    .hud-title {
-      font-size: 12px;
-      font-weight: 900;
-      opacity: 0.7;
-    }
-
-    .hud-value {
-      font-size: 16px;
-      font-weight: 900;
-      margin-top: 2px;
-    }
-
-    #sideBar {
-      position: absolute;
-      top: 100px;
-      left: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 60;
-    }
-
-    .btn {
-      background: rgba(255,255,255,0.95);
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 10px 12px;
-      font-weight: 900;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.2);
-      user-select: none;
-      min-width: 92px;
-      text-align: center;
-    }
-
-    .btn:active {
-      transform: translateY(3px);
-      box-shadow: 0 5px 0 rgba(0,0,0,0.2);
-    }
-
-    #assistantPanel {
-      position: absolute;
-      bottom: 20px;
-      left: 15px;
-      right: 15px;
-      z-index: 80;
-      background: rgba(255,255,255,0.95);
-      border: 3px solid #111827;
-      border-radius: 20px;
-      padding: 12px 12px;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
-      display: none;
-    }
-
-    #assistantPanel .title {
-      font-weight: 900;
-      font-size: 14px;
-    }
-
-    #assistantPanel .msg {
-      margin-top: 6px;
-      font-size: 13px;
-      font-weight: 700;
-      opacity: 0.9;
-      line-height: 1.4;
-    }
-
-    #assistantPanel .row {
-      margin-top: 10px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .smallBtn {
-      border-radius: 14px;
-      border: 2px solid #111827;
-      background: #fef3c7;
-      font-weight: 900;
-      padding: 8px 10px;
-      cursor: pointer;
-    }
-
-    .smallBtn:active {
-      transform: scale(0.98);
-    }
-
-    #buildMenu {
-      position: absolute;
-      right: 12px;
-      top: 100px;
-      z-index: 70;
-      background: rgba(255,255,255,0.96);
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 12px;
-      width: 180px;
-      display: none;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
-    }
-
-    #buildMenu h3 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 900;
-    }
-
-    .buildItem {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 14px;
-      border: 2px solid #111827;
-      cursor: pointer;
-      font-weight: 900;
-      background: #dbeafe;
-    }
-
-    .hint {
-      font-size: 12px;
-      opacity: 0.75;
-      margin-top: 6px;
-      line-height: 1.3;
-    }
-
-    #updateBanner {
-      position: absolute;
-      top: 55px;
-      left: 15px;
-      right: 15px;
-      z-index: 99;
-      background: #22c55e;
-      color: white;
-      border: 3px solid #111827;
-      border-radius: 18px;
-      padding: 10px 12px;
-      font-weight: 900;
-      display: none;
-      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
-      cursor: pointer;
-      text-align: center;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>卡通小鎮 - 真等距3D版</title>
+<style>
+  body{
+    margin:0;
+    background: linear-gradient(#dff6ff,#f0f9ff);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans HK", Arial;
+  }
+  #wrap{
+    width:min(92vw, 820px);
+    aspect-ratio: 1 / 1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  }
+  canvas{
+    width:100%;
+    height:100%;
+    border: 4px solid #bae6fd;
+    border-radius: 24px;
+    background: #f0f9ff;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.12);
+    touch-action: manipulation;
+  }
+</style>
 </head>
 <body>
-  <div id="game-wrap">
-    <div id="updateBanner">🚀 有新版本！點我刷新更新</div>
-    <div id="hud">
-      <div class="hud-box"><div class="hud-title">🌲 木材</div><div class="hud-value" id="wood">0</div></div>
-      <div class="hud-box"><div class="hud-title">⛏️ 石材</div><div class="hud-value" id="stone">0</div></div>
-      <div class="hud-box"><div class="hud-title">⚡ 能量</div><div class="hud-value" id="energy">0</div></div>
-      <div class="hud-box"><div class="hud-title">🪙 金幣</div><div class="hud-value" id="gold">0</div></div>
-      <div class="hud-box"><div class="hud-title">💎 AENO</div><div class="hud-value" id="aeno">0</div></div>
-    </div>
-    <div id="sideBar">
-      <div class="btn" onclick="toggleBuildMenu()">🏗 建築</div>
-      <div class="btn" onclick="toggleAssistant()">🐾 助手</div>
-      <div class="btn" onclick="toggleAI()">🤖 AI建設</div>
-      <div class="btn" onclick="manualSave()">💾 保存</div>
-    </div>
-    <div id="buildMenu">
-      <h3>🏗 建築選單</h3>
-      <div class="hint">點選建築後，再點地圖空地放置。</div>
-      <div class="buildItem" onclick="selectBuild('house')">🏠 民房</div>
-      <div class="buildItem" onclick="selectBuild('farm')">🌾 農田</div>
-      <div class="buildItem" onclick="selectBuild('lumber')">🌲 伐木場</div>
-      <div class="buildItem" onclick="selectBuild('quarry')">⛏️ 礦場</div>
-      <div class="buildItem" onclick="selectBuild('power')">⚡ 發電站</div>
-      <div class="buildItem" onclick="selectBuild('market')">🏦 市場</div>
-      <div class="buildItem" onclick="selectBuild('wall')">🧱 城牆</div>
-      <div class="hint">📌 你可以拖動地圖、雙指縮放。AI助手會半自動幫你建設。</div>
-    </div>
-    <div id="assistantPanel">
-      <div class="title">🐾 AI助手：Lupus Minor</div>
-      <div class="msg" id="assistantMsg">你好！我會幫你建設基地～</div>
-      <div class="row">
-        <button class="smallBtn" onclick="assistantAsk('what')">點玩？</button>
-        <button class="smallBtn" onclick="assistantAsk('build')">點起建築？</button>
-        <button class="smallBtn" onclick="assistantAsk('aeno')">點挖AENO？</button>
-        <button class="smallBtn" onclick="assistantAsk('beast')">獸潮係乜？</button>
-        <button class="smallBtn" onclick="assistantAsk('close')">關閉</button>
-      </div>
-    </div>
-    <div id="phaser-container"></div>
-  </div>
+<div id="wrap">
+  <canvas id="canvas" width="900" height="900"></canvas>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-  <script src="characters.js"></script>
-  <script src="game.js"></script>
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const W = canvas.width;
+const H = canvas.height;
 
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").then(reg=>{
-        reg.addEventListener("updatefound",()=>{
-          const nw=reg.installing;
-          nw.addEventListener("statechange",()=>{
-            if(nw.state==="installed"&&navigator.serviceWorker.controller){
-              document.getElementById("updateBanner").style.display="block";
-            }
-          });
-        });
-      });
+const gridSize = 110;
+const isoAngle = Math.PI / 6;
+
+const lightDir = { x: -0.6, y: -1.0 }; // 左上光源
+
+const colors = {
+  skyTop: "#dff6ff",
+  skyBottom: "#f0f9ff",
+
+  grassTop: "#dcfce7",
+  grassSideL: "#86efac",
+  grassSideR: "#4ade80",
+  grassLine: "#bbf7d0",
+
+  roadTop: "#fef9c3",
+  roadLine: "#fde68a",
+
+  house: {
+    top: "#fde68a",
+    left: "#fef3c7",
+    right: "#fcd34d",
+    roof: "#fb923c",
+    roofDark: "#f97316",
+    door: "#b45309",
+    window: "#bfdbfe",
+    trim: "#fff7ed"
+  },
+
+  dome: {
+    top: "#93c5fd",
+    left: "#60a5fa",
+    right: "#3b82f6",
+    baseTop: "#fde68a",
+    baseLeft: "#fef3c7",
+    baseRight: "#fcd34d",
+    trim: "#fbbf24",
+    door: "#92400e",
+    window: "#dbeafe"
+  },
+
+  tree: {
+    trunk: "#92400e",
+    trunkDark: "#78350f",
+    leaf1: "#86efac",
+    leaf2: "#4ade80",
+    leaf3: "#22c55e",
+    highlight: "rgba(255,255,255,0.35)"
+  },
+
+  shadow: "rgba(0,0,0,0.18)"
+};
+
+function gridToScreen(r, c){
+  const x = (c - r) * (gridSize * Math.cos(isoAngle));
+  const y = (c + r) * (gridSize * Math.sin(isoAngle));
+  return { x: W/2 + x, y: 210 + y };
+}
+
+// 畫菱形 tile（等距）
+function drawIsoTile(x, y, size, fill, stroke){
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
+  ctx.lineTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+  ctx.closePath();
+  ctx.fill();
+
+  if(stroke){
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+// 畫立體 tile（有厚度）
+function drawIsoBlock(x, y, size, height, topColor, leftColor, rightColor, stroke){
+  // top
+  drawIsoTile(x, y, size, topColor, stroke);
+
+  // left face
+  ctx.fillStyle = leftColor;
+  ctx.beginPath();
+  ctx.moveTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
+  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle) + height);
+  ctx.lineTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle) + height);
+  ctx.closePath();
+  ctx.fill();
+
+  // right face
+  ctx.fillStyle = rightColor;
+  ctx.beginPath();
+  ctx.moveTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
+  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle) + height);
+  ctx.lineTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle) + height);
+  ctx.closePath();
+  ctx.fill();
+
+  // outline
+  if(stroke){
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+    ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
+    ctx.lineTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+    ctx.stroke();
+  }
+}
+
+function drawSoftShadow(x, y, rx, ry, alpha=0.18){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawGrass(r,c){
+  const {x,y} = gridToScreen(r,c);
+
+  const h = 18 + ((r+c)%2)*4;
+  drawIsoBlock(
+    x, y,
+    gridSize,
+    h,
+    colors.grassTop,
+    colors.grassSideL,
+    colors.grassSideR,
+    colors.grassLine
+  );
+
+  // 草地紋理點點
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = "#16a34a";
+  for(let i=0;i<8;i++){
+    const px = x + (Math.random()*2-1)*35;
+    const py = y + 40 + Math.random()*35;
+    ctx.beginPath();
+    ctx.arc(px, py, 2.2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawRoad(r,c){
+  const {x,y} = gridToScreen(r,c);
+
+  ctx.save();
+  drawIsoTile(x,y,gridSize, colors.roadTop, colors.roadLine);
+
+  // 小路條紋
+  ctx.globalAlpha = 0.25;
+  ctx.strokeStyle = "#f59e0b";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x-20, y+40);
+  ctx.lineTo(x+20, y+55);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// 立體小屋（有屋頂面 + 牆面）
+function drawHouse(r,c, pulse=0){
+  const {x,y} = gridToScreen(r,c);
+  const baseY = y - 10 - pulse;
+
+  drawSoftShadow(x, baseY+120, 60, 22, 0.22);
+
+  // base block
+  drawIsoBlock(
+    x, baseY+55,
+    60,
+    55,
+    colors.house.left,
+    "#fef9c3",
+    "#fcd34d",
+    null
+  );
+
+  // roof top
+  ctx.save();
+  ctx.translate(x, baseY+15);
+
+  // roof shadow
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.ellipse(0, 90, 60, 18, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // roof
+  const roofGrad = ctx.createLinearGradient(-60, -50, 60, 80);
+  roofGrad.addColorStop(0, colors.house.roof);
+  roofGrad.addColorStop(1, colors.house.roofDark);
+
+  ctx.fillStyle = roofGrad;
+  ctx.beginPath();
+  ctx.moveTo(0, -70);
+  ctx.quadraticCurveTo(80, -10, 60, 40);
+  ctx.quadraticCurveTo(0, 70, -60, 40);
+  ctx.quadraticCurveTo(-80, -10, 0, -70);
+  ctx.closePath();
+  ctx.fill();
+
+  // roof highlight
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.ellipse(-20, -20, 28, 14, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // walls (front)
+  const wallGrad = ctx.createLinearGradient(-50, 30, 50, 140);
+  wallGrad.addColorStop(0, colors.house.left);
+  wallGrad.addColorStop(1, "#fde68a");
+
+  ctx.fillStyle = wallGrad;
+  ctx.beginPath();
+  ctx.roundRect(-52, 35, 104, 85, 18);
+  ctx.fill();
+
+  // trim
+  ctx.strokeStyle = colors.house.trim;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.roundRect(-52, 35, 104, 85, 18);
+  ctx.stroke();
+
+  // door
+  ctx.fillStyle = colors.house.door;
+  ctx.beginPath();
+  ctx.roundRect(-16, 78, 32, 42, 10);
+  ctx.fill();
+
+  // door knob
+  ctx.fillStyle = "#fef3c7";
+  ctx.beginPath();
+  ctx.arc(8, 98, 4, 0, Math.PI*2);
+  ctx.fill();
+
+  // windows
+  ctx.fillStyle = colors.house.window;
+  ctx.beginPath();
+  ctx.roundRect(-38, 58, 26, 22, 8);
+  ctx.roundRect(12, 58, 26, 22, 8);
+  ctx.fill();
+
+  ctx.strokeStyle = "#60a5fa";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // glass shine
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.ellipse(-30, 65, 7, 14, 0.5, 0, Math.PI*2);
+  ctx.ellipse(20, 65, 7, 14, 0.5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+// 圓頂屋（更像手遊神殿）
+function drawDome(r,c, pulse=0){
+  const {x,y} = gridToScreen(r,c);
+  const baseY = y - 12 - pulse;
+
+  drawSoftShadow(x, baseY+118, 58, 20, 0.22);
+
+  // base platform
+  drawIsoBlock(
+    x, baseY+60,
+    62,
+    55,
+    colors.dome.baseTop,
+    colors.dome.baseLeft,
+    colors.dome.baseRight,
+    null
+  );
+
+  // dome
+  ctx.save();
+  ctx.translate(x, baseY+30);
+
+  // main dome
+  const domeGrad = ctx.createRadialGradient(-18, -35, 10, 0, 0, 85);
+  domeGrad.addColorStop(0, "#dbeafe");
+  domeGrad.addColorStop(0.45, colors.dome.top);
+  domeGrad.addColorStop(1, colors.dome.right);
+
+  ctx.fillStyle = domeGrad;
+  ctx.beginPath();
+  ctx.arc(0, 10, 58, 0, Math.PI*2);
+  ctx.fill();
+
+  // trim ring
+  ctx.strokeStyle = colors.dome.trim;
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.arc(0, 10, 50, 0, Math.PI*2);
+  ctx.stroke();
+
+  // top gem
+  const gemGrad = ctx.createRadialGradient(-4, -55, 0, 0, -55, 18);
+  gemGrad.addColorStop(0, "#fff7ed");
+  gemGrad.addColorStop(1, colors.dome.trim);
+  ctx.fillStyle = gemGrad;
+  ctx.beginPath();
+  ctx.arc(0, -55, 14, 0, Math.PI*2);
+  ctx.fill();
+
+  // door
+  ctx.fillStyle = colors.dome.door;
+  ctx.beginPath();
+  ctx.roundRect(-18, 55, 36, 45, 12);
+  ctx.fill();
+
+  // windows
+  ctx.fillStyle = colors.dome.window;
+  ctx.beginPath();
+  ctx.arc(-28, 28, 12, 0, Math.PI*2);
+  ctx.arc(28, 28, 12, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // highlight
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.ellipse(-20, -10, 20, 12, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// 樹（更立體 + 搖動）
+function drawTree(r,c, sway=0){
+  const {x,y} = gridToScreen(r,c);
+  const tx = x + 45;
+  const ty = y + 95;
+
+  drawSoftShadow(tx, ty+45, 28, 12, 0.20);
+
+  // trunk
+  ctx.save();
+  ctx.translate(tx, ty);
+
+  ctx.fillStyle = colors.tree.trunkDark;
+  ctx.beginPath();
+  ctx.roundRect(-10, 0, 20, 44, 8);
+  ctx.fill();
+
+  ctx.fillStyle = colors.tree.trunk;
+  ctx.beginPath();
+  ctx.roundRect(-8, 0, 16, 44, 7);
+  ctx.fill();
+
+  // leaves
+  ctx.rotate(sway);
+
+  const g1 = ctx.createRadialGradient(-10, -42, 5, 0, -40, 55);
+  g1.addColorStop(0, colors.tree.leaf1);
+  g1.addColorStop(1, colors.tree.leaf3);
+
+  ctx.fillStyle = g1;
+  ctx.beginPath();
+  ctx.arc(0, -45, 38, 0, Math.PI*2);
+  ctx.fill();
+
+  const g2 = ctx.createRadialGradient(-25, -25, 5, -18, -25, 45);
+  g2.addColorStop(0, colors.tree.leaf1);
+  g2.addColorStop(1, colors.tree.leaf2);
+
+  ctx.fillStyle = g2;
+  ctx.beginPath();
+  ctx.arc(-20, -22, 28, 0, Math.PI*2);
+  ctx.fill();
+
+  const g3 = ctx.createRadialGradient(25, -25, 5, 18, -25, 45);
+  g3.addColorStop(0, colors.tree.leaf1);
+  g3.addColorStop(1, colors.tree.leaf2);
+
+  ctx.fillStyle = g3;
+  ctx.beginPath();
+  ctx.arc(20, -22, 28, 0, Math.PI*2);
+  ctx.fill();
+
+  // highlight
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.ellipse(-12, -55, 12, 8, -0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+// 雲（慢慢飄）
+const clouds = [
+  { x: 120, y: 120, s: 1.2, spd: 0.22 },
+  { x: 500, y: 85, s: 0.9, spd: 0.16 },
+  { x: 760, y: 150, s: 1.1, spd: 0.19 },
+];
+
+function drawCloud(cx, cy, scale){
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(0, 0, 28, 0, Math.PI*2);
+  ctx.arc(26, -10, 22, 0, Math.PI*2);
+  ctx.arc(50, 0, 26, 0, Math.PI*2);
+  ctx.arc(25, 12, 24, 0, Math.PI*2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = "#93c5fd";
+  ctx.beginPath();
+  ctx.ellipse(25, 10, 45, 12, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+let t = 0;
+let clicked = null;
+
+const buildings = [
+  { type:"dome", r:1, c:2 },
+  { type:"house", r:2, c:3 },
+  { type:"dome", r:2, c:1 },
+  { type:"house", r:3, c:2 },
+];
+
+function hitTest(mx,my){
+  // 簡化碰撞：用 screen pos + 半徑判定
+  for(const b of buildings){
+    const p = gridToScreen(b.r, b.c);
+    const dx = mx - p.x;
+    const dy = my - (p.y+40);
+    if(dx*dx + dy*dy < 85*85){
+      return b;
     }
-    document.getElementById("updateBanner").onclick=()=>location.reload();
-  </script>
+  }
+  return null;
+}
+
+canvas.addEventListener("click", (e)=>{
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  const b = hitTest(mx,my);
+  if(b){
+    clicked = { b, time: 0 };
+  }
+});
+
+function drawBackground(){
+  const sky = ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0, colors.skyTop);
+  sky.addColorStop(1, colors.skyBottom);
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,W,H);
+
+  // 遠景淡淡山丘
+  ctx.globalAlpha = 0.20;
+  ctx.fillStyle = "#60a5fa";
+  ctx.beginPath();
+  ctx.moveTo(0, 280);
+  ctx.quadraticCurveTo(220, 210, 420, 270);
+  ctx.quadraticCurveTo(650, 350, 900, 250);
+  ctx.lineTo(900, 420);
+  ctx.lineTo(0, 420);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawScene(){
+  drawBackground();
+
+  // clouds
+  for(const cl of clouds){
+    drawCloud(cl.x, cl.y, cl.s);
+  }
+
+  // ground tiles
+  for(let r=0;r<5;r++){
+    for(let c=0;c<5;c++){
+      if((r===2 && c===2) || (r===2 && c===3) || (r===3 && c===2)){
+        drawRoad(r,c);
+      }else{
+        drawGrass(r,c);
+      }
+    }
+  }
+
+  // animate pulses
+  const sway = Math.sin(t*0.03)*0.06;
+
+  // buildings back-to-front order
+  for(const b of buildings){
+    let pulse = 0;
+    if(clicked && clicked.b === b){
+      pulse = Math.sin(clicked.time*0.35)*10 * Math.max(0, 1 - clicked.time/30);
+    }
+
+    if(b.type==="dome") drawDome(b.r,b.c, pulse);
+    if(b.type==="house") drawHouse(b.r,b.c, pulse);
+
+    drawTree(b.r,b.c, sway);
+  }
+
+  // title UI
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.roundRect(24, 20, 360, 72, 18);
+  ctx.fill();
+
+  ctx.strokeStyle = "#bae6fd";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = "#0f172a";
+  ctx.font = "bold 26px system-ui";
+  ctx.fillText("卡通小鎮 · 真等距3D", 44, 55);
+
+  ctx.fillStyle = "#2563eb";
+  ctx.font = "16px system-ui";
+  ctx.fillText("點建築會彈一下 ✨", 44, 78);
+  ctx.restore();
+}
+
+function update(){
+  t++;
+
+  // cloud movement
+  for(const cl of clouds){
+    cl.x += cl.spd;
+    if(cl.x > W + 120) cl.x = -140;
+  }
+
+  if(clicked){
+    clicked.time++;
+    if(clicked.time > 35) clicked = null;
+  }
+}
+
+function loop(){
+  update();
+  drawScene();
+  requestAnimationFrame(loop);
+}
+
+// Polyfill: roundRect (某些舊 webview 可能無)
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    if(w<2*r) r=w/2;
+    if(h<2*r) r=h/2;
+    this.beginPath();
+    this.moveTo(x+r, y);
+    this.arcTo(x+w, y, x+w, y+h, r);
+    this.arcTo(x+w, y+h, x, y+h, r);
+    this.arcTo(x, y+h, x, y, r);
+    this.arcTo(x, y, x+w, y, r);
+    this.closePath();
+    return this;
+  };
+}
+
+loop();
+</script>
 </body>
 </html>
