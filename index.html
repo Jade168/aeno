@@ -2,864 +2,301 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>AENO - Cartoon Civilization V1</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>AENO - 手遊卡通育成版 V2</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+
   <style>
-    * { box-sizing: border-box; margin:0; padding:0; font-family: "Arial", "Microsoft JhengHei", sans-serif; }
-    body {
-      background: linear-gradient(#7dd3fc, #d9f99d);
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0b1220;
       overflow: hidden;
+      font-family: Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
     }
 
-    /* ===== Phone Screen Container ===== */
-    #phone {
+    #game-wrap {
       width: 100vw;
       height: 100vh;
-      max-width: 520px;
-      margin: auto;
-      background: #9ae6b4;
       position: relative;
-      overflow: hidden;
-      border-left: 2px solid rgba(0,0,0,0.08);
-      border-right: 2px solid rgba(0,0,0,0.08);
     }
 
-    /* ===== Top HUD ===== */
+    /* 手遊風 HUD */
     #hud {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 10px;
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(8px);
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
       z-index: 50;
-      border-bottom: 2px solid rgba(0,0,0,0.08);
+      pointer-events: none;
     }
 
-    #hud h1 {
+    .hud-box {
+      background: rgba(255,255,255,0.90);
+      border: 3px solid #111827;
+      border-radius: 18px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 0 rgba(0,0,0,0.15);
+      pointer-events: auto;
+    }
+
+    .hud-title {
+      font-size: 12px;
+      font-weight: 900;
+      opacity: 0.7;
+    }
+
+    .hud-value {
       font-size: 16px;
       font-weight: 900;
-      color: #14532d;
-      margin-bottom: 6px;
+      margin-top: 2px;
     }
 
-    #resources {
+    /* 左側功能列 */
+    #sideBar {
+      position: absolute;
+      top: 100px;
+      left: 10px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 12px;
-    }
-
-    .res {
-      background: rgba(0,0,0,0.06);
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .res span {
-      color: #0f766e;
-      font-weight: 900;
-    }
-
-    /* ===== Game World ===== */
-    #world {
-      position: absolute;
-      top: 88px;
-      left: 0;
-      width: 100%;
-      height: calc(100% - 170px);
-      background: linear-gradient(#86efac, #bbf7d0);
-      overflow: hidden;
-    }
-
-    /* ===== Ground decorations ===== */
-    .tree {
-      position: absolute;
-      width: 30px;
-      height: 40px;
-      background: radial-gradient(circle at 50% 20%, #166534, #14532d);
-      border-radius: 50% 50% 40% 40%;
-      box-shadow: 0 3px 0 rgba(0,0,0,0.15);
-    }
-    .tree::after {
-      content:"";
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 10px;
-      height: 15px;
-      background: #7c2d12;
-      border-radius: 4px;
-    }
-
-    .rock {
-      position: absolute;
-      width: 28px;
-      height: 18px;
-      background: #94a3b8;
-      border-radius: 40% 40% 50% 50%;
-      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12);
-    }
-
-    /* ===== Building Slots ===== */
-    .slot {
-      position: absolute;
-      width: 70px;
-      height: 70px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.4);
-      border: 2px dashed rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 900;
-      color: rgba(0,0,0,0.6);
-    }
-
-    /* ===== Buildings ===== */
-    .building {
-      width: 66px;
-      height: 66px;
-      border-radius: 16px;
-      position: relative;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding-bottom: 6px;
-      font-size: 10px;
-      font-weight: 900;
-      color: #0f172a;
-      box-shadow: 0 5px 0 rgba(0,0,0,0.12);
-      border: 2px solid rgba(0,0,0,0.15);
-    }
-
-    .building .lv {
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      background: #facc15;
-      padding: 4px 6px;
-      border-radius: 999px;
-      font-size: 10px;
-      border: 2px solid rgba(0,0,0,0.15);
-    }
-
-    .house { background: linear-gradient(#fde68a, #fbbf24); }
-    .farm { background: linear-gradient(#bef264, #65a30d); }
-    .mine { background: linear-gradient(#cbd5e1, #64748b); }
-    .factory { background: linear-gradient(#93c5fd, #2563eb); }
-    .lab { background: linear-gradient(#fbcfe8, #db2777); }
-    .wall { background: linear-gradient(#fecaca, #dc2626); }
-
-    /* ===== Characters ===== */
-    .char {
-      position: absolute;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      box-shadow: 0 4px 0 rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      color: white;
-      user-select: none;
-    }
-
-    #player {
-      background: radial-gradient(circle at 30% 30%, #fb7185, #be123c);
-      z-index: 10;
-    }
-
-    #assistant {
-      background: radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8);
-      z-index: 9;
-    }
-
-    .animal {
-      background: radial-gradient(circle at 30% 30%, #fbbf24, #b45309);
-      z-index: 5;
-      width: 22px;
-      height: 22px;
-      font-size: 12px;
-    }
-
-    /* ===== Bottom Menu ===== */
-    #menu {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 82px;
-      background: rgba(255,255,255,0.9);
-      border-top: 2px solid rgba(0,0,0,0.08);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
+      flex-direction: column;
+      gap: 10px;
       z-index: 60;
-      backdrop-filter: blur(8px);
     }
 
     .btn {
-      background: #0f766e;
-      color: white;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 18px;
-      font-weight: 900;
-      font-size: 12px;
-      box-shadow: 0 4px 0 rgba(0,0,0,0.15);
-      cursor: pointer;
-    }
-    .btn:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 rgba(0,0,0,0.15);
-    }
-
-    .btn2 {
-      background: #7c3aed;
-    }
-
-    .btnDanger {
-      background: #dc2626;
-    }
-
-    /* ===== Popups ===== */
-    #popup {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%,-50%);
-      width: 92%;
-      max-width: 440px;
       background: rgba(255,255,255,0.95);
-      border-radius: 22px;
-      border: 2px solid rgba(0,0,0,0.12);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-      padding: 14px;
-      z-index: 100;
+      border: 3px solid #111827;
+      border-radius: 18px;
+      padding: 10px 12px;
+      font-weight: 900;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+      user-select: none;
+      min-width: 92px;
+      text-align: center;
+    }
+
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+    }
+
+    /* AI助手泡泡 */
+    #assistantPanel {
+      position: absolute;
+      bottom: 20px;
+      left: 15px;
+      right: 15px;
+      z-index: 80;
+      background: rgba(255,255,255,0.95);
+      border: 3px solid #111827;
+      border-radius: 20px;
+      padding: 12px 12px;
+      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
       display: none;
     }
 
-    #popup h2 {
-      font-size: 16px;
-      margin-bottom: 8px;
-      color: #0f172a;
+    #assistantPanel .title {
+      font-weight: 900;
+      font-size: 14px;
     }
 
-    #popup p {
+    #assistantPanel .msg {
+      margin-top: 6px;
       font-size: 13px;
-      color: #334155;
-      margin-bottom: 10px;
+      font-weight: 700;
+      opacity: 0.9;
       line-height: 1.4;
     }
 
-    #popup .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    #popup .closeBtn {
+    #assistantPanel .row {
       margin-top: 10px;
-      width: 100%;
-      background: #334155;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    /* ===== AI Speech Bubble ===== */
-    #bubble {
-      position: absolute;
-      bottom: 95px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 92%;
-      max-width: 460px;
-      background: rgba(255,255,255,0.92);
-      padding: 10px 12px;
-      border-radius: 20px;
-      border: 2px solid rgba(0,0,0,0.12);
-      font-size: 13px;
-      font-weight: 800;
-      color: #0f172a;
-      z-index: 55;
-      display: none;
-    }
-
-    #bubble span {
-      color: #2563eb;
-    }
-
-    /* ===== Build Button list ===== */
-    .buildOption {
-      flex: 1;
-      min-width: 120px;
-      background: #f1f5f9;
-      padding: 10px;
-      border-radius: 18px;
-      border: 2px solid rgba(0,0,0,0.08);
+    .smallBtn {
+      border-radius: 14px;
+      border: 2px solid #111827;
+      background: #fef3c7;
       font-weight: 900;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    .smallBtn:active {
+      transform: scale(0.98);
+    }
+
+    /* 建築選單 */
+    #buildMenu {
+      position: absolute;
+      right: 12px;
+      top: 100px;
+      z-index: 70;
+      background: rgba(255,255,255,0.96);
+      border: 3px solid #111827;
+      border-radius: 18px;
+      padding: 12px;
+      width: 180px;
+      display: none;
+      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
+    }
+
+    #buildMenu h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .buildItem {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 2px solid #111827;
+      cursor: pointer;
+      font-weight: 900;
+      background: #dbeafe;
+    }
+
+    .buildItem:hover {
+      filter: brightness(1.03);
+    }
+
+    .hint {
       font-size: 12px;
+      opacity: 0.75;
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+
+    /* 更新提示 */
+    #updateBanner {
+      position: absolute;
+      top: 55px;
+      left: 15px;
+      right: 15px;
+      z-index: 99;
+      background: #22c55e;
+      color: white;
+      border: 3px solid #111827;
+      border-radius: 18px;
+      padding: 10px 12px;
+      font-weight: 900;
+      display: none;
+      box-shadow: 0 10px 0 rgba(0,0,0,0.2);
       cursor: pointer;
       text-align: center;
     }
 
-    .buildOption small {
-      display:block;
-      font-size: 11px;
-      font-weight: 700;
-      opacity: 0.8;
-      margin-top: 4px;
-    }
-
   </style>
 </head>
-
 <body>
-<div id="phone">
+  <div id="game-wrap">
 
-  <div id="hud">
-    <h1>🌍 AENO 世界 - 育成文明（V1）</h1>
-    <div id="resources">
-      <div class="res">木材: <span id="wood">0</span></div>
-      <div class="res">石材: <span id="stone">0</span></div>
-      <div class="res">食物: <span id="food">0</span></div>
-      <div class="res">金幣: <span id="gold">0</span></div>
-      <div class="res">AENO: <span id="aeno">0</span></div>
-      <div class="res">人口: <span id="pop">0</span></div>
+    <div id="updateBanner">🚀 有新版本！點我刷新更新</div>
+
+    <div id="hud">
+      <div class="hud-box">
+        <div class="hud-title">🌲 木材</div>
+        <div class="hud-value" id="wood">0</div>
+      </div>
+
+      <div class="hud-box">
+        <div class="hud-title">⛏️ 石材</div>
+        <div class="hud-value" id="stone">0</div>
+      </div>
+
+      <div class="hud-box">
+        <div class="hud-title">⚡ 能量</div>
+        <div class="hud-value" id="energy">0</div>
+      </div>
+
+      <div class="hud-box">
+        <div class="hud-title">🪙 金幣</div>
+        <div class="hud-value" id="gold">0</div>
+      </div>
+
+      <div class="hud-box">
+        <div class="hud-title">💎 AENO</div>
+        <div class="hud-value" id="aeno">0</div>
+      </div>
     </div>
+
+    <div id="sideBar">
+      <div class="btn" onclick="toggleBuildMenu()">🏗 建築</div>
+      <div class="btn" onclick="toggleAssistant()">🐾 助手</div>
+      <div class="btn" onclick="toggleAI()">🤖 AI建設</div>
+      <div class="btn" onclick="manualSave()">💾 保存</div>
+    </div>
+
+    <div id="buildMenu">
+      <h3>🏗 建築選單</h3>
+      <div class="hint">點選建築後，再點地圖空地放置。</div>
+
+      <div class="buildItem" onclick="selectBuild('house')">🏠 民房</div>
+      <div class="buildItem" onclick="selectBuild('farm')">🌾 農田</div>
+      <div class="buildItem" onclick="selectBuild('lumber')">🌲 伐木場</div>
+      <div class="buildItem" onclick="selectBuild('quarry')">⛏️ 礦場</div>
+      <div class="buildItem" onclick="selectBuild('power')">⚡ 發電站</div>
+      <div class="buildItem" onclick="selectBuild('market')">🏦 市場</div>
+      <div class="buildItem" onclick="selectBuild('wall')">🧱 城牆</div>
+
+      <div class="hint" style="margin-top:10px;">
+        📌 你可以拖動地圖、雙指縮放。<br>
+        AI助手會半自動幫你建設（最多用50%資源）。
+      </div>
+    </div>
+
+    <div id="assistantPanel">
+      <div class="title">🐾 AI助手：Lupus Minor</div>
+      <div class="msg" id="assistantMsg">你好！我會幫你建設基地，記得留資源呀～</div>
+
+      <div class="row">
+        <button class="smallBtn" onclick="assistantAsk('what')">點玩？</button>
+        <button class="smallBtn" onclick="assistantAsk('build')">點起建築？</button>
+        <button class="smallBtn" onclick="assistantAsk('aeno')">點挖AENO？</button>
+        <button class="smallBtn" onclick="assistantAsk('beast')">獸潮係乜？</button>
+        <button class="smallBtn" onclick="assistantAsk('close')">關閉</button>
+      </div>
+    </div>
+
+    <div id="phaser-container"></div>
   </div>
 
-  <div id="world"></div>
+  <!-- Phaser 3 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <script src="game.js"></script>
 
-  <div id="bubble"></div>
+  <script>
+    // PWA 安裝 & Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").then(reg => {
+        console.log("SW registered", reg);
 
-  <div id="menu">
-    <button class="btn" onclick="openBuildMenu()">🏗 建築</button>
-    <button class="btn btn2" onclick="collectAll()">💰 收取</button>
-    <button class="btn" onclick="openUpgradeMenu()">⬆ 升級</button>
-    <button class="btn btnDanger" onclick="toggleAI()">🤖 AI</button>
-  </div>
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              document.getElementById("updateBanner").style.display = "block";
+            }
+          });
+        });
 
-  <div id="popup"></div>
-
-</div>
-
-<script>
-/* =========================================================
-   AENO V1 - Cartoon Civilization Core
-   - Offline Save
-   - Animated world
-   - AI assistant semi-auto build (50% resource cap)
-========================================================= */
-
-const SAVE_KEY = "AENO_V1_SAVE";
-
-/* ===== Game State ===== */
-let state = {
-  wood: 120,
-  stone: 80,
-  food: 90,
-  gold: 50,
-  aeno: 0,
-  pop: 5,
-
-  aiEnabled: true,
-  lastAIMove: 0,
-  lastAIAction: 0,
-
-  buildings: {
-    house: { lv: 0 },
-    farm: { lv: 0 },
-    mine: { lv: 0 },
-    factory: { lv: 0 },
-    lab: { lv: 0 },
-    wall: { lv: 0 },
-  },
-
-  slots: [
-    { id:"S1", x: 30, y: 40, built: null },
-    { id:"S2", x: 140, y: 40, built: null },
-    { id:"S3", x: 250, y: 40, built: null },
-
-    { id:"S4", x: 30, y: 140, built: null },
-    { id:"S5", x: 140, y: 140, built: null },
-    { id:"S6", x: 250, y: 140, built: null },
-
-    { id:"S7", x: 30, y: 240, built: null },
-    { id:"S8", x: 140, y: 240, built: null },
-    { id:"S9", x: 250, y: 240, built: null },
-  ]
-};
-
-/* ===== Load Save ===== */
-function loadGame(){
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if(raw){
-      const saved = JSON.parse(raw);
-      if(saved && typeof saved === "object"){
-        state = saved;
-      }
-    }
-  } catch(e){}
-}
-
-/* ===== Save Game ===== */
-function saveGame(){
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-  } catch(e){}
-}
-
-/* ===== UI Update ===== */
-function updateHUD(){
-  document.getElementById("wood").innerText = Math.floor(state.wood);
-  document.getElementById("stone").innerText = Math.floor(state.stone);
-  document.getElementById("food").innerText = Math.floor(state.food);
-  document.getElementById("gold").innerText = Math.floor(state.gold);
-  document.getElementById("aeno").innerText = state.aeno.toFixed(4);
-  document.getElementById("pop").innerText = Math.floor(state.pop);
-}
-
-/* ===== World Setup ===== */
-const world = document.getElementById("world");
-
-function spawnDecor(){
-  for(let i=0;i<8;i++){
-    const t = document.createElement("div");
-    t.className = "tree";
-    t.style.left = Math.random()*90 + "%";
-    t.style.top = Math.random()*90 + "%";
-    world.appendChild(t);
-  }
-
-  for(let i=0;i<6;i++){
-    const r = document.createElement("div");
-    r.className = "rock";
-    r.style.left = Math.random()*90 + "%";
-    r.style.top = Math.random()*90 + "%";
-    world.appendChild(r);
-  }
-}
-
-/* ===== Building Slots Render ===== */
-function renderSlots(){
-  world.querySelectorAll(".slot").forEach(s => s.remove());
-
-  state.slots.forEach(slot => {
-    const div = document.createElement("div");
-    div.className = "slot";
-    div.style.left = slot.x + "px";
-    div.style.top = slot.y + "px";
-    div.dataset.slot = slot.id;
-
-    if(slot.built){
-      div.innerHTML = "";
-      const b = document.createElement("div");
-      b.className = "building " + slot.built;
-      const lv = state.buildings[slot.built].lv;
-      b.innerHTML = `${slot.built.toUpperCase()} <div class="lv">Lv${lv}</div>`;
-      div.appendChild(b);
-    }else{
-      div.innerText = "空地";
+      }).catch(err => console.error("SW error", err));
     }
 
-    div.onclick = ()=> slotClicked(slot.id);
-    world.appendChild(div);
-  });
-}
+    document.getElementById("updateBanner").onclick = () => {
+      location.reload();
+    };
+  </script>
 
-/* ===== Player & Assistant ===== */
-const player = document.createElement("div");
-player.id = "player";
-player.className = "char";
-player.innerText = "🙂";
-world.appendChild(player);
-
-const assistant = document.createElement("div");
-assistant.id = "assistant";
-assistant.className = "char";
-assistant.innerText = "🐾";
-world.appendChild(assistant);
-
-/* ===== Animals ===== */
-let animals = [];
-
-function spawnAnimals(){
-  for(let i=0;i<5;i++){
-    const a = document.createElement("div");
-    a.className = "char animal";
-    a.innerText = (Math.random() > 0.5) ? "🐦" : "🐿️";
-    a.style.left = (Math.random()*280+20) + "px";
-    a.style.top = (Math.random()*280+30) + "px";
-    world.appendChild(a);
-    animals.push({ el:a, vx:(Math.random()*0.6-0.3), vy:(Math.random()*0.6-0.3) });
-  }
-}
-
-/* ===== Movement ===== */
-let playerPos = { x: 180, y: 240 };
-let assistantPos = { x: 140, y: 270 };
-
-function clamp(val, min, max){ return Math.max(min, Math.min(max,val)); }
-
-function movePlayerTo(x,y){
-  playerPos.x = clamp(x, 0, world.clientWidth-34);
-  playerPos.y = clamp(y, 0, world.clientHeight-34);
-}
-
-/* Tap to move player */
-world.addEventListener("click", (e)=>{
-  const rect = world.getBoundingClientRect();
-  const x = e.clientX - rect.left - 17;
-  const y = e.clientY - rect.top - 17;
-  movePlayerTo(x,y);
-});
-
-/* ===== Speech Bubble ===== */
-function say(text){
-  const bubble = document.getElementById("bubble");
-  bubble.style.display = "block";
-  bubble.innerHTML = "🐾 AI助手：<span>" + text + "</span>";
-  setTimeout(()=>{ bubble.style.display="none"; }, 5000);
-}
-
-/* ===== Popup ===== */
-function openPopup(title, html){
-  const p = document.getElementById("popup");
-  p.style.display = "block";
-  p.innerHTML = `
-    <h2>${title}</h2>
-    <div>${html}</div>
-    <button class="btn closeBtn" onclick="closePopup()">關閉</button>
-  `;
-}
-
-function closePopup(){
-  document.getElementById("popup").style.display = "none";
-}
-
-/* ===== Slot Click ===== */
-function slotClicked(slotId){
-  const slot = state.slots.find(s=>s.id===slotId);
-  if(!slot) return;
-
-  if(slot.built){
-    say("呢度係 " + slot.built.toUpperCase() + "，你可以用【升級】提升等級。");
-  }else{
-    say("呢塊地係空地，可以起民房/農田/礦場/工廠。");
-  }
-}
-
-/* ===== Build Menu ===== */
-function openBuildMenu(){
-  let html = `
-    <p>選擇你想起嘅建築：</p>
-    <div class="row">
-      <div class="buildOption" onclick="build('house')">🏠 民房<br><small>木 60 / 石 20</small></div>
-      <div class="buildOption" onclick="build('farm')">🌾 農田<br><small>木 40 / 食 10</small></div>
-      <div class="buildOption" onclick="build('mine')">⛏ 礦場<br><small>木 30 / 石 60</small></div>
-      <div class="buildOption" onclick="build('factory')">🏭 工廠<br><small>木 80 / 石 80 / 金 40</small></div>
-      <div class="buildOption" onclick="build('lab')">🧪 研究所<br><small>木 100 / 石 50 / 金 80</small></div>
-      <div class="buildOption" onclick="build('wall')">🧱 城牆<br><small>石 120 / 金 20</small></div>
-    </div>
-  `;
-  openPopup("🏗 建築菜單", html);
-}
-
-/* ===== Build Costs ===== */
-const COSTS = {
-  house: { wood:60, stone:20, food:0, gold:0 },
-  farm: { wood:40, stone:0, food:10, gold:0 },
-  mine: { wood:30, stone:60, food:0, gold:0 },
-  factory: { wood:80, stone:80, food:0, gold:40 },
-  lab: { wood:100, stone:50, food:0, gold:80 },
-  wall: { wood:0, stone:120, food:0, gold:20 },
-};
-
-/* ===== Build Logic ===== */
-function build(type){
-  const emptySlot = state.slots.find(s=>!s.built);
-  if(!emptySlot){
-    say("冇空地啦！升級建築先。");
-    return;
-  }
-
-  const c = COSTS[type];
-  if(state.wood < c.wood || state.stone < c.stone || state.food < c.food || state.gold < c.gold){
-    say("資源不足，未能建築。");
-    return;
-  }
-
-  state.wood -= c.wood;
-  state.stone -= c.stone;
-  state.food -= c.food;
-  state.gold -= c.gold;
-
-  emptySlot.built = type;
-  state.buildings[type].lv = Math.max(1, state.buildings[type].lv);
-
-  say("成功建造 " + type.toUpperCase() + "！🎉");
-  renderSlots();
-  updateHUD();
-  saveGame();
-  closePopup();
-}
-
-/* ===== Upgrade Menu ===== */
-function openUpgradeMenu(){
-  let html = `<p>你已有建築：</p><div class="row">`;
-
-  for(const k in state.buildings){
-    const lv = state.buildings[k].lv;
-    if(lv > 0){
-      html += `<div class="buildOption" onclick="upgrade('${k}')">
-        ⬆ ${k.toUpperCase()}<br><small>Lv ${lv}</small>
-      </div>`;
-    }
-  }
-
-  html += `</div>`;
-  openPopup("⬆ 升級建築", html);
-}
-
-/* ===== Upgrade Costs ===== */
-function upgradeCost(type){
-  const lv = state.buildings[type].lv;
-  return {
-    wood: Math.floor((COSTS[type].wood*0.8) + lv*20),
-    stone: Math.floor((COSTS[type].stone*0.8) + lv*18),
-    food: Math.floor((COSTS[type].food*0.6) + lv*10),
-    gold: Math.floor((COSTS[type].gold*0.8) + lv*12)
-  };
-}
-
-/* ===== Upgrade Logic ===== */
-function upgrade(type){
-  const lv = state.buildings[type].lv;
-  if(lv <= 0){
-    say("你未起呢個建築。");
-    return;
-  }
-
-  const cost = upgradeCost(type);
-
-  if(state.wood < cost.wood || state.stone < cost.stone || state.food < cost.food || state.gold < cost.gold){
-    say("資源不足，未能升級。");
-    return;
-  }
-
-  state.wood -= cost.wood;
-  state.stone -= cost.stone;
-  state.food -= cost.food;
-  state.gold -= cost.gold;
-
-  state.buildings[type].lv += 1;
-
-  say(type.toUpperCase() + " 升級成功！✨ Lv " + state.buildings[type].lv);
-
-  renderSlots();
-  updateHUD();
-  saveGame();
-  closePopup();
-}
-
-/* ===== Collect Resources ===== */
-function collectAll(){
-  // production based on building levels
-  const houseLv = state.buildings.house.lv;
-  const farmLv = state.buildings.farm.lv;
-  const mineLv = state.buildings.mine.lv;
-  const factoryLv = state.buildings.factory.lv;
-
-  state.pop += houseLv * 0.2;
-
-  state.food += farmLv * 6;
-  state.wood += farmLv * 2;
-
-  state.stone += mineLv * 4;
-  state.wood += mineLv * 1;
-
-  state.gold += factoryLv * 3;
-
-  // chance to get tiny AENO from mine
-  if(mineLv > 0 && Math.random() < (0.03 + mineLv*0.01)){
-    const gain = 0.0001 * mineLv;
-    state.aeno += gain;
-    say("你挖到少量 AENO 晶體！+" + gain.toFixed(4));
-  }else{
-    say("資源已收取！🌱");
-  }
-
-  updateHUD();
-  saveGame();
-}
-
-/* ===== AI Toggle ===== */
-function toggleAI(){
-  state.aiEnabled = !state.aiEnabled;
-  if(state.aiEnabled){
-    say("AI助手已啟動！我會半自動幫你發展文明。");
-  }else{
-    say("AI助手已停止。你而家完全手動控制。");
-  }
-  saveGame();
-}
-
-/* ===== AI Semi-Auto Build/Upgrade ===== */
-function aiLogic(){
-  if(!state.aiEnabled) return;
-
-  const now = Date.now();
-
-  // AI only acts every 20 seconds (cooldown)
-  if(now - state.lastAIAction < 20000) return;
-
-  // AI can only use 50% of resources
-  const allowed = {
-    wood: state.wood * 0.5,
-    stone: state.stone * 0.5,
-    food: state.food * 0.5,
-    gold: state.gold * 0.5,
-  };
-
-  // AI decides priority (basic)
-  let priority = "farm";
-  if(state.food < 60) priority = "farm";
-  else if(state.wood < 60) priority = "farm";
-  else if(state.stone < 80) priority = "mine";
-  else if(state.gold < 80) priority = "factory";
-  else priority = "house";
-
-  // If there is empty slot -> build
-  const emptySlot = state.slots.find(s=>!s.built);
-  if(emptySlot){
-    const c = COSTS[priority];
-
-    if(allowed.wood >= c.wood && allowed.stone >= c.stone && allowed.food >= c.food && allowed.gold >= c.gold){
-      state.wood -= c.wood;
-      state.stone -= c.stone;
-      state.food -= c.food;
-      state.gold -= c.gold;
-
-      emptySlot.built = priority;
-      state.buildings[priority].lv = Math.max(1, state.buildings[priority].lv);
-
-      state.lastAIAction = now;
-      say("我幫你建造咗：" + priority.toUpperCase() + "（只用咗 50% 可用資源）");
-      renderSlots();
-      updateHUD();
-      saveGame();
-      return;
-    }
-  }
-
-  // Otherwise upgrade a building
-  const candidates = ["farm","mine","factory","house","lab","wall"];
-  for(const b of candidates){
-    if(state.buildings[b].lv > 0){
-      const cost = upgradeCost(b);
-      if(allowed.wood >= cost.wood && allowed.stone >= cost.stone && allowed.food >= cost.food && allowed.gold >= cost.gold){
-        state.wood -= cost.wood;
-        state.stone -= cost.stone;
-        state.food -= cost.food;
-        state.gold -= cost.gold;
-
-        state.buildings[b].lv += 1;
-        state.lastAIAction = now;
-
-        say("我幫你升級咗：" + b.toUpperCase() + " → Lv " + state.buildings[b].lv);
-        renderSlots();
-        updateHUD();
-        saveGame();
-        return;
-      }
-    }
-  }
-
-  // If cannot act
-  state.lastAIAction = now;
-  say("我暫時唔夠資源去建設/升級，我建議你先收取資源。");
-}
-
-/* ===== Animate Movement ===== */
-function animate(){
-  // player render
-  player.style.left = playerPos.x + "px";
-  player.style.top = playerPos.y + "px";
-
-  // assistant follow player slowly
-  const dx = playerPos.x - assistantPos.x;
-  const dy = playerPos.y - assistantPos.y;
-
-  assistantPos.x += dx * 0.02;
-  assistantPos.y += dy * 0.02;
-
-  assistant.style.left = assistantPos.x + "px";
-  assistant.style.top = assistantPos.y + "px";
-
-  // animals random move
-  animals.forEach(a=>{
-    let x = parseFloat(a.el.style.left);
-    let y = parseFloat(a.el.style.top);
-
-    x += a.vx;
-    y += a.vy;
-
-    if(Math.random() < 0.02){
-      a.vx = (Math.random()*1.0 - 0.5);
-      a.vy = (Math.random()*1.0 - 0.5);
-    }
-
-    x = clamp(x, 0, world.clientWidth-22);
-    y = clamp(y, 0, world.clientHeight-22);
-
-    a.el.style.left = x + "px";
-    a.el.style.top = y + "px";
-  });
-
-  // AI logic
-  aiLogic();
-
-  requestAnimationFrame(animate);
-}
-
-/* ===== Game Tick ===== */
-function tick(){
-  // passive growth
-  state.food += 0.3;
-  state.wood += 0.15;
-  state.gold += 0.08;
-
-  // population consumes food
-  state.food -= state.pop * 0.03;
-  if(state.food < 0) state.food = 0;
-
-  updateHUD();
-  saveGame();
-}
-
-/* ===== Tutorial ===== */
-function tutorial(){
-  say("歡迎來到 AENO 世界！點擊地圖可以移動🙂。按【建築】開始起文明！");
-}
-
-/* ===== Init ===== */
-loadGame();
-spawnDecor();
-spawnAnimals();
-renderSlots();
-updateHUD();
-tutorial();
-
-setInterval(tick, 3000);
-requestAnimationFrame(animate);
-
-</script>
 </body>
 </html>
