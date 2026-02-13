@@ -2,113 +2,542 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>卡通小鎮 - 真等距3D版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>AENO V3 - 直屏卡通城鎮(整合UI)</title>
 <style>
+  :root{
+    --bg1:#dff6ff;
+    --bg2:#f0f9ff;
+    --card:#ffffffcc;
+    --stroke:#bae6fd;
+    --dark:#0f172a;
+    --blue:#2563eb;
+    --green:#16a34a;
+    --gold:#f59e0b;
+    --danger:#ef4444;
+    --shadow: 0 14px 30px rgba(0,0,0,0.12);
+    --radius: 18px;
+  }
+
+  *{box-sizing:border-box;}
   body{
     margin:0;
-    background: linear-gradient(#dff6ff,#f0f9ff);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
+    background: linear-gradient(var(--bg1),var(--bg2));
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans HK", Arial;
+    overflow:hidden;
+    touch-action: manipulation;
   }
-  #wrap{
-    width:min(92vw, 820px);
-    aspect-ratio: 1 / 1;
+
+  /* ====== GAME LAYOUT (直屏) ====== */
+  #app{
+    width:100vw;
+    height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
   }
+
+  #phone{
+    width:min(100vw, 520px);
+    height:100vh;
+    max-height: 980px;
+    position:relative;
+    border-radius: 28px;
+    overflow:hidden;
+    background: linear-gradient(var(--bg1),var(--bg2));
+  }
+
   canvas{
     width:100%;
     height:100%;
-    border: 4px solid #bae6fd;
-    border-radius: 24px;
-    background: #f0f9ff;
-    box-shadow: 0 16px 36px rgba(0,0,0,0.12);
-    touch-action: manipulation;
+    display:block;
+    background: transparent;
   }
+
+  /* ====== TOP BAR ====== */
+  #topbar{
+    position:absolute;
+    top:10px;
+    left:10px;
+    right:10px;
+    display:flex;
+    gap:10px;
+    z-index:10;
+  }
+
+  .chip{
+    flex:1;
+    background: var(--card);
+    border: 2px solid var(--stroke);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 8px 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    backdrop-filter: blur(6px);
+  }
+
+  .chip .title{
+    font-weight:800;
+    color:var(--dark);
+    font-size:14px;
+    white-space:nowrap;
+  }
+
+  .chip .val{
+    font-weight:900;
+    font-size:15px;
+    color:var(--blue);
+    white-space:nowrap;
+  }
+
+  /* ====== LEFT PANEL ====== */
+  #leftPanel{
+    position:absolute;
+    left:10px;
+    top:86px;
+    width: 200px;
+    background: var(--card);
+    border:2px solid var(--stroke);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 10px;
+    z-index:10;
+    backdrop-filter: blur(6px);
+    transition: transform .25s ease;
+  }
+
+  #leftPanel.hidden{
+    transform: translateX(-220px);
+  }
+
+  .panelTitle{
+    font-weight:900;
+    color:var(--dark);
+    font-size:15px;
+    margin-bottom:6px;
+  }
+
+  .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    font-size:13px;
+  }
+  .row:last-child{border-bottom:none;}
+  .row span:first-child{color:#334155;font-weight:700;}
+  .row span:last-child{color:#0f172a;font-weight:900;}
+
+  .btn{
+    width:100%;
+    margin-top:8px;
+    padding:10px 10px;
+    border-radius: 14px;
+    border:none;
+    font-weight:900;
+    background: #2563eb;
+    color:white;
+    cursor:pointer;
+    box-shadow: 0 10px 18px rgba(37,99,235,0.25);
+  }
+  .btn:active{transform: scale(0.98);}
+
+  .btn.secondary{
+    background:#16a34a;
+    box-shadow: 0 10px 18px rgba(22,163,74,0.25);
+  }
+
+  .btn.gray{
+    background:#0f172a;
+    box-shadow: 0 10px 18px rgba(15,23,42,0.18);
+  }
+
+  /* ====== RIGHT PANEL ====== */
+  #rightPanel{
+    position:absolute;
+    right:10px;
+    top:86px;
+    width: 180px;
+    background: var(--card);
+    border:2px solid var(--stroke);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 10px;
+    z-index:10;
+    backdrop-filter: blur(6px);
+    transition: transform .25s ease;
+  }
+
+  #rightPanel.hidden{
+    transform: translateX(210px);
+  }
+
+  .miniBtn{
+    width:100%;
+    margin-top:8px;
+    padding:10px;
+    border-radius: 14px;
+    border:none;
+    font-weight:900;
+    cursor:pointer;
+    background:#fff;
+    border:2px solid rgba(0,0,0,0.08);
+    color:#0f172a;
+  }
+  .miniBtn:active{transform: scale(0.98);}
+
+  /* ====== BOTTOM DOCK ====== */
+  #dock{
+    position:absolute;
+    left:10px;
+    right:10px;
+    bottom:10px;
+    display:flex;
+    gap:10px;
+    z-index:10;
+  }
+
+  .dockBtn{
+    flex:1;
+    padding:12px 10px;
+    border-radius: 18px;
+    border:2px solid var(--stroke);
+    background: var(--card);
+    box-shadow: var(--shadow);
+    font-weight:900;
+    color:var(--dark);
+    cursor:pointer;
+    backdrop-filter: blur(6px);
+    font-size:14px;
+  }
+  .dockBtn:active{transform: scale(0.98);}
+
+  /* ====== POPUP ====== */
+  #popupMask{
+    position:absolute;
+    inset:0;
+    background: rgba(0,0,0,0.25);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:30;
+    padding:18px;
+  }
+  #popupMask.show{display:flex;}
+
+  #popup{
+    width:min(420px, 100%);
+    background:white;
+    border-radius: 22px;
+    border:2px solid var(--stroke);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.2);
+    padding:14px;
+  }
+
+  #popup h2{
+    margin:6px 0 8px;
+    font-size:18px;
+    color:var(--dark);
+  }
+  #popup p{
+    margin:6px 0;
+    font-size:14px;
+    color:#334155;
+    line-height:1.4;
+  }
+
+  .popupRow{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+  }
+
+  .popupRow button{
+    flex:1;
+    padding:12px;
+    border-radius: 16px;
+    border:none;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  .ok{background:#2563eb;color:white;}
+  .cancel{background:#e2e8f0;color:#0f172a;}
+
+  /* ====== FLOAT TEXT ====== */
+  .floatText{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform: translate(-50%,-50%);
+    font-weight:1000;
+    pointer-events:none;
+    z-index:25;
+    text-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    animation: floatUp 1.1s ease-out forwards;
+    white-space:nowrap;
+  }
+
+  @keyframes floatUp{
+    0%{opacity:0; transform: translate(-50%,-50%) scale(0.8);}
+    20%{opacity:1; transform: translate(-50%,-58%) scale(1);}
+    100%{opacity:0; transform: translate(-50%,-95%) scale(1.05);}
+  }
+
 </style>
 </head>
 <body>
-<div id="wrap">
-  <canvas id="canvas" width="900" height="900"></canvas>
+
+<div id="app">
+  <div id="phone">
+
+    <canvas id="game" width="900" height="1600"></canvas>
+
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <div class="chip">
+        <div class="title">AENO</div>
+        <div class="val" id="aenoVal">0</div>
+      </div>
+      <div class="chip">
+        <div class="title">星球</div>
+        <div class="val" id="planetVal">翠綠星</div>
+      </div>
+      <div class="chip">
+        <div class="title">機械人</div>
+        <div class="val" id="botVal">1</div>
+      </div>
+    </div>
+
+    <!-- LEFT PANEL -->
+    <div id="leftPanel">
+      <div class="panelTitle">資源倉庫</div>
+      <div class="row"><span>木材</span><span id="woodVal">0</span></div>
+      <div class="row"><span>水晶</span><span id="crystalVal">0</span></div>
+      <div class="row"><span>鐵礦</span><span id="ironVal">0</span></div>
+      <div class="row"><span>食物</span><span id="foodVal">0</span></div>
+      <button class="btn secondary" id="harvestBtn">採集一次</button>
+      <button class="btn gray" id="toggleLeftBtn">收起面板</button>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="rightPanel">
+      <div class="panelTitle">功能表</div>
+      <button class="miniBtn" id="shopBtn">🛒 商店</button>
+      <button class="miniBtn" id="missionBtn">📜 任務</button>
+      <button class="miniBtn" id="assistantBtn">🐾 助手</button>
+      <button class="miniBtn" id="toggleRightBtn">收起功能</button>
+    </div>
+
+    <!-- DOCK -->
+    <div id="dock">
+      <button class="dockBtn" id="switchPlanetBtn">🪐 切換星球</button>
+      <button class="dockBtn" id="sendBotBtn">🤖 派遣機械人</button>
+      <button class="dockBtn" id="claimBtn">✨ 領取AENO</button>
+    </div>
+
+    <!-- POPUP -->
+    <div id="popupMask">
+      <div id="popup">
+        <h2 id="popupTitle">提示</h2>
+        <p id="popupText">內容</p>
+        <div class="popupRow">
+          <button class="cancel" id="popupCancel">關閉</button>
+          <button class="ok" id="popupOK">確定</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <script>
-const canvas = document.getElementById("canvas");
+/* =========================
+   AENO V3 - 直屏卡通城鎮
+   (整合 UI + 動畫 + 互動)
+   ========================= */
+
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+
 const W = canvas.width;
 const H = canvas.height;
 
-const gridSize = 110;
+const gridSize = 120;
 const isoAngle = Math.PI / 6;
 
-const lightDir = { x: -0.6, y: -1.0 }; // 左上光源
+const ui = {
+  aenoVal: document.getElementById("aenoVal"),
+  planetVal: document.getElementById("planetVal"),
+  botVal: document.getElementById("botVal"),
+  woodVal: document.getElementById("woodVal"),
+  crystalVal: document.getElementById("crystalVal"),
+  ironVal: document.getElementById("ironVal"),
+  foodVal: document.getElementById("foodVal"),
+
+  leftPanel: document.getElementById("leftPanel"),
+  rightPanel: document.getElementById("rightPanel"),
+
+  toggleLeftBtn: document.getElementById("toggleLeftBtn"),
+  toggleRightBtn: document.getElementById("toggleRightBtn"),
+
+  harvestBtn: document.getElementById("harvestBtn"),
+  shopBtn: document.getElementById("shopBtn"),
+  missionBtn: document.getElementById("missionBtn"),
+  assistantBtn: document.getElementById("assistantBtn"),
+
+  switchPlanetBtn: document.getElementById("switchPlanetBtn"),
+  sendBotBtn: document.getElementById("sendBotBtn"),
+  claimBtn: document.getElementById("claimBtn"),
+
+  popupMask: document.getElementById("popupMask"),
+  popupTitle: document.getElementById("popupTitle"),
+  popupText: document.getElementById("popupText"),
+  popupOK: document.getElementById("popupOK"),
+  popupCancel: document.getElementById("popupCancel"),
+};
 
 const colors = {
   skyTop: "#dff6ff",
   skyBottom: "#f0f9ff",
+  stroke: "#bae6fd",
+  shadow: "rgba(0,0,0,0.18)",
 
   grassTop: "#dcfce7",
-  grassSideL: "#86efac",
-  grassSideR: "#4ade80",
+  grassLeft: "#86efac",
+  grassRight: "#4ade80",
   grassLine: "#bbf7d0",
 
-  roadTop: "#fef9c3",
-  roadLine: "#fde68a",
+  sandTop: "#fef9c3",
+  sandLeft: "#fde68a",
+  sandRight: "#fbbf24",
+  sandLine: "#fde68a",
+
+  iceTop: "#e0f2fe",
+  iceLeft: "#bae6fd",
+  iceRight: "#7dd3fc",
+  iceLine: "#93c5fd",
+
+  lavaTop: "#ffedd5",
+  lavaLeft: "#fdba74",
+  lavaRight: "#fb923c",
+  lavaLine: "#f97316",
 
   house: {
-    top: "#fde68a",
-    left: "#fef3c7",
-    right: "#fcd34d",
+    wall: "#fef3c7",
+    wall2: "#fde68a",
     roof: "#fb923c",
-    roofDark: "#f97316",
+    roof2: "#f97316",
     door: "#b45309",
-    window: "#bfdbfe",
+    win: "#bfdbfe",
     trim: "#fff7ed"
   },
 
   dome: {
+    base: "#fde68a",
+    base2: "#fef3c7",
     top: "#93c5fd",
-    left: "#60a5fa",
-    right: "#3b82f6",
-    baseTop: "#fde68a",
-    baseLeft: "#fef3c7",
-    baseRight: "#fcd34d",
+    top2: "#3b82f6",
     trim: "#fbbf24",
     door: "#92400e",
-    window: "#dbeafe"
+    win: "#dbeafe"
   },
 
   tree: {
     trunk: "#92400e",
-    trunkDark: "#78350f",
+    trunk2: "#78350f",
     leaf1: "#86efac",
     leaf2: "#4ade80",
-    leaf3: "#22c55e",
-    highlight: "rgba(255,255,255,0.35)"
-  },
-
-  shadow: "rgba(0,0,0,0.18)"
+    leaf3: "#22c55e"
+  }
 };
+
+const planets = [
+  { name:"翠綠星", theme:"grass" },
+  { name:"黃金沙", theme:"sand" },
+  { name:"冰晶界", theme:"ice" },
+  { name:"熔岩域", theme:"lava" },
+];
+
+let state = {
+  planetIndex: 0,
+  aeno: 0,
+  bots: 1,
+  wood: 0,
+  crystal: 0,
+  iron: 0,
+  food: 0,
+  tick: 0,
+  lastClaim: 0,
+};
+
+function fmt(n){
+  if(n >= 1000000) return (n/1000000).toFixed(2)+"M";
+  if(n >= 1000) return (n/1000).toFixed(2)+"K";
+  return String(Math.floor(n));
+}
+
+function syncUI(){
+  ui.aenoVal.textContent = fmt(state.aeno);
+  ui.planetVal.textContent = planets[state.planetIndex].name;
+  ui.botVal.textContent = state.bots;
+
+  ui.woodVal.textContent = fmt(state.wood);
+  ui.crystalVal.textContent = fmt(state.crystal);
+  ui.ironVal.textContent = fmt(state.iron);
+  ui.foodVal.textContent = fmt(state.food);
+}
+
+function showPopup(title, text, okText="確定", cancelText="關閉", onOK=null){
+  ui.popupTitle.textContent = title;
+  ui.popupText.textContent = text;
+  ui.popupOK.textContent = okText;
+  ui.popupCancel.textContent = cancelText;
+
+  ui.popupMask.classList.add("show");
+
+  ui.popupOK.onclick = () => {
+    ui.popupMask.classList.remove("show");
+    if(onOK) onOK();
+  };
+  ui.popupCancel.onclick = () => {
+    ui.popupMask.classList.remove("show");
+  };
+}
+
+function floatText(text, color="#2563eb"){
+  const el = document.createElement("div");
+  el.className = "floatText";
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left = "50%";
+  el.style.top = "52%";
+  document.getElementById("phone").appendChild(el);
+
+  setTimeout(()=> el.remove(), 1150);
+}
+
+/* =========================
+   ISO DRAW HELPERS
+   ========================= */
 
 function gridToScreen(r, c){
   const x = (c - r) * (gridSize * Math.cos(isoAngle));
   const y = (c + r) * (gridSize * Math.sin(isoAngle));
-  return { x: W/2 + x, y: 210 + y };
+  return { x: W/2 + x, y: 420 + y };
 }
 
-// 畫菱形 tile（等距）
 function drawIsoTile(x, y, size, fill, stroke){
   ctx.fillStyle = fill;
   ctx.beginPath();
   ctx.moveTo(x, y);
-  ctx.lineTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
-  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
-  ctx.lineTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+  ctx.lineTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
+  ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
+  ctx.lineTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
   ctx.closePath();
   ctx.fill();
 
@@ -119,139 +548,87 @@ function drawIsoTile(x, y, size, fill, stroke){
   }
 }
 
-// 畫立體 tile（有厚度）
-function drawIsoBlock(x, y, size, height, topColor, leftColor, rightColor, stroke){
-  // top
-  drawIsoTile(x, y, size, topColor, stroke);
+function drawIsoBlock(x, y, size, height, top, left, right, stroke){
+  drawIsoTile(x,y,size,top,stroke);
 
   // left face
-  ctx.fillStyle = leftColor;
+  ctx.fillStyle = left;
   ctx.beginPath();
-  ctx.moveTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
-  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
-  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle) + height);
-  ctx.lineTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle) + height);
+  ctx.moveTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
+  ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
+  ctx.lineTo(x, y + size*2*Math.sin(isoAngle) + height);
+  ctx.lineTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle) + height);
   ctx.closePath();
   ctx.fill();
 
   // right face
-  ctx.fillStyle = rightColor;
+  ctx.fillStyle = right;
   ctx.beginPath();
-  ctx.moveTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
-  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
-  ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle) + height);
-  ctx.lineTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle) + height);
+  ctx.moveTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
+  ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
+  ctx.lineTo(x, y + size*2*Math.sin(isoAngle) + height);
+  ctx.lineTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle) + height);
   ctx.closePath();
   ctx.fill();
 
-  // outline
   if(stroke){
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(x - size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
-    ctx.lineTo(x, y + size * 2 * Math.sin(isoAngle));
-    ctx.lineTo(x + size * Math.cos(isoAngle), y + size * Math.sin(isoAngle));
+    ctx.moveTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
+    ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
+    ctx.lineTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
     ctx.stroke();
   }
 }
 
-function drawSoftShadow(x, y, rx, ry, alpha=0.18){
+function shadowEllipse(x,y,rx,ry,a=0.18){
   ctx.save();
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = a;
   ctx.fillStyle = "#000";
   ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI*2);
+  ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
   ctx.fill();
   ctx.restore();
 }
 
-function drawGrass(r,c){
-  const {x,y} = gridToScreen(r,c);
+/* =========================
+   BUILDINGS
+   ========================= */
 
-  const h = 18 + ((r+c)%2)*4;
-  drawIsoBlock(
-    x, y,
-    gridSize,
-    h,
-    colors.grassTop,
-    colors.grassSideL,
-    colors.grassSideR,
-    colors.grassLine
-  );
+let clicked = null;
 
-  // 草地紋理點點
-  ctx.save();
-  ctx.globalAlpha = 0.16;
-  ctx.fillStyle = "#16a34a";
-  for(let i=0;i<8;i++){
-    const px = x + (Math.random()*2-1)*35;
-    const py = y + 40 + Math.random()*35;
-    ctx.beginPath();
-    ctx.arc(px, py, 2.2, 0, Math.PI*2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
+const buildings = [
+  { id:"dome1", type:"dome", r:1, c:2, name:"圓頂研究所" },
+  { id:"house1", type:"house", r:2, c:3, name:"居民小屋" },
+  { id:"dome2", type:"dome", r:2, c:1, name:"星際倉庫" },
+  { id:"house2", type:"house", r:3, c:2, name:"機械人工坊" },
+];
 
-function drawRoad(r,c){
-  const {x,y} = gridToScreen(r,c);
+function drawHouse(r,c,pulse=0){
+  const p = gridToScreen(r,c);
+  const x = p.x;
+  const y = p.y - 40 - pulse;
+
+  shadowEllipse(x, y+250, 70, 24, 0.22);
+
+  // base
+  drawIsoBlock(x, y+150, 66, 55, colors.house.wall, "#fef9c3", colors.house.wall2, null);
 
   ctx.save();
-  drawIsoTile(x,y,gridSize, colors.roadTop, colors.roadLine);
-
-  // 小路條紋
-  ctx.globalAlpha = 0.25;
-  ctx.strokeStyle = "#f59e0b";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(x-20, y+40);
-  ctx.lineTo(x+20, y+55);
-  ctx.stroke();
-  ctx.restore();
-}
-
-// 立體小屋（有屋頂面 + 牆面）
-function drawHouse(r,c, pulse=0){
-  const {x,y} = gridToScreen(r,c);
-  const baseY = y - 10 - pulse;
-
-  drawSoftShadow(x, baseY+120, 60, 22, 0.22);
-
-  // base block
-  drawIsoBlock(
-    x, baseY+55,
-    60,
-    55,
-    colors.house.left,
-    "#fef9c3",
-    "#fcd34d",
-    null
-  );
-
-  // roof top
-  ctx.save();
-  ctx.translate(x, baseY+15);
-
-  // roof shadow
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle = "#000";
-  ctx.beginPath();
-  ctx.ellipse(0, 90, 60, 18, 0, 0, Math.PI*2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
+  ctx.translate(x, y+90);
 
   // roof
-  const roofGrad = ctx.createLinearGradient(-60, -50, 60, 80);
+  const roofGrad = ctx.createLinearGradient(-70,-80,70,120);
   roofGrad.addColorStop(0, colors.house.roof);
-  roofGrad.addColorStop(1, colors.house.roofDark);
+  roofGrad.addColorStop(1, colors.house.roof2);
 
   ctx.fillStyle = roofGrad;
   ctx.beginPath();
-  ctx.moveTo(0, -70);
-  ctx.quadraticCurveTo(80, -10, 60, 40);
-  ctx.quadraticCurveTo(0, 70, -60, 40);
-  ctx.quadraticCurveTo(-80, -10, 0, -70);
+  ctx.moveTo(0, -85);
+  ctx.quadraticCurveTo(95, -10, 70, 50);
+  ctx.quadraticCurveTo(0, 85, -70, 50);
+  ctx.quadraticCurveTo(-95, -10, 0, -85);
   ctx.closePath();
   ctx.fill();
 
@@ -259,122 +636,93 @@ function drawHouse(r,c, pulse=0){
   ctx.globalAlpha = 0.25;
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.ellipse(-20, -20, 28, 14, -0.3, 0, Math.PI*2);
+  ctx.ellipse(-20, -25, 30, 16, -0.3, 0, Math.PI*2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // walls (front)
-  const wallGrad = ctx.createLinearGradient(-50, 30, 50, 140);
-  wallGrad.addColorStop(0, colors.house.left);
+  // wall
+  const wallGrad = ctx.createLinearGradient(-55,40,55,170);
+  wallGrad.addColorStop(0, colors.house.wall);
   wallGrad.addColorStop(1, "#fde68a");
-
   ctx.fillStyle = wallGrad;
   ctx.beginPath();
-  ctx.roundRect(-52, 35, 104, 85, 18);
+  ctx.roundRect(-56, 45, 112, 110, 20);
   ctx.fill();
 
   // trim
   ctx.strokeStyle = colors.house.trim;
   ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.roundRect(-52, 35, 104, 85, 18);
   ctx.stroke();
 
   // door
   ctx.fillStyle = colors.house.door;
   ctx.beginPath();
-  ctx.roundRect(-16, 78, 32, 42, 10);
-  ctx.fill();
-
-  // door knob
-  ctx.fillStyle = "#fef3c7";
-  ctx.beginPath();
-  ctx.arc(8, 98, 4, 0, Math.PI*2);
+  ctx.roundRect(-18, 100, 36, 55, 12);
   ctx.fill();
 
   // windows
-  ctx.fillStyle = colors.house.window;
+  ctx.fillStyle = colors.house.win;
   ctx.beginPath();
-  ctx.roundRect(-38, 58, 26, 22, 8);
-  ctx.roundRect(12, 58, 26, 22, 8);
+  ctx.roundRect(-42, 75, 28, 24, 10);
+  ctx.roundRect(14, 75, 28, 24, 10);
   ctx.fill();
-
   ctx.strokeStyle = "#60a5fa";
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // glass shine
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.ellipse(-30, 65, 7, 14, 0.5, 0, Math.PI*2);
-  ctx.ellipse(20, 65, 7, 14, 0.5, 0, Math.PI*2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
   ctx.restore();
 }
 
-// 圓頂屋（更像手遊神殿）
-function drawDome(r,c, pulse=0){
-  const {x,y} = gridToScreen(r,c);
-  const baseY = y - 12 - pulse;
+function drawDome(r,c,pulse=0){
+  const p = gridToScreen(r,c);
+  const x = p.x;
+  const y = p.y - 40 - pulse;
 
-  drawSoftShadow(x, baseY+118, 58, 20, 0.22);
+  shadowEllipse(x, y+250, 70, 24, 0.22);
 
-  // base platform
-  drawIsoBlock(
-    x, baseY+60,
-    62,
-    55,
-    colors.dome.baseTop,
-    colors.dome.baseLeft,
-    colors.dome.baseRight,
-    null
-  );
+  drawIsoBlock(x, y+150, 70, 55, colors.dome.base, colors.dome.base2, "#fcd34d", null);
 
-  // dome
   ctx.save();
-  ctx.translate(x, baseY+30);
+  ctx.translate(x, y+105);
 
-  // main dome
-  const domeGrad = ctx.createRadialGradient(-18, -35, 10, 0, 0, 85);
+  // dome main
+  const domeGrad = ctx.createRadialGradient(-18,-30,10, 0,0, 90);
   domeGrad.addColorStop(0, "#dbeafe");
-  domeGrad.addColorStop(0.45, colors.dome.top);
-  domeGrad.addColorStop(1, colors.dome.right);
+  domeGrad.addColorStop(0.5, colors.dome.top);
+  domeGrad.addColorStop(1, colors.dome.top2);
 
   ctx.fillStyle = domeGrad;
   ctx.beginPath();
-  ctx.arc(0, 10, 58, 0, Math.PI*2);
+  ctx.arc(0, 20, 68, 0, Math.PI*2);
   ctx.fill();
 
   // trim ring
   ctx.strokeStyle = colors.dome.trim;
-  ctx.lineWidth = 8;
+  ctx.lineWidth = 9;
   ctx.beginPath();
-  ctx.arc(0, 10, 50, 0, Math.PI*2);
+  ctx.arc(0, 20, 56, 0, Math.PI*2);
   ctx.stroke();
 
-  // top gem
-  const gemGrad = ctx.createRadialGradient(-4, -55, 0, 0, -55, 18);
+  // gem
+  const gemGrad = ctx.createRadialGradient(-4,-60,0, 0,-60, 20);
   gemGrad.addColorStop(0, "#fff7ed");
   gemGrad.addColorStop(1, colors.dome.trim);
   ctx.fillStyle = gemGrad;
   ctx.beginPath();
-  ctx.arc(0, -55, 14, 0, Math.PI*2);
+  ctx.arc(0, -60, 15, 0, Math.PI*2);
   ctx.fill();
 
   // door
   ctx.fillStyle = colors.dome.door;
   ctx.beginPath();
-  ctx.roundRect(-18, 55, 36, 45, 12);
+  ctx.roundRect(-20, 70, 40, 55, 14);
   ctx.fill();
 
   // windows
-  ctx.fillStyle = colors.dome.window;
+  ctx.fillStyle = colors.dome.win;
   ctx.beginPath();
-  ctx.arc(-28, 28, 12, 0, Math.PI*2);
-  ctx.arc(28, 28, 12, 0, Math.PI*2);
+  ctx.arc(-32, 40, 12, 0, Math.PI*2);
+  ctx.arc(32, 40, 12, 0, Math.PI*2);
   ctx.fill();
 
   ctx.strokeStyle = "#2563eb";
@@ -385,79 +733,83 @@ function drawDome(r,c, pulse=0){
   ctx.globalAlpha = 0.25;
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.ellipse(-20, -10, 20, 12, -0.3, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
-}
-
-// 樹（更立體 + 搖動）
-function drawTree(r,c, sway=0){
-  const {x,y} = gridToScreen(r,c);
-  const tx = x + 45;
-  const ty = y + 95;
-
-  drawSoftShadow(tx, ty+45, 28, 12, 0.20);
-
-  // trunk
-  ctx.save();
-  ctx.translate(tx, ty);
-
-  ctx.fillStyle = colors.tree.trunkDark;
-  ctx.beginPath();
-  ctx.roundRect(-10, 0, 20, 44, 8);
-  ctx.fill();
-
-  ctx.fillStyle = colors.tree.trunk;
-  ctx.beginPath();
-  ctx.roundRect(-8, 0, 16, 44, 7);
-  ctx.fill();
-
-  // leaves
-  ctx.rotate(sway);
-
-  const g1 = ctx.createRadialGradient(-10, -42, 5, 0, -40, 55);
-  g1.addColorStop(0, colors.tree.leaf1);
-  g1.addColorStop(1, colors.tree.leaf3);
-
-  ctx.fillStyle = g1;
-  ctx.beginPath();
-  ctx.arc(0, -45, 38, 0, Math.PI*2);
-  ctx.fill();
-
-  const g2 = ctx.createRadialGradient(-25, -25, 5, -18, -25, 45);
-  g2.addColorStop(0, colors.tree.leaf1);
-  g2.addColorStop(1, colors.tree.leaf2);
-
-  ctx.fillStyle = g2;
-  ctx.beginPath();
-  ctx.arc(-20, -22, 28, 0, Math.PI*2);
-  ctx.fill();
-
-  const g3 = ctx.createRadialGradient(25, -25, 5, 18, -25, 45);
-  g3.addColorStop(0, colors.tree.leaf1);
-  g3.addColorStop(1, colors.tree.leaf2);
-
-  ctx.fillStyle = g3;
-  ctx.beginPath();
-  ctx.arc(20, -22, 28, 0, Math.PI*2);
-  ctx.fill();
-
-  // highlight
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.ellipse(-12, -55, 12, 8, -0.2, 0, Math.PI*2);
+  ctx.ellipse(-20, 0, 22, 14, -0.3, 0, Math.PI*2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
   ctx.restore();
 }
 
-// 雲（慢慢飄）
+function drawTree(r,c,sway=0){
+  const p = gridToScreen(r,c);
+  const tx = p.x + 55;
+  const ty = p.y + 180;
+
+  shadowEllipse(tx, ty+40, 30, 12, 0.20);
+
+  ctx.save();
+  ctx.translate(tx, ty);
+
+  // trunk
+  ctx.fillStyle = colors.tree.trunk2;
+  ctx.beginPath();
+  ctx.roundRect(-10, 0, 20, 48, 8);
+  ctx.fill();
+
+  ctx.fillStyle = colors.tree.trunk;
+  ctx.beginPath();
+  ctx.roundRect(-8, 0, 16, 48, 7);
+  ctx.fill();
+
+  ctx.rotate(sway);
+
+  // leaves
+  const g1 = ctx.createRadialGradient(-10,-45,5, 0,-40, 65);
+  g1.addColorStop(0, colors.tree.leaf1);
+  g1.addColorStop(1, colors.tree.leaf3);
+
+  ctx.fillStyle = g1;
+  ctx.beginPath();
+  ctx.arc(0, -50, 42, 0, Math.PI*2);
+  ctx.fill();
+
+  const g2 = ctx.createRadialGradient(-25,-20,5, -18,-25, 55);
+  g2.addColorStop(0, colors.tree.leaf1);
+  g2.addColorStop(1, colors.tree.leaf2);
+
+  ctx.fillStyle = g2;
+  ctx.beginPath();
+  ctx.arc(-22, -25, 32, 0, Math.PI*2);
+  ctx.fill();
+
+  const g3 = ctx.createRadialGradient(25,-20,5, 18,-25, 55);
+  g3.addColorStop(0, colors.tree.leaf1);
+  g3.addColorStop(1, colors.tree.leaf2);
+
+  ctx.fillStyle = g3;
+  ctx.beginPath();
+  ctx.arc(22, -25, 32, 0, Math.PI*2);
+  ctx.fill();
+
+  // highlight
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.ellipse(-12, -62, 12, 8, -0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+/* =========================
+   CLOUDS + BACKGROUND
+   ========================= */
+
 const clouds = [
-  { x: 120, y: 120, s: 1.2, spd: 0.22 },
-  { x: 500, y: 85, s: 0.9, spd: 0.16 },
-  { x: 760, y: 150, s: 1.1, spd: 0.19 },
+  { x: 160, y: 150, s: 1.25, spd: 0.22 },
+  { x: 600, y: 110, s: 0.95, spd: 0.16 },
+  { x: 860, y: 170, s: 1.05, spd: 0.19 },
 ];
 
 function drawCloud(cx, cy, scale){
@@ -465,7 +817,7 @@ function drawCloud(cx, cy, scale){
   ctx.translate(cx, cy);
   ctx.scale(scale, scale);
 
-  ctx.globalAlpha = 0.85;
+  ctx.globalAlpha = 0.88;
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.arc(0, 0, 28, 0, Math.PI*2);
@@ -475,32 +827,119 @@ function drawCloud(cx, cy, scale){
   ctx.closePath();
   ctx.fill();
 
-  ctx.globalAlpha = 0.25;
+  ctx.globalAlpha = 0.20;
   ctx.fillStyle = "#93c5fd";
   ctx.beginPath();
-  ctx.ellipse(25, 10, 45, 12, 0, 0, Math.PI*2);
+  ctx.ellipse(25, 12, 45, 12, 0, 0, Math.PI*2);
   ctx.fill();
 
   ctx.restore();
 }
 
-let t = 0;
-let clicked = null;
+function drawBackground(){
+  const sky = ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0, colors.skyTop);
+  sky.addColorStop(1, colors.skyBottom);
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,W,H);
 
-const buildings = [
-  { type:"dome", r:1, c:2 },
-  { type:"house", r:2, c:3 },
-  { type:"dome", r:2, c:1 },
-  { type:"house", r:3, c:2 },
-];
+  // far hills
+  ctx.globalAlpha = 0.20;
+  ctx.fillStyle = "#60a5fa";
+  ctx.beginPath();
+  ctx.moveTo(0, 450);
+  ctx.quadraticCurveTo(260, 360, 460, 440);
+  ctx.quadraticCurveTo(720, 560, 900, 420);
+  ctx.lineTo(900, 650);
+  ctx.lineTo(0, 650);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+/* =========================
+   TILE THEMES
+   ========================= */
+
+function getThemeColors(){
+  const theme = planets[state.planetIndex].theme;
+  if(theme==="sand"){
+    return {
+      top: colors.sandTop,
+      left: colors.sandLeft,
+      right: colors.sandRight,
+      line: colors.sandLine
+    };
+  }
+  if(theme==="ice"){
+    return {
+      top: colors.iceTop,
+      left: colors.iceLeft,
+      right: colors.iceRight,
+      line: colors.iceLine
+    };
+  }
+  if(theme==="lava"){
+    return {
+      top: colors.lavaTop,
+      left: colors.lavaLeft,
+      right: colors.lavaRight,
+      line: colors.lavaLine
+    };
+  }
+  return {
+    top: colors.grassTop,
+    left: colors.grassLeft,
+    right: colors.grassRight,
+    line: colors.grassLine
+  };
+}
+
+function drawGround(){
+  const th = getThemeColors();
+
+  for(let r=0;r<5;r++){
+    for(let c=0;c<5;c++){
+      const p = gridToScreen(r,c);
+      const height = 18 + ((r+c)%2)*4;
+
+      drawIsoBlock(
+        p.x,
+        p.y,
+        gridSize,
+        height,
+        th.top,
+        th.left,
+        th.right,
+        th.line
+      );
+
+      // texture dots
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = "#0f172a";
+      for(let i=0;i<5;i++){
+        const px = p.x + (Math.random()*2-1)*40;
+        const py = p.y + 60 + Math.random()*40;
+        ctx.beginPath();
+        ctx.arc(px, py, 2.1, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+}
+
+/* =========================
+   INTERACTION
+   ========================= */
 
 function hitTest(mx,my){
-  // 簡化碰撞：用 screen pos + 半徑判定
   for(const b of buildings){
     const p = gridToScreen(b.r, b.c);
     const dx = mx - p.x;
-    const dy = my - (p.y+40);
-    if(dx*dx + dy*dy < 85*85){
+    const dy = my - (p.y+120);
+    if(dx*dx + dy*dy < 95*95){
       return b;
     }
   }
@@ -515,94 +954,156 @@ canvas.addEventListener("click", (e)=>{
   const b = hitTest(mx,my);
   if(b){
     clicked = { b, time: 0 };
+
+    if(b.type==="house"){
+      state.food += 3;
+      state.wood += 2;
+      floatText("+2 木材  +3 食物", "#16a34a");
+    }else{
+      state.crystal += 2;
+      state.iron += 2;
+      floatText("+2 水晶  +2 鐵礦", "#2563eb");
+    }
+
+    syncUI();
   }
 });
 
-function drawBackground(){
-  const sky = ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0, colors.skyTop);
-  sky.addColorStop(1, colors.skyBottom);
-  ctx.fillStyle = sky;
-  ctx.fillRect(0,0,W,H);
+/* =========================
+   UI BUTTON EVENTS
+   ========================= */
 
-  // 遠景淡淡山丘
-  ctx.globalAlpha = 0.20;
-  ctx.fillStyle = "#60a5fa";
-  ctx.beginPath();
-  ctx.moveTo(0, 280);
-  ctx.quadraticCurveTo(220, 210, 420, 270);
-  ctx.quadraticCurveTo(650, 350, 900, 250);
-  ctx.lineTo(900, 420);
-  ctx.lineTo(0, 420);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalAlpha = 1;
-}
+ui.toggleLeftBtn.onclick = ()=>{
+  ui.leftPanel.classList.toggle("hidden");
+  ui.toggleLeftBtn.textContent = ui.leftPanel.classList.contains("hidden") ? "打開面板" : "收起面板";
+};
 
-function drawScene(){
-  drawBackground();
+ui.toggleRightBtn.onclick = ()=>{
+  ui.rightPanel.classList.toggle("hidden");
+  ui.toggleRightBtn.textContent = ui.rightPanel.classList.contains("hidden") ? "打開功能" : "收起功能";
+};
 
-  // clouds
-  for(const cl of clouds){
-    drawCloud(cl.x, cl.y, cl.s);
+ui.harvestBtn.onclick = ()=>{
+  const gainW = 2 + Math.floor(Math.random()*4);
+  const gainF = 1 + Math.floor(Math.random()*3);
+  const gainC = Math.floor(Math.random()*3);
+  const gainI = Math.floor(Math.random()*2);
+
+  state.wood += gainW;
+  state.food += gainF;
+  state.crystal += gainC;
+  state.iron += gainI;
+
+  floatText(`+${gainW}木 +${gainF}食 +${gainC}晶 +${gainI}鐵`, "#16a34a");
+  syncUI();
+};
+
+ui.switchPlanetBtn.onclick = ()=>{
+  state.planetIndex = (state.planetIndex + 1) % planets.length;
+  floatText("🪐 星球切換成功", "#2563eb");
+  syncUI();
+};
+
+ui.sendBotBtn.onclick = ()=>{
+  if(state.bots <= 0){
+    floatText("冇機械人", "#ef4444");
+    return;
   }
 
-  // ground tiles
-  for(let r=0;r<5;r++){
-    for(let c=0;c<5;c++){
-      if((r===2 && c===2) || (r===2 && c===3) || (r===3 && c===2)){
-        drawRoad(r,c);
-      }else{
-        drawGrass(r,c);
+  showPopup(
+    "🤖 派遣機械人",
+    "機械人將會自動採集資源。\n(示範版：立即獲得少量資源)",
+    "派遣",
+    "取消",
+    ()=>{
+      const gain = 3 + Math.floor(Math.random()*6);
+      state.wood += gain;
+      state.crystal += Math.floor(gain/2);
+      state.food += gain;
+      floatText(`🤖 +${gain}資源`, "#0f172a");
+      syncUI();
+    }
+  );
+};
+
+ui.claimBtn.onclick = ()=>{
+  const now = Date.now();
+  if(now - state.lastClaim < 5000){
+    floatText("⏳ 冷卻中...", "#ef4444");
+    return;
+  }
+  state.lastClaim = now;
+
+  // AENO reward depends on resources + bots
+  const base = 1 + Math.floor(state.bots * 0.5);
+  const bonus = Math.min(10, Math.floor((state.wood + state.food + state.crystal + state.iron)/40));
+  const reward = base + bonus;
+
+  state.aeno += reward;
+  floatText(`✨ +${reward} AENO`, "#f59e0b");
+  syncUI();
+};
+
+ui.shopBtn.onclick = ()=>{
+  showPopup(
+    "🛒 商店（示範）",
+    "購買：\n- 機械人 +1 (需要 20 AENO)\n- 翻譯包 (需要 50 AENO)\n\n目前只做示範按鈕。",
+    "買機械人",
+    "關閉",
+    ()=>{
+      if(state.aeno < 20){
+        floatText("AENO 不足", "#ef4444");
+        return;
       }
+      state.aeno -= 20;
+      state.bots += 1;
+      floatText("🤖 機械人 +1", "#2563eb");
+      syncUI();
     }
-  }
+  );
+};
 
-  // animate pulses
-  const sway = Math.sin(t*0.03)*0.06;
-
-  // buildings back-to-front order
-  for(const b of buildings){
-    let pulse = 0;
-    if(clicked && clicked.b === b){
-      pulse = Math.sin(clicked.time*0.35)*10 * Math.max(0, 1 - clicked.time/30);
+ui.missionBtn.onclick = ()=>{
+  showPopup(
+    "📜 今日任務",
+    "1) 點擊建築 3 次\n2) 採集一次\n3) 領取 AENO\n\n完成後會得到獎勵 (示範版)。",
+    "領取獎勵",
+    "關閉",
+    ()=>{
+      state.aeno += 5;
+      floatText("🎁 +5 AENO", "#f59e0b");
+      syncUI();
     }
+  );
+};
 
-    if(b.type==="dome") drawDome(b.r,b.c, pulse);
-    if(b.type==="house") drawHouse(b.r,b.c, pulse);
+ui.assistantBtn.onclick = ()=>{
+  showPopup(
+    "🐾 助手：AEN狐",
+    "你好！我係 AEN狐 🦊\n\n建議：\n- 多派遣機械人\n- 收集水晶用於 FTL\n- 累積 AENO 等候黑洞移民\n\n(示範版助手面板)",
+    "知道",
+    "關閉",
+    ()=>{}
+  );
+};
 
-    drawTree(b.r,b.c, sway);
-  }
-
-  // title UI
-  ctx.save();
-  ctx.globalAlpha = 0.9;
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.roundRect(24, 20, 360, 72, 18);
-  ctx.fill();
-
-  ctx.strokeStyle = "#bae6fd";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  ctx.fillStyle = "#0f172a";
-  ctx.font = "bold 26px system-ui";
-  ctx.fillText("卡通小鎮 · 真等距3D", 44, 55);
-
-  ctx.fillStyle = "#2563eb";
-  ctx.font = "16px system-ui";
-  ctx.fillText("點建築會彈一下 ✨", 44, 78);
-  ctx.restore();
-}
+/* =========================
+   GAME LOOP
+   ========================= */
 
 function update(){
-  t++;
+  state.tick++;
 
   // cloud movement
   for(const cl of clouds){
     cl.x += cl.spd;
-    if(cl.x > W + 120) cl.x = -140;
+    if(cl.x > W + 160) cl.x = -200;
+  }
+
+  // idle resource trickle (放置感)
+  if(state.tick % 80 === 0){
+    state.food += 1;
+    state.wood += 1;
   }
 
   if(clicked){
@@ -611,13 +1112,64 @@ function update(){
   }
 }
 
+function drawBuildings(){
+  const sway = Math.sin(state.tick*0.03)*0.06;
+
+  for(const b of buildings){
+    let pulse = 0;
+    if(clicked && clicked.b === b){
+      pulse = Math.sin(clicked.time*0.35)*10 * Math.max(0, 1 - clicked.time/30);
+    }
+
+    if(b.type==="house") drawHouse(b.r,b.c,pulse);
+    if(b.type==="dome") drawDome(b.r,b.c,pulse);
+
+    drawTree(b.r,b.c,sway);
+  }
+}
+
+function drawHUDText(){
+  ctx.save();
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.roundRect(20, 250, 360, 78, 18);
+  ctx.fill();
+
+  ctx.strokeStyle = colors.stroke;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = "#0f172a";
+  ctx.font = "900 26px system-ui";
+  ctx.fillText("AENO V3 · 卡通城鎮", 40, 285);
+
+  ctx.fillStyle = "#2563eb";
+  ctx.font = "700 15px system-ui";
+  ctx.fillText("點建築可獲資源 / 右下領AENO", 40, 310);
+  ctx.restore();
+}
+
+function draw(){
+  drawBackground();
+
+  for(const cl of clouds){
+    drawCloud(cl.x, cl.y, cl.s);
+  }
+
+  drawGround();
+  drawBuildings();
+  drawHUDText();
+}
+
 function loop(){
   update();
-  drawScene();
+  draw();
+  syncUI();
   requestAnimationFrame(loop);
 }
 
-// Polyfill: roundRect (某些舊 webview 可能無)
+/* roundRect polyfill */
 if(!CanvasRenderingContext2D.prototype.roundRect){
   CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
     if(w<2*r) r=w/2;
@@ -633,7 +1185,9 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
   };
 }
 
+syncUI();
 loop();
 </script>
+
 </body>
 </html>
