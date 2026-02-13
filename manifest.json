@@ -1,0 +1,10 @@
+{
+  "name": "AENO 育成世界",
+  "short_name": "AENO",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#1e293b",
+  "orientation": "portrait",
+  "icons": []
+}
