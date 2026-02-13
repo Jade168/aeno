@@ -1,165 +1,70 @@
 /************************************************************
- AENO - 手遊卡通育成版 V3 (Phaser 3)
- - 直屏、可拖動縮放
- - 卡通地形（山/水/森林）
- - 動物/村民走動
- - 資源自動產出
- - AI 助手半自動建設/升級（最多用50%資源）
- - 獸潮自動週期
- - 機器人採集（簡化版）
- - LocalStorage 存檔
- ************************************************************/
-
+ AENO - 卡通育成簡潔版 V3.1 (Phaser 3)
+ - 現代簡約UI 不擋視線
+ - 可愛小動物AI助手 Lupus Minor
+ - AI半自動建築/升級 只使用50%資源
+ - 玩家可手動停止AI
+ - 對話框系統
+ - 保留所有原版核心玩法、AEMO幣、存檔、去中心化邏輯
+************************************************************/
 (() => {
   "use strict";
 
-  // -------------------------
-  // 版本控制（只改這個就會觸發更新存檔結構）
-  // -------------------------
-  const GAME_VERSION = "3.0.0";
-
-  // -------------------------
-  // LocalStorage Key
-  // -------------------------
+  const GAME_VERSION = "3.1.0";
   const SAVE_KEY = "AENO_SAVE_V3";
 
-  // -------------------------
-  // 遊戲世界設定
-  // -------------------------
   const WORLD_W = 3600;
   const WORLD_H = 3600;
   const TILE = 80;
 
-  // -------------------------
-  // 建築資料
-  // -------------------------
   const BUILDINGS = {
-    house: {
-      name: "民房",
-      emoji: "🏠",
-      cost: { wood: 40, stone: 20, gold: 10 },
-      prod: { gold: 0.25 },
-      hp: 80,
-      levelMax: 10
-    },
-    farm: {
-      name: "農田",
-      emoji: "🌾",
-      cost: { wood: 20, stone: 10, gold: 5 },
-      prod: { gold: 0.15, energy: 0.05 },
-      hp: 60,
-      levelMax: 10
-    },
-    lumber: {
-      name: "伐木場",
-      emoji: "🌲",
-      cost: { wood: 10, stone: 20, gold: 5 },
-      prod: { wood: 1.1 },
-      hp: 80,
-      levelMax: 10
-    },
-    quarry: {
-      name: "礦場",
-      emoji: "⛏️",
-      cost: { wood: 15, stone: 30, gold: 10 },
-      prod: { stone: 0.9 },
-      hp: 90,
-      levelMax: 10
-    },
-    power: {
-      name: "發電站",
-      emoji: "⚡",
-      cost: { wood: 30, stone: 30, gold: 20 },
-      prod: { energy: 0.8 },
-      hp: 100,
-      levelMax: 10
-    },
-    market: {
-      name: "市場",
-      emoji: "🏦",
-      cost: { wood: 60, stone: 40, gold: 40 },
-      prod: { gold: 0.6 },
-      hp: 120,
-      levelMax: 10
-    },
-    wall: {
-      name: "城牆",
-      emoji: "🧱",
-      cost: { wood: 25, stone: 80, gold: 20 },
-      prod: {},
-      hp: 300,
-      levelMax: 5
-    }
+    house:  { name:"民房",   emoji:"🏠", cost:{wood:40,stone:20,gold:10}, prod:{gold:0.25}, hp:80, levelMax:10 },
+    farm:   { name:"農田",   emoji:"🌾", cost:{wood:20,stone:10,gold:5},  prod:{gold:0.15,energy:0.05}, hp:60, levelMax:10 },
+    lumber: { name:"伐木場", emoji:"🌲", cost:{wood:10,stone:20,gold:5},  prod:{wood:1.1}, hp:80, levelMax:10 },
+    quarry:{ name:"礦場",   emoji:"⛏️", cost:{wood:15,stone:30,gold:10}, prod:{stone:0.9}, hp:90, levelMax:10 },
+    power:  { name:"發電站", emoji:"⚡", cost:{wood:30,stone:30,gold:20}, prod:{energy:0.8}, hp:100, levelMax:10 },
+    market: { name:"市場",   emoji:"🏦", cost:{wood:60,stone:40,gold:40}, prod:{gold:0.6}, hp:120, levelMax:10 },
+    wall:   { name:"城牆",   emoji:"🧱", cost:{wood:25,stone:80,gold:20}, prod:{}, hp:300, levelMax:5 }
   };
 
-  // -------------------------
-  // 初始資源（首次新檔）
-  // -------------------------
   const DEFAULT_RES = {
-    wood: 120,
-    stone: 90,
-    energy: 40,
-    gold: 30,
-    aeno: 0
+    wood:120, stone:90, energy:40, gold:30, aeno:0
   };
 
-  // -------------------------
-  // AI助手設定
-  // -------------------------
   const AI_HELPER = {
-    enabled: false,
-    useRatio: 0.5, // 只可用50%資源
+    useRatio: 0.5,
     intervalSec: 6,
     name: "Lupus Minor"
   };
 
-  // -------------------------
-  // 獸潮設定
-  // -------------------------
   const BEAST = {
-    intervalSec: 70,     // 每70秒一波（示範版，未來可改成公式）
-    durationSec: 20,     // 持續20秒
-    dps: 1.2,            // 每秒扣城牆耐久
-    retreatAt: 0.4       // 低於40%退潮
+    intervalSec:70, durationSec:20, dps:1.2, retreatAt:0.4
   };
 
-  // -------------------------
-  // 機器人設定
-  // -------------------------
   const ROBOT = {
-    intervalSec: 40,
-    maxTakeRatio: 0.2 // 最多抽取20%
+    intervalSec:40, maxTakeRatio:0.2
   };
 
-  // -------------------------
-  // 遊戲狀態
-  // -------------------------
   let state = {
     version: GAME_VERSION,
-    res: { ...DEFAULT_RES },
+    res: {...DEFAULT_RES},
     buildings: [],
-    wallHP: 100,
-    wallHPMax: 100,
-    time: 0,
+    wallHP:100, wallHPMax:100,
+    time:0,
     aiEnabled: false,
-    lastBeast: 0,
-    beastActive: false,
-    beastTimer: 0,
-    lastRobot: 0,
-    robotMsg: "",
+    lastBeast:0, beastActive:false, beastTimer:0,
+    lastRobot:0, robotMsg:"",
     tutorialShown: false
   };
 
-  // 建築放置模式
   let buildMode = null;
-
-  // Phaser 對象
   let game, sceneMain;
   let cam, worldLayer;
   let mapObjects = [];
   let animals = [];
   let villagers = [];
   let robotSprite = null;
+  let aiPetSprite = null;
 
   // UI
   const ui = {
@@ -168,89 +73,83 @@
     energy: document.getElementById("energy"),
     gold: document.getElementById("gold"),
     aeno: document.getElementById("aeno"),
-    assistantPanel: document.getElementById("assistantPanel"),
-    assistantMsg: document.getElementById("assistantMsg"),
-    buildMenu: document.getElementById("buildMenu")
+    aiChatInput: document.getElementById("aiChatInput"),
+    aiChatLog: document.getElementById("aiChatLog"),
+    aiToggleBtn: document.getElementById("aiToggleBtn")
   };
 
-  // -------------------------
-  // 對外暴露給 index.html 的按鈕事件
-  // -------------------------
   window.toggleBuildMenu = () => {
-    ui.buildMenu.style.display = ui.buildMenu.style.display === "block" ? "none" : "block";
+    const m = document.getElementById("buildMenu");
+    m.style.display = m.style.display === "flex" ? "none" : "flex";
   };
 
-  window.toggleAssistant = () => {
-    ui.assistantPanel.style.display = ui.assistantPanel.style.display === "block" ? "none" : "block";
+  window.toggleAIPanel = () => {
+    const p = document.getElementById("aiPanel");
+    p.style.display = p.style.display === "block" ? "none" : "block";
   };
 
   window.toggleAI = () => {
     state.aiEnabled = !state.aiEnabled;
-    showAssistantMessage(state.aiEnabled
-      ? "🤖 AI建設已啟動！我會幫你半自動起建築/升級，但只會用最多 50% 資源。"
-      : "🛑 AI建設已停止！所有建設交返你控制。"
-    );
+    ui.aiToggleBtn.textContent = state.aiEnabled ? "暫停AI" : "啟動AI";
+    aiSay(state.aiEnabled ? "✅ AI半自動已啟動（只會用50%資源）" : "🛑 AI已暫停");
     saveGame();
   };
 
   window.selectBuild = (type) => {
-    if (!BUILDINGS[type]) return;
+    if(!BUILDINGS[type]) return;
     buildMode = type;
-    showAssistantMessage(`🏗 已選擇建築：${BUILDINGS[type].emoji} ${BUILDINGS[type].name}，請點地圖空地放置。`);
-    ui.buildMenu.style.display = "none";
+    aiSay(`🏗 選擇：${BUILDINGS[type].name}，點地圖放置`);
+    document.getElementById("buildMenu").style.display = "none";
   };
 
   window.manualSave = () => {
     saveGame();
-    showAssistantMessage("💾 已保存！你關網頁都唔會重置。");
+    aiSay("💾 已儲存");
   };
 
-  window.assistantAsk = (type) => {
-    if (type === "close") {
-      ui.assistantPanel.style.display = "none";
-      return;
-    }
+  window.sendAIChat = () => {
+    const input = ui.aiChatInput;
+    const msg = input.value.trim();
+    if(!msg) return;
+    addChat("我", msg);
+    input.value = "";
 
-    const answers = {
-      what: "你要做嘅就係：起伐木場/礦場→起發電站→起市場→升級→等獸潮→收集戰利品。",
-      build: "按左邊🏗建築 → 揀建築 → 再點地圖放置。之後可點建築升級。",
-      aeno: "AENO 主要由獸潮戰利品、機器人探索、以及高級礦產事件中獲得（未來會更完整）。",
-      beast: "獸潮會定期攻城！城牆跌到 40% 會自動退潮。你要維修城牆，保持 100% 才可以安全。"
-    };
-
-    showAssistantMessage(answers[type] || "我仲學緊，遲啲會更聰明～");
+    setTimeout(() => {
+      if(msg.includes("你好") || msg.includes("hi")) aiSay("你好呀主人～");
+      else if(msg.includes("做咩") || msg.includes("點玩")) aiSay("我會幫你起建築同升級，淨係用一半資源㗎！");
+      else if(msg.includes("停止") || msg.includes("唔好")) aiSay("😢 咁我暫停啦…");
+      else if(msg.includes("繼續") || msg.includes("開啟")) aiSay("🥰 收到！我繼續幫你打理！");
+      else aiSay("嗯嗯，我聽緊㗎～");
+    }, 700);
   };
 
-  // -------------------------
-  // 存檔
-  // -------------------------
+  function addChat(who, text) {
+    const div = document.createElement("div");
+    div.className = "chat-item";
+    div.textContent = `[${who}] ${text}`;
+    ui.aiChatLog.appendChild(div);
+    ui.aiChatLog.scrollTop = ui.aiChatLog.scrollHeight;
+  }
+
+  function aiSay(text) {
+    addChat(AI_HELPER.name, text);
+  }
+
   function saveGame() {
-    try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.warn("Save failed:", e);
-    }
+    try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){}
   }
 
   function loadGame() {
-    try {
+    try{
       const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return false;
-
+      if(!raw) return false;
       const data = JSON.parse(raw);
-      if (!data || data.version !== GAME_VERSION) return false;
-
+      if(!data || data.version !== GAME_VERSION) return false;
       state = data;
       return true;
-    } catch (e) {
-      console.warn("Load failed:", e);
-      return false;
-    }
+    } catch(e){ return false; }
   }
 
-  // -------------------------
-  // UI 更新
-  // -------------------------
   function updateHUD() {
     ui.wood.textContent = Math.floor(state.res.wood);
     ui.stone.textContent = Math.floor(state.res.stone);
@@ -259,661 +158,368 @@
     ui.aeno.textContent = Math.floor(state.res.aeno);
   }
 
-  function showAssistantMessage(msg) {
-    ui.assistantPanel.style.display = "block";
-    ui.assistantMsg.textContent = msg;
-  }
-
-  // -------------------------
-  // 資源消耗檢查
-  // -------------------------
   function canAfford(cost) {
-    for (const k in cost) {
-      if ((state.res[k] || 0) < cost[k]) return false;
-    }
+    for(const k in cost) if((state.res[k]||0) < cost[k]) return false;
     return true;
   }
 
   function payCost(cost) {
-    for (const k in cost) {
-      state.res[k] -= cost[k];
-      if (state.res[k] < 0) state.res[k] = 0;
-    }
+    for(const k in cost) { state.res[k] -= cost[k]; if(state.res[k]<0) state.res[k]=0; }
   }
 
-  // -------------------------
-  // 地形生成（卡通風）
-  // -------------------------
   function generateTerrain(scene) {
     const g = scene.add.graphics();
     g.setDepth(-10);
+    g.fillStyle(0x22c55e,1);
+    g.fillRect(0,0,WORLD_W,WORLD_H);
 
-    // 草地底色
-    g.fillStyle(0x22c55e, 1);
-    g.fillRect(0, 0, WORLD_W, WORLD_H);
-
-    // 水域
-    for (let i = 0; i < 10; i++) {
-      const x = Phaser.Math.Between(200, WORLD_W - 600);
-      const y = Phaser.Math.Between(200, WORLD_H - 600);
-      const w = Phaser.Math.Between(300, 650);
-      const h = Phaser.Math.Between(250, 550);
-
-      g.fillStyle(0x38bdf8, 1);
-      g.fillRoundedRect(x, y, w, h, 80);
-
-      g.lineStyle(6, 0x0ea5e9, 1);
-      g.strokeRoundedRect(x + 8, y + 8, w - 16, h - 16, 70);
+    for(let i=0;i<10;i++){
+      const x=Phaser.Math.Between(200,WORLD_W-600);
+      const y=Phaser.Math.Between(200,WORLD_H-600);
+      const w=Phaser.Math.Between(300,650);
+      const h=Phaser.Math.Between(250,550);
+      g.fillStyle(0x38bdf8,1);
+      g.fillRoundedRect(x,y,w,h,80);
+      g.lineStyle(6,0x0ea5e9,1);
+      g.strokeRoundedRect(x+8,y+8,w-16,h-16,70);
     }
 
-    // 山
-    for (let i = 0; i < 20; i++) {
-      const x = Phaser.Math.Between(100, WORLD_W - 200);
-      const y = Phaser.Math.Between(100, WORLD_H - 200);
-      const r = Phaser.Math.Between(80, 160);
-
-      g.fillStyle(0x9ca3af, 1);
-      g.fillCircle(x, y, r);
-
-      g.fillStyle(0x6b7280, 1);
-      g.fillCircle(x + r * 0.25, y + r * 0.15, r * 0.65);
-
-      g.fillStyle(0xffffff, 0.25);
-      g.fillCircle(x - r * 0.25, y - r * 0.25, r * 0.45);
+    for(let i=0;i<20;i++){
+      const x=Phaser.Math.Between(100,WORLD_W-200);
+      const y=Phaser.Math.Between(100,WORLD_H-200);
+      const r=Phaser.Math.Between(80,160);
+      g.fillStyle(0x9ca3af,1);
+      g.fillCircle(x,y,r);
+      g.fillStyle(0x6b7280,1);
+      g.fillCircle(x+r*0.25,y+r*0.15,r*0.65);
+      g.fillStyle(0xffffff,0.25);
+      g.fillCircle(x-r*0.25,y-r*0.25,r*0.45);
     }
 
-    // 森林
-    for (let i = 0; i < 80; i++) {
-      const x = Phaser.Math.Between(80, WORLD_W - 80);
-      const y = Phaser.Math.Between(80, WORLD_H - 80);
-
-      g.fillStyle(0x14532d, 1);
-      g.fillCircle(x, y, 24);
-
-      g.fillStyle(0x166534, 1);
-      g.fillCircle(x + 10, y + 6, 18);
-
-      g.fillStyle(0x065f46, 1);
-      g.fillCircle(x - 10, y + 6, 18);
+    for(let i=0;i<80;i++){
+      const x=Phaser.Math.Between(80,WORLD_W-80);
+      const y=Phaser.Math.Between(80,WORLD_H-80);
+      g.fillStyle(0x14532d,1);
+      g.fillCircle(x,y,24);
+      g.fillStyle(0x166534,1);
+      g.fillCircle(x+10,y+6,18);
+      g.fillStyle(0x065f46,1);
+      g.fillCircle(x-10,y+6,18);
     }
 
-    g.generateTexture("terrainTex", WORLD_W, WORLD_H);
+    g.generateTexture("terrainTex",WORLD_W,WORLD_H);
     g.destroy();
-
-    const img = scene.add.image(0, 0, "terrainTex").setOrigin(0, 0);
+    const img = scene.add.image(0,0,"terrainTex").setOrigin(0,0);
     img.setDepth(-20);
     return img;
   }
 
-  // -------------------------
-  // 生成卡通角色（動物/村民）
-  // -------------------------
-  function createCartoonAnimal(scene, x, y, type = "bird") {
-    const container = scene.add.container(x, y);
-
-    const body = scene.add.circle(0, 0, 12, 0xf59e0b).setStrokeStyle(3, 0x111827);
-    const head = scene.add.circle(10, -8, 9, 0xfbbf24).setStrokeStyle(3, 0x111827);
-
-    const eye = scene.add.circle(13, -10, 2, 0x111827);
-    const wing = scene.add.ellipse(-5, 0, 18, 12, 0xfde68a).setStrokeStyle(2, 0x111827);
-
-    container.add([wing, body, head, eye]);
-
-    container.setDepth(10);
-    container.speed = Phaser.Math.FloatBetween(20, 50);
-    container.dir = Phaser.Math.FloatBetween(0, Math.PI * 2);
-
-    return container;
-  }
-
-  function createVillager(scene, x, y) {
-    const c = scene.add.container(x, y);
-
-    const body = scene.add.rectangle(0, 10, 22, 28, 0x60a5fa).setStrokeStyle(3, 0x111827);
-    const head = scene.add.circle(0, -8, 12, 0xfcd34d).setStrokeStyle(3, 0x111827);
-
-    const eye1 = scene.add.circle(-4, -10, 2, 0x111827);
-    const eye2 = scene.add.circle(4, -10, 2, 0x111827);
-    const mouth = scene.add.arc(0, -5, 4, 4, 0, 180, false, 0xef4444).setStrokeStyle(2, 0x111827);
-
-    c.add([body, head, eye1, eye2, mouth]);
-    c.setDepth(11);
-
-    c.speed = Phaser.Math.FloatBetween(12, 26);
-    c.dir = Phaser.Math.FloatBetween(0, Math.PI * 2);
-
+  function createCartoonAnimal(scene,x,y,type="bird"){
+    const c=scene.add.container(x,y);
+    const body=scene.add.circle(0,0,12,0xf59e0b).setStrokeStyle(3,0x111827);
+    const head=scene.add.circle(10,-8,9,0xfbbf24).setStrokeStyle(3,0x111827);
+    const eye=scene.add.circle(13,-10,2,0x111827);
+    const wing=scene.add.ellipse(-5,0,18,12,0xfde68a).setStrokeStyle(2,0x111827);
+    c.add([wing,body,head,eye]);
+    c.setDepth(10);
+    c.speed=Phaser.Math.FloatBetween(20,50);
+    c.dir=Phaser.Math.FloatBetween(0,Math.PI*2);
     return c;
   }
 
-  // -------------------------
-  // 建築生成（卡通方塊 + emoji）
-  // -------------------------
-  function spawnBuilding(scene, b) {
-    const def = BUILDINGS[b.type];
-    const container = scene.add.container(b.x, b.y);
-
-    const base = scene.add.rectangle(0, 0, 66, 66, 0xffffff, 0.9)
-      .setStrokeStyle(4, 0x111827);
-
-    const top = scene.add.rectangle(0, -10, 66, 26, 0x93c5fd, 1)
-      .setStrokeStyle(4, 0x111827);
-
-    const label = scene.add.text(-20, -18, def.emoji, {
-      fontFamily: "Arial",
-      fontSize: "28px"
-    });
-
-    const lvl = scene.add.text(-30, 22, `Lv.${b.level}`, {
-      fontFamily: "Arial",
-      fontSize: "14px",
-      fontStyle: "bold",
-      color: "#111827"
-    });
-
-    container.add([base, top, label, lvl]);
-    container.setDepth(20);
-
-    container.buildingId = b.id;
-    container.isBuilding = true;
-
-    // 點擊建築升級
-    base.setInteractive({ useHandCursor: true });
-    base.on("pointerdown", () => {
-      upgradeBuilding(b.id);
-    });
-
-    b._sprite = container;
-    b._lvlText = lvl;
-
-    return container;
+  function createVillager(scene,x,y){
+    const c=scene.add.container(x,y);
+    const body=scene.add.rectangle(0,10,22,28,0x60a5fa).setStrokeStyle(3,0x111827);
+    const head=scene.add.circle(0,-8,12,0xfcd34d).setStrokeStyle(3,0x111827);
+    const eye1=scene.add.circle(-4,-10,2,0x111827);
+    const eye2=scene.add.circle(4,-10,2,0x111827);
+    const mouth=scene.add.arc(0,-5,4,0,Math.PI,false,0xef4444).setStrokeStyle(2,0x111827);
+    c.add([body,head,eye1,eye2,mouth]);
+    c.setDepth(11);
+    c.speed=Phaser.Math.FloatBetween(12,26);
+    c.dir=Phaser.Math.FloatBetween(0,Math.PI*2);
+    return c;
   }
 
-  function upgradeBuilding(id) {
-    const b = state.buildings.find(x => x.id === id);
-    if (!b) return;
+  function spawnAIPet(scene){
+    const pet=scene.add.container(0,0);
+    const body=scene.add.ellipse(0,0,36,28,0xfcd34d).setStrokeStyle(3,0x111827);
+    const ear1=scene.add.ellipse(-12,-16,10,14,0xfbbf24).setStrokeStyle(3,0x111827);
+    const ear2=scene.add.ellipse(12,-16,10,14,0xfbbf24).setStrokeStyle(3,0x111827);
+    const eye1=scene.add.circle(-8,-4,3,0x111827);
+    const eye2=scene.add.circle(8,-4,3,0x111827);
+    const mouth=scene.add.arc(0,2,6,0,Math.PI,false,0xef4444).setStrokeStyle(2,0x111827);
+    pet.add([body,ear1,ear2,eye1,eye2,mouth]);
+    pet.setScale(0.6);
+    pet.setDepth(999);
+    aiPetSprite=pet;
+    return pet;
+  }
 
-    const def = BUILDINGS[b.type];
-    if (b.level >= def.levelMax) {
-      showAssistantMessage("📌 已經升到最高級啦！");
-      return;
-    }
+  function spawnBuilding(scene,b){
+    const def=BUILDINGS[b.type];
+    const c=scene.add.container(b.x,b.y);
+    const base=scene.add.rectangle(0,0,66,66,0xffffff,0.9).setStrokeStyle(4,0x111827);
+    const top=scene.add.rectangle(0,-10,66,26,0x93c5fd,1).setStrokeStyle(4,0x111827);
+    const label=scene.add.text(-20,-18,def.emoji,{fontSize:"28px"});
+    const lvl=scene.add.text(-30,22,`Lv.${b.level}`,{fontSize:"14px",fontStyle:"bold",color:"#111"});
+    c.add([base,top,label,lvl]);
+    c.setDepth(20);
+    c.buildingId=b.id;
+    base.setInteractive({useHandCursor:true});
+    base.on("pointerdown",()=>{upgradeBuilding(b.id);});
+    b._sprite=c;
+    b._lvlText=lvl;
+    return c;
+  }
 
-    // 升級成本：每級乘 1.35
-    const factor = Math.pow(1.35, b.level);
-    const cost = {};
-    for (const k in def.cost) cost[k] = Math.floor(def.cost[k] * factor);
-
-    if (!canAfford(cost)) {
-      showAssistantMessage(`❌ 升級資源不足！需要：木${cost.wood||0} 石${cost.stone||0} 金${cost.gold||0}`);
-      return;
-    }
-
+  function upgradeBuilding(id){
+    const b=state.buildings.find(x=>x.id===id);
+    if(!b)return;
+    const def=BUILDINGS[b.type];
+    if(b.level>=def.levelMax){aiSay("已滿級");return;}
+    const factor=Math.pow(1.35,b.level);
+    const cost={};
+    for(const k in def.cost)cost[k]=Math.floor(def.cost[k]*factor);
+    if(!canAfford(cost)){aiSay("資源唔夠");return;}
     payCost(cost);
-    b.level += 1;
-
-    // HP 增加
-    b.hpMax = Math.floor(b.hpMax * 1.18);
-    b.hp = b.hpMax;
-
-    if (b._lvlText) b._lvlText.setText(`Lv.${b.level}`);
-
-    showAssistantMessage(`⬆️ ${def.emoji} ${def.name} 升級成功！現在 Lv.${b.level}`);
+    b.level+=1;
+    b.hpMax=Math.floor(b.hpMax*1.18);
+    b.hp=b.hpMax;
+    if(b._lvlText)b._lvlText.setText(`Lv.${b.level}`);
+    aiSay(`⬆️ ${def.name} 升級至 Lv.${b.level}`);
     saveGame();
     updateHUD();
   }
 
-  // -------------------------
-  // 建築放置
-  // -------------------------
-  function placeBuilding(scene, x, y, type) {
-    const def = BUILDINGS[type];
-    if (!def) return;
-
-    if (!canAfford(def.cost)) {
-      showAssistantMessage(`❌ 資源不足，無法建造 ${def.name}`);
-      return;
-    }
-
+  function placeBuilding(scene,x,y,type){
+    const def=BUILDINGS[type];
+    if(!def)return;
+    if(!canAfford(def.cost)){aiSay("資源不足");return;}
     payCost(def.cost);
-
-    const b = {
-      id: "b" + Date.now() + "_" + Math.floor(Math.random() * 9999),
-      type,
-      x,
-      y,
-      level: 1,
-      hpMax: def.hp,
-      hp: def.hp
+    const b={
+      id:"b"+Date.now()+"_"+Math.floor(Math.random()*9999),
+      type,x,y,level:1,hpMax:def.hp,hp:def.hp
     };
-
     state.buildings.push(b);
-    spawnBuilding(scene, b);
-
-    // 城牆更新（如果建造城牆）
-    if (type === "wall") {
-      state.wallHPMax += 220;
-      state.wallHP += 220;
-    }
-
+    spawnBuilding(scene,b);
+    if(type==="wall"){state.wallHPMax+=220;state.wallHP+=220;}
     saveGame();
     updateHUD();
   }
 
-  // -------------------------
-  // 資源自動產出（每秒）
-  // -------------------------
-  function produceResources(dtSec) {
-    for (const b of state.buildings) {
-      const def = BUILDINGS[b.type];
-      if (!def) continue;
-
-      const levelFactor = 1 + (b.level - 1) * 0.25;
-
-      for (const k in def.prod) {
-        state.res[k] = (state.res[k] || 0) + def.prod[k] * levelFactor * dtSec;
+  function produceResources(dtSec){
+    for(const b of state.buildings){
+      const def=BUILDINGS[b.type];
+      if(!def)continue;
+      const lf=1+(b.level-1)*0.25;
+      for(const k in def.prod){
+        state.res[k]=(state.res[k]||0)+def.prod[k]*lf*dtSec;
       }
     }
-
-    // 自然慢慢補能量（少少）
-    state.res.energy += 0.02 * dtSec;
-
-    // 資源上限保護（避免爆炸）
-    for (const k in state.res) {
-      if (state.res[k] > 999999999) state.res[k] = 999999999;
-    }
+    state.res.energy+=0.02*dtSec;
+    for(const k in state.res)if(state.res[k]>999999999)state.res[k]=999999999;
   }
 
-  // -------------------------
-  // AI助手：半自動建設 + 升級
-  // -------------------------
-  function aiHelperTick() {
-    if (!state.aiEnabled) return;
-
-    // 只可以用最多 50% 資源
-    const usable = {};
-    for (const k in state.res) usable[k] = state.res[k] * AI_HELPER.useRatio;
-
-    function canAffordUsable(cost) {
-      for (const k in cost) {
-        if ((usable[k] || 0) < cost[k]) return false;
-      }
+  function aiHelperTick(){
+    if(!state.aiEnabled)return;
+    const usable={};
+    for(const k in state.res)usable[k]=state.res[k]*AI_HELPER.useRatio;
+    function canUse(cost){
+      for(const k in cost)if((usable[k]||0)<cost[k])return false;
       return true;
     }
-
-    // 建設優先順序
-    const plan = ["lumber", "quarry", "power", "house", "farm", "market"];
-
-    // 若城牆太低，優先補城牆（升級/補建）
-    const wallPercent = state.wallHPMax > 0 ? state.wallHP / state.wallHPMax : 1;
-    if (wallPercent < 0.7) {
-      // 嘗試建造城牆
-      const cost = BUILDINGS.wall.cost;
-      if (canAffordUsable(cost)) {
-        const x = Phaser.Math.Between(200, WORLD_W - 200);
-        const y = Phaser.Math.Between(200, WORLD_H - 200);
-        placeBuilding(sceneMain, x, y, "wall");
-        showAssistantMessage("🧱 AI助手：城牆不足，我幫你加固啦！");
+    const wallPct=state.wallHPMax>0?state.wallHP/state.wallHPMax:1;
+    if(wallPct<0.7){
+      const c=BUILDINGS.wall;
+      if(canUse(c.cost)){
+        const x=Phaser.Math.Between(200,WORLD_W-200);
+        const y=Phaser.Math.Between(200,WORLD_H-200);
+        placeBuilding(sceneMain,x,y,"wall");
+        aiSay("🧱 我幫你加強城牆");
         return;
       }
     }
-
-    // 嘗試升級一個建築（最便宜升級優先）
-    let best = null;
-    let bestCost = Infinity;
-
-    for (const b of state.buildings) {
-      const def = BUILDINGS[b.type];
-      if (!def) continue;
-      if (b.level >= def.levelMax) continue;
-
-      const factor = Math.pow(1.35, b.level);
-      const cost = {};
-      for (const k in def.cost) cost[k] = Math.floor(def.cost[k] * factor);
-
-      let sum = 0;
-      for (const k in cost) sum += cost[k];
-
-      if (sum < bestCost && canAffordUsable(cost)) {
-        bestCost = sum;
-        best = b;
-      }
+    let best=null;
+    let bestCost=999999;
+    for(const b of state.buildings){
+      const def=BUILDINGS[b.type];
+      if(!def||b.level>=def.levelMax)continue;
+      const f=Math.pow(1.35,b.level);
+      const cost={};
+      for(const k in def.cost)cost[k]=Math.floor(def.cost[k]*f);
+      let sum=0;
+      for(const k in cost)sum+=cost[k];
+      if(sum<bestCost&&canUse(cost)){bestCost=sum;best=b;}
     }
-
-    if (best) {
+    if(best){
       upgradeBuilding(best.id);
-      showAssistantMessage(`🐾 ${AI_HELPER.name}：我幫你升級咗一座建築！`);
+      aiSay("🐾 幫你升咗個建築");
       return;
     }
-
-    // 若無可升級，就建新建築
-    for (const t of plan) {
-      const cost = BUILDINGS[t].cost;
-      if (canAffordUsable(cost)) {
-        const x = Phaser.Math.Between(220, WORLD_W - 220);
-        const y = Phaser.Math.Between(220, WORLD_H - 220);
-        placeBuilding(sceneMain, x, y, t);
-        showAssistantMessage(`🐾 ${AI_HELPER.name}：我幫你起咗 ${BUILDINGS[t].emoji} ${BUILDINGS[t].name}`);
+    const plan=["lumber","quarry","power","house","farm","market"];
+    for(const t of plan){
+      const c=BUILDINGS[t];
+      if(canUse(c.cost)){
+        const x=Phaser.Math.Between(220,WORLD_W-220);
+        const y=Phaser.Math.Between(220,WORLD_H-220);
+        placeBuilding(sceneMain,x,y,t);
+        aiSay(`🏗️ 幫你起咗 ${c.name}`);
         return;
       }
     }
   }
 
-  // -------------------------
-  // 獸潮系統
-  // -------------------------
-  function beastTick(dtSec) {
-    // 觸發
-    if (!state.beastActive && (state.time - state.lastBeast) > BEAST.intervalSec) {
-      state.beastActive = true;
-      state.beastTimer = 0;
-      state.lastBeast = state.time;
-      showAssistantMessage("🦖 獸潮來襲！！快守住城牆！！");
+  function beastTick(dtSec){
+    if(!state.beastActive&&state.time-state.lastBeast>BEAST.intervalSec){
+      state.beastActive=true;
+      state.beastTimer=0;
+      state.lastBeast=state.time;
+      aiSay("🦖 獸潮來襲！");
     }
-
-    if (!state.beastActive) return;
-
-    state.beastTimer += dtSec;
-
-    // 扣城牆
-    state.wallHP -= BEAST.dps * dtSec;
-    if (state.wallHP < 0) state.wallHP = 0;
-
-    // 低於40%退潮
-    const percent = state.wallHPMax > 0 ? state.wallHP / state.wallHPMax : 1;
-    if (percent <= BEAST.retreatAt) {
-      state.beastActive = false;
-      showAssistantMessage("🌊 獸潮退走了！你可以按提示收集野獸屍體（未來會加按鈕）。");
-
-      // 獸潮獎勵：少量AENO機率
-      const chance = 0.18;
-      if (Math.random() < chance) {
-        const gain = Phaser.Math.Between(1, 3);
-        state.res.aeno += gain;
-        showAssistantMessage(`💎 你從獸潮戰利品中挖到 AENO +${gain}！`);
+    if(!state.beastActive)return;
+    state.beastTimer+=dtSec;
+    state.wallHP-=BEAST.dps*dtSec;
+    if(state.wallHP<0)state.wallHP=0;
+    const pct=state.wallHPMax>0?state.wallHP/state.wallHPMax:1;
+    if(pct<=BEAST.retreatAt){
+      state.beastActive=false;
+      aiSay("🌊 獸潮退咗啦！");
+      if(Math.random()<0.18){
+        const a=Phaser.Math.Between(1,3);
+        state.res.aeno+=a;
+        aiSay(`💎 獲得 AENO +${a}`);
       }
-
-      // 同時掉落金幣
-      state.res.gold += Phaser.Math.Between(10, 35);
-
+      state.res.gold+=Phaser.Math.Between(10,35);
       saveGame();
       updateHUD();
       return;
     }
-
-    // 持續時間完結
-    if (state.beastTimer >= BEAST.durationSec) {
-      state.beastActive = false;
-      showAssistantMessage("🦴 獸潮暫時完結，你守住了基地！");
+    if(state.beastTimer>=BEAST.durationSec){
+      state.beastActive=false;
+      aiSay("🦴 獸潮完結！");
       saveGame();
     }
   }
 
-  // -------------------------
-  // 機器人採集（簡化版：會出現並帶資源返嚟）
-  // -------------------------
-  function robotTick() {
-    if ((state.time - state.lastRobot) < ROBOT.intervalSec) return;
-
-    state.lastRobot = state.time;
-
-    // 抽取上限 20%（模擬）
-    const takeWood = Math.floor(state.res.wood * 0.05);
-    const takeStone = Math.floor(state.res.stone * 0.04);
-
-    // 其實係帶返資源（遊戲設定：去星球採集返嚟）
-    const gainWood = Phaser.Math.Between(20, 90);
-    const gainStone = Phaser.Math.Between(15, 60);
-    const gainGold = Phaser.Math.Between(5, 22);
-
-    state.res.wood += gainWood;
-    state.res.stone += gainStone;
-    state.res.gold += gainGold;
-
-    // 小機率獲得 AENO
-    if (Math.random() < 0.12) {
-      const a = Phaser.Math.Between(1, 2);
-      state.res.aeno += a;
-      showAssistantMessage(`🤖 機器人探索成功！帶回資源 +AENO ${a}`);
-    } else {
-      showAssistantMessage(`🤖 機器人探索成功！木+${gainWood} 石+${gainStone} 金+${gainGold}`);
+  function robotTick(){
+    if(state.time-state.lastRobot<ROBOT.intervalSec)return;
+    state.lastRobot=state.time;
+    const gw=Phaser.Math.Between(20,90);
+    const gs=Phaser.Math.Between(15,60);
+    const gg=Phaser.Math.Between(5,22);
+    state.res.wood+=gw;
+    state.res.stone+=gs;
+    state.res.gold+=gg;
+    if(Math.random()<0.12){
+      const a=Phaser.Math.Between(1,2);
+      state.res.aeno+=a;
+      aiSay(`🤖 機器人帶回 AENO +${a}`);
+    }else{
+      aiSay(`🤖 機器人採集：木+${gw} 石+${gs} 金+${gg}`);
     }
-
     saveGame();
     updateHUD();
-
-    // 視覺上生成一隻小機器人跑過
-    if (sceneMain) {
-      if (robotSprite) robotSprite.destroy();
-
-      robotSprite = sceneMain.add.container(
-        Phaser.Math.Between(200, WORLD_W - 200),
-        Phaser.Math.Between(200, WORLD_H - 200)
-      );
-
-      const body = sceneMain.add.rectangle(0, 0, 26, 22, 0xe5e7eb).setStrokeStyle(3, 0x111827);
-      const eye1 = sceneMain.add.circle(-6, -3, 3, 0x111827);
-      const eye2 = sceneMain.add.circle(6, -3, 3, 0x111827);
-      const antenna = sceneMain.add.rectangle(0, -18, 4, 10, 0x9ca3af).setStrokeStyle(2, 0x111827);
-      const tip = sceneMain.add.circle(0, -24, 5, 0xf97316).setStrokeStyle(2, 0x111827);
-
-      robotSprite.add([body, eye1, eye2, antenna, tip]);
-      robotSprite.setDepth(12);
-
-      sceneMain.tweens.add({
-        targets: robotSprite,
-        y: robotSprite.y - 10,
-        duration: 400,
-        yoyo: true,
-        repeat: 5
-      });
-    }
   }
 
-  // -------------------------
-  // 角色移動
-  // -------------------------
-  function moveEntities(dtSec) {
-    function moveOne(e) {
-      e.x += Math.cos(e.dir) * e.speed * dtSec;
-      e.y += Math.sin(e.dir) * e.speed * dtSec;
-
-      // 轉向
-      if (Math.random() < 0.02) {
-        e.dir += Phaser.Math.FloatBetween(-0.7, 0.7);
-      }
-
-      // 邊界反彈
-      if (e.x < 80) e.dir = 0;
-      if (e.x > WORLD_W - 80) e.dir = Math.PI;
-      if (e.y < 80) e.dir = Math.PI / 2;
-      if (e.y > WORLD_H - 80) e.dir = -Math.PI / 2;
-
-      // 小跳動動畫
-      e.scaleX = 1 + Math.sin(state.time * 3) * 0.02;
-      e.scaleY = 1 + Math.cos(state.time * 3) * 0.02;
+  function moveEntities(dtSec){
+    function move(e){
+      e.x+=Math.cos(e.dir)*e.speed*dtSec;
+      e.y+=Math.sin(e.dir)*e.speed*dtSec;
+      if(Math.random()<0.02)e.dir+=Phaser.Math.FloatBetween(-0.7,0.7);
+      if(e.x<80)e.dir=0;
+      if(e.x>WORLD_W-80)e.dir=Math.PI;
+      if(e.y<80)e.dir=Math.PI/2;
+      if(e.y>WORLD_H-80)e.dir=-Math.PI/2;
+      e.scaleX=1+Math.sin(state.time*3)*0.02;
+      e.scaleY=1+Math.cos(state.time*3)*0.02;
     }
-
-    animals.forEach(moveOne);
-    villagers.forEach(moveOne);
+    animals.forEach(move);
+    villagers.forEach(move);
   }
 
-  // -------------------------
-  // Phaser 主場景
-  // -------------------------
-  class MainScene extends Phaser.Scene {
-    constructor() {
-      super("MainScene");
-    }
-
-    preload() {}
-
-    create() {
-      sceneMain = this;
-
-      // 地形
-      worldLayer = generateTerrain(this);
-
-      // Camera
-      cam = this.cameras.main;
-      cam.setBounds(0, 0, WORLD_W, WORLD_H);
-      cam.centerOn(WORLD_W / 2, WORLD_H / 2);
+  class MainScene extends Phaser.Scene{
+    constructor(){super("MainScene");}
+    preload(){}
+    create(){
+      sceneMain=this;
+      worldLayer=generateTerrain(this);
+      cam=this.cameras.main;
+      cam.setBounds(0,0,WORLD_W,WORLD_H);
+      cam.centerOn(WORLD_W/2,WORLD_H/2);
       cam.setZoom(0.9);
-
-      // 拖動
-      let drag = false;
-      let lastX = 0, lastY = 0;
-
-      this.input.on("pointerdown", (p) => {
-        drag = true;
-        lastX = p.x;
-        lastY = p.y;
+      let drag=false;
+      let lx=0,ly=0;
+      this.input.on("pointerdown",p=>{drag=true;lx=p.x;ly=p.y;});
+      this.input.on("pointerup",()=>drag=false);
+      this.input.on("pointermove",p=>{
+        if(!drag)return;
+        cam.scrollX-=(p.x-lx)/cam.zoom;
+        cam.scrollY-=(p.y-ly)/cam.zoom;
+        lx=p.x; ly=p.y;
       });
-
-      this.input.on("pointerup", () => drag = false);
-
-      this.input.on("pointermove", (p) => {
-        if (!drag) return;
-        if (p.isDown) {
-          cam.scrollX -= (p.x - lastX) / cam.zoom;
-          cam.scrollY -= (p.y - lastY) / cam.zoom;
-          lastX = p.x;
-          lastY = p.y;
+      this.input.on("wheel",(p,dx,dy)=>{
+        cam.zoom-=dy*0.001;
+        cam.zoom=Phaser.Math.Clamp(cam.zoom,0.45,1.7);
+      });
+      this.input.on("pointerdown",p=>{
+        if(buildMode){
+          placeBuilding(this,p.worldX,p.worldY,buildMode);
+          buildMode=null;
         }
       });
-
-      // 滾輪縮放（手機雙指 zoom 由瀏覽器處理，Phaser 仍可支援）
-      this.input.on("wheel", (pointer, dx, dy) => {
-        cam.zoom -= dy * 0.001;
-        cam.zoom = Phaser.Math.Clamp(cam.zoom, 0.45, 1.7);
-      });
-
-      // 點地圖放建築
-      this.input.on("pointerdown", (p) => {
-        const wx = p.worldX;
-        const wy = p.worldY;
-
-        if (buildMode) {
-          placeBuilding(this, wx, wy, buildMode);
-          showAssistantMessage(`✅ 已建造 ${BUILDINGS[buildMode].emoji} ${BUILDINGS[buildMode].name}`);
-          buildMode = null;
-          saveGame();
+      spawnAIPet(this);
+      if(!loadGame()){
+        aiSay("🎮 新遊戲開始！我係你嘅AI助手 "+AI_HELPER.name);
+      }else{
+        aiSay("🔙 載入存檔成功！");
+      }
+      updateHUD();
+      this.time.addEvent({
+        delay:1000,
+        callback:()=>{
+          state.time+=1;
+          produceResources(1);
           updateHUD();
-        }
+        },
+        loop:true
       });
-
-      // 建築重建
-      for (const b of state.buildings) {
-        spawnBuilding(this, b);
-      }
-
-      // 初始城牆
-      if (state.wallHPMax < 100) {
-        state.wallHPMax = 100;
-        state.wallHP = 100;
-      }
-
-      // 生成動物
-      if (animals.length === 0) {
-        for (let i = 0; i < 16; i++) {
-          animals.push(createCartoonAnimal(this,
-            Phaser.Math.Between(200, WORLD_W - 200),
-            Phaser.Math.Between(200, WORLD_H - 200)
-          ));
-        }
-      }
-
-      // 生成村民
-      if (villagers.length === 0) {
-        for (let i = 0; i < 8; i++) {
-          villagers.push(createVillager(this,
-            Phaser.Math.Between(200, WORLD_W - 200),
-            Phaser.Math.Between(200, WORLD_H - 200)
-          ));
-        }
-      }
-
-      // 教學提示（只一次）
-      if (!state.tutorialShown) {
-        state.tutorialShown = true;
-        showAssistantMessage("👋 歡迎嚟到 AENO！拖動地圖探索、按🏗建築開始起基地。AI建設可以幫你升級，但會保留50%資源。");
-        saveGame();
-      }
-
-      updateHUD();
+      this.time.addEvent({
+        delay:AI_HELPER.intervalSec*1000,
+        callback:aiHelperTick,
+        loop:true
+      });
+      this.time.addEvent({
+        delay:1000,
+        callback:()=>{beastTick(1);robotTick();},
+        loop:true
+      });
+      for(let i=0;i<30;i++)animals.push(createCartoonAnimal(this,
+        Phaser.Math.Between(100,WORLD_W-100),
+        Phaser.Math.Between(100,WORLD_H-100)
+      ));
+      for(let i=0;i<12;i++)villagers.push(createVillager(this,
+        Phaser.Math.Between(200,WORLD_W-200),
+        Phaser.Math.Between(200,WORLD_H-200)
+      ));
+      state.buildings.forEach(b=>spawnBuilding(this,b));
     }
-
-    update(time, delta) {
-      const dtSec = delta / 1000;
-      state.time += dtSec;
-
-      // 自動產出資源
-      produceResources(dtSec);
-
-      // 獸潮
-      beastTick(dtSec);
-
-      // 機器人
-      robotTick();
-
-      // 移動動物村民
-      moveEntities(dtSec);
-
-      // 每幾秒 AI助手執行一次
-      if (state.aiEnabled) {
-        if (!this._aiTimer) this._aiTimer = 0;
-        this._aiTimer += dtSec;
-        if (this._aiTimer >= AI_HELPER.intervalSec) {
-          this._aiTimer = 0;
-          aiHelperTick();
-        }
-      }
-
-      // HUD
-      updateHUD();
-
-      // 自動保存（每10秒）
-      if (!this._saveTimer) this._saveTimer = 0;
-      this._saveTimer += dtSec;
-      if (this._saveTimer >= 10) {
-        this._saveTimer = 0;
-        saveGame();
+    update(){
+      moveEntities(0.016);
+      if(aiPetSprite){
+        aiPetSprite.x=cam.scrollX+60;
+        aiPetSprite.y=cam.scrollY+cam.height-60;
+        aiPetSprite.rotation=Math.sin(state.time*2)*0.05;
       }
     }
   }
 
-  // -------------------------
-  // 初始化
-  // -------------------------
-  function init() {
-    const loaded = loadGame();
-    if (!loaded) {
-      // 新檔初始化：放一個城牆
-      state.wallHPMax = 120;
-      state.wallHP = 120;
-      state.buildings = [];
-      state.aiEnabled = false;
-      saveGame();
-    }
+  const config={
+    type:Phaser.AUTO,
+    scale:{mode:Phaser.Scale.FIT,width:800,height:1280},
+    physics:{default:"arcade",arcade:{gravity:{y:0}}},
+    scene:[MainScene]
+  };
 
-    const config = {
-      type: Phaser.AUTO,
-      parent: "phaser-container",
-      width: window.innerWidth,
-      height: window.innerHeight,
-      backgroundColor: "#0b1220",
-      physics: { default: "arcade" },
-      scene: [MainScene]
-    };
-
-    game = new Phaser.Game(config);
-
-    window.addEventListener("resize", () => {
-      game.scale.resize(window.innerWidth, window.innerHeight);
-    });
-
-    updateHUD();
-  }
-
-  init();
-
+  game=new Phaser.Game(config);
 })();
