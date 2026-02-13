@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>AENO - 手遊卡通育成版 V2</title>
+  <title>AENO - 卡通育成簡潔版 V3.1</title>
 
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e293b">
@@ -107,12 +107,25 @@
       font-size: 14px;
     }
 
-    #assistantPanel .msg {
-      margin-top: 6px;
+    #aiChatLog {
+      max-height: 120px;
+      overflow-y: auto;
+      margin: 8px 0;
       font-size: 13px;
-      font-weight: 700;
-      opacity: 0.9;
       line-height: 1.4;
+    }
+
+    .chat-item {
+      margin: 4px 0;
+    }
+
+    #aiChatInput {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
     }
 
     #assistantPanel .row {
@@ -232,8 +245,8 @@
 
     <div id="sideBar">
       <div class="btn" onclick="toggleBuildMenu()">🏗 建築</div>
-      <div class="btn" onclick="toggleAssistant()">🐾 助手</div>
-      <div class="btn" onclick="toggleAI()">🤖 AI建設</div>
+      <div class="btn" onclick="toggleAIPanel()">🐾 助手</div>
+      <div class="btn" id="aiToggleBtn" onclick="toggleAI()">🤖 AI建設</div>
       <div class="btn" onclick="manualSave()">💾 保存</div>
     </div>
 
@@ -257,14 +270,14 @@
 
     <div id="assistantPanel">
       <div class="title">🐾 AI助手：Lupus Minor</div>
-      <div class="msg" id="assistantMsg">你好！我會幫你建設基地，記得留資源呀～</div>
-
+      <div id="aiChatLog"></div>
+      <input type="text" id="aiChatInput" placeholder="同我傾計啦..." onkeydown="if(event.key==='Enter') sendAIChat()">
       <div class="row">
         <button class="smallBtn" onclick="assistantAsk('what')">點玩？</button>
         <button class="smallBtn" onclick="assistantAsk('build')">點起建築？</button>
         <button class="smallBtn" onclick="assistantAsk('aeno')">點挖AENO？</button>
         <button class="smallBtn" onclick="assistantAsk('beast')">獸潮係乜？</button>
-        <button class="smallBtn" onclick="assistantAsk('close')">關閉</button>
+        <button class="smallBtn" onclick="toggleAIPanel()">關閉</button>
       </div>
     </div>
 
@@ -296,6 +309,11 @@
     document.getElementById("updateBanner").onclick = () => {
       location.reload();
     };
+
+    // 兼容舊版函數名
+    function toggleAssistant() {
+      toggleAIPanel();
+    }
   </script>
 
 </body>
