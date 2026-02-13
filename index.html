@@ -2,1192 +2,1139 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>AENO V3 - 直屏卡通城鎮(整合UI)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>AENO V3 - Cartoon Town (Vertical)</title>
 <style>
   :root{
     --bg1:#dff6ff;
-    --bg2:#f0f9ff;
-    --card:#ffffffcc;
-    --stroke:#bae6fd;
-    --dark:#0f172a;
-    --blue:#2563eb;
-    --green:#16a34a;
-    --gold:#f59e0b;
-    --danger:#ef4444;
-    --shadow: 0 14px 30px rgba(0,0,0,0.12);
-    --radius: 18px;
+    --bg2:#f6fbff;
+    --panel:#ffffffee;
+    --line:#c7e7ff;
+    --shadow: rgba(0,0,0,0.18);
+    --gold:#fbbf24;
+    --blue:#60a5fa;
+    --green:#34d399;
+    --red:#fb7185;
+    --text:#0f172a;
+    --muted:#64748b;
   }
 
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box; font-family: system-ui, -apple-system, "Segoe UI", Arial;}
   body{
     margin:0;
-    background: linear-gradient(var(--bg1),var(--bg2));
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans HK", Arial;
-    overflow:hidden;
-    touch-action: manipulation;
-  }
-
-  /* ====== GAME LAYOUT (直屏) ====== */
-  #app{
-    width:100vw;
+    background: linear-gradient(180deg,var(--bg1),var(--bg2));
     height:100vh;
+    overflow:hidden;
     display:flex;
     justify-content:center;
     align-items:center;
   }
 
-  #phone{
-    width:min(100vw, 520px);
+  /* phone frame */
+  #app{
+    width:min(460px, 100vw);
     height:100vh;
-    max-height: 980px;
     position:relative;
-    border-radius: 28px;
     overflow:hidden;
-    background: linear-gradient(var(--bg1),var(--bg2));
+    background:linear-gradient(180deg,#dff6ff,#f6fbff);
   }
 
   canvas{
+    position:absolute;
+    left:0;
+    top:0;
     width:100%;
     height:100%;
-    display:block;
-    background: transparent;
   }
 
-  /* ====== TOP BAR ====== */
-  #topbar{
+  /* Top HUD */
+  #topHud{
     position:absolute;
     top:10px;
     left:10px;
     right:10px;
     display:flex;
     gap:10px;
-    z-index:10;
+    z-index:20;
   }
 
   .chip{
     flex:1;
-    background: var(--card);
-    border: 2px solid var(--stroke);
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    padding: 8px 10px;
+    background: var(--panel);
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:10px 12px;
+    box-shadow: 0 10px 20px var(--shadow);
     display:flex;
-    align-items:center;
     justify-content:space-between;
-    gap:10px;
-    backdrop-filter: blur(6px);
+    align-items:center;
+    min-height:54px;
+    backdrop-filter: blur(8px);
   }
 
-  .chip .title{
-    font-weight:800;
-    color:var(--dark);
-    font-size:14px;
-    white-space:nowrap;
+  .chip .label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:700;
+    letter-spacing:0.3px;
   }
-
-  .chip .val{
+  .chip .value{
+    font-size:16px;
     font-weight:900;
-    font-size:15px;
-    color:var(--blue);
-    white-space:nowrap;
+    color:var(--text);
   }
 
-  /* ====== LEFT PANEL ====== */
-  #leftPanel{
+  /* Bottom bar */
+  #bottomBar{
     position:absolute;
     left:10px;
-    top:86px;
-    width: 200px;
-    background: var(--card);
-    border:2px solid var(--stroke);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 10px;
-    z-index:10;
-    backdrop-filter: blur(6px);
-    transition: transform .25s ease;
+    right:10px;
+    bottom:12px;
+    z-index:30;
+    display:flex;
+    gap:10px;
   }
 
-  #leftPanel.hidden{
-    transform: translateX(-220px);
+  .btn{
+    flex:1;
+    border:none;
+    border-radius:20px;
+    padding:14px 10px;
+    font-size:14px;
+    font-weight:900;
+    color:#0b1220;
+    background: white;
+    border:2px solid var(--line);
+    box-shadow: 0 12px 24px var(--shadow);
+    cursor:pointer;
+    transition: transform 0.08s ease;
+    user-select:none;
+  }
+  .btn:active{ transform: scale(0.97); }
+
+  .btn.primary{ background: linear-gradient(180deg,#fff7d6,#ffe08a); border-color:#ffd66a; }
+  .btn.blue{ background: linear-gradient(180deg,#dff1ff,#a9d5ff); border-color:#8dc8ff; }
+  .btn.green{ background: linear-gradient(180deg,#ddfff2,#a8ffe2); border-color:#7cf0c9; }
+  .btn.red{ background: linear-gradient(180deg,#ffe0e7,#ffb5c4); border-color:#ff9bb1; }
+
+  /* Side panels */
+  .panel{
+    position:absolute;
+    left:10px;
+    right:10px;
+    bottom:86px;
+    background: var(--panel);
+    border:2px solid var(--line);
+    border-radius:22px;
+    padding:12px;
+    box-shadow: 0 18px 36px var(--shadow);
+    z-index:40;
+    display:none;
+    backdrop-filter: blur(8px);
+  }
+
+  .panelHeader{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
   }
 
   .panelTitle{
-    font-weight:900;
-    color:var(--dark);
-    font-size:15px;
-    margin-bottom:6px;
+    font-weight:1000;
+    font-size:16px;
+    color:var(--text);
   }
 
-  .row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:6px 0;
-    border-bottom: 1px dashed rgba(0,0,0,0.08);
-    font-size:13px;
-  }
-  .row:last-child{border-bottom:none;}
-  .row span:first-child{color:#334155;font-weight:700;}
-  .row span:last-child{color:#0f172a;font-weight:900;}
-
-  .btn{
-    width:100%;
-    margin-top:8px;
-    padding:10px 10px;
-    border-radius: 14px;
-    border:none;
-    font-weight:900;
-    background: #2563eb;
-    color:white;
-    cursor:pointer;
-    box-shadow: 0 10px 18px rgba(37,99,235,0.25);
-  }
-  .btn:active{transform: scale(0.98);}
-
-  .btn.secondary{
-    background:#16a34a;
-    box-shadow: 0 10px 18px rgba(22,163,74,0.25);
-  }
-
-  .btn.gray{
-    background:#0f172a;
-    box-shadow: 0 10px 18px rgba(15,23,42,0.18);
-  }
-
-  /* ====== RIGHT PANEL ====== */
-  #rightPanel{
-    position:absolute;
-    right:10px;
-    top:86px;
-    width: 180px;
-    background: var(--card);
-    border:2px solid var(--stroke);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 10px;
-    z-index:10;
-    backdrop-filter: blur(6px);
-    transition: transform .25s ease;
-  }
-
-  #rightPanel.hidden{
-    transform: translateX(210px);
-  }
-
-  .miniBtn{
-    width:100%;
-    margin-top:8px;
-    padding:10px;
-    border-radius: 14px;
-    border:none;
-    font-weight:900;
-    cursor:pointer;
+  .closeBtn{
     background:#fff;
-    border:2px solid rgba(0,0,0,0.08);
-    color:#0f172a;
-  }
-  .miniBtn:active{transform: scale(0.98);}
-
-  /* ====== BOTTOM DOCK ====== */
-  #dock{
-    position:absolute;
-    left:10px;
-    right:10px;
-    bottom:10px;
-    display:flex;
-    gap:10px;
-    z-index:10;
-  }
-
-  .dockBtn{
-    flex:1;
-    padding:12px 10px;
-    border-radius: 18px;
-    border:2px solid var(--stroke);
-    background: var(--card);
-    box-shadow: var(--shadow);
+    border:2px solid var(--line);
+    border-radius:14px;
+    padding:8px 12px;
     font-weight:900;
-    color:var(--dark);
     cursor:pointer;
-    backdrop-filter: blur(6px);
-    font-size:14px;
   }
-  .dockBtn:active{transform: scale(0.98);}
 
-  /* ====== POPUP ====== */
-  #popupMask{
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:10px;
+  }
+
+  .card{
+    background:#ffffff;
+    border:2px solid #e6f5ff;
+    border-radius:18px;
+    padding:12px;
+    box-shadow: 0 10px 18px rgba(0,0,0,0.08);
+  }
+
+  .card h4{
+    margin:0 0 6px 0;
+    font-size:14px;
+    font-weight:1000;
+  }
+
+  .card p{
+    margin:0;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:700;
+    line-height:1.3;
+  }
+
+  .smallBtn{
+    margin-top:10px;
+    width:100%;
+    padding:10px;
+    border-radius:14px;
+    border:none;
+    background: linear-gradient(180deg,#fff7d6,#ffe08a);
+    font-weight:1000;
+    border:2px solid #ffd66a;
+    cursor:pointer;
+  }
+
+  /* Assistant */
+  #assistant{
     position:absolute;
-    inset:0;
-    background: rgba(0,0,0,0.25);
-    display:none;
+    left:12px;
+    bottom:170px;
+    z-index:50;
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+    pointer-events:none;
+  }
+
+  #assistantAvatar{
+    width:70px;
+    height:70px;
+    border-radius:22px;
+    background: linear-gradient(180deg,#fff,#e8f6ff);
+    border:2px solid var(--line);
+    box-shadow: 0 14px 24px var(--shadow);
+    display:flex;
     justify-content:center;
     align-items:center;
-    z-index:30;
-    padding:18px;
+    font-size:34px;
+    pointer-events:auto;
+    cursor:pointer;
+    user-select:none;
   }
-  #popupMask.show{display:flex;}
 
-  #popup{
-    width:min(420px, 100%);
-    background:white;
-    border-radius: 22px;
-    border:2px solid var(--stroke);
-    box-shadow: 0 18px 40px rgba(0,0,0,0.2);
+  #assistantBubble{
+    max-width: 290px;
+    background: rgba(255,255,255,0.95);
+    border:2px solid var(--line);
+    border-radius:22px;
+    padding:10px 12px;
+    box-shadow: 0 14px 26px var(--shadow);
+    font-size:13px;
+    font-weight:900;
+    color:#0b1220;
+    line-height:1.35;
+    pointer-events:auto;
+    cursor:pointer;
+    user-select:none;
+  }
+
+  /* Toast */
+  #toast{
+    position:absolute;
+    top:90px;
+    left:50%;
+    transform:translateX(-50%);
+    background: rgba(0,0,0,0.72);
+    color:white;
+    font-weight:900;
+    font-size:13px;
+    padding:10px 14px;
+    border-radius:999px;
+    z-index:60;
+    display:none;
+  }
+
+  /* Build menu handle */
+  #reopenHandle{
+    position:absolute;
+    right:12px;
+    bottom:150px;
+    z-index:55;
+    background: rgba(255,255,255,0.95);
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:10px 12px;
+    font-weight:1000;
+    box-shadow: 0 12px 24px var(--shadow);
+    cursor:pointer;
+    display:none;
+    user-select:none;
+  }
+
+  /* dialog */
+  #dialogOverlay{
+    position:absolute;
+    inset:0;
+    background: rgba(0,0,0,0.35);
+    z-index:100;
+    display:none;
+    justify-content:center;
+    align-items:flex-end;
+    padding:16px;
+  }
+
+  #dialog{
+    width:100%;
+    max-width:460px;
+    background: rgba(255,255,255,0.96);
+    border:2px solid var(--line);
+    border-radius:26px;
     padding:14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    backdrop-filter: blur(10px);
   }
 
-  #popup h2{
-    margin:6px 0 8px;
-    font-size:18px;
-    color:var(--dark);
+  #dialogTitle{
+    font-size:16px;
+    font-weight:1000;
+    margin-bottom:8px;
   }
-  #popup p{
-    margin:6px 0;
-    font-size:14px;
-    color:#334155;
-    line-height:1.4;
+  #dialogText{
+    font-size:13px;
+    font-weight:800;
+    color:#0b1220;
+    line-height:1.45;
+    margin-bottom:12px;
   }
 
-  .popupRow{
+  #dialogRow{
     display:flex;
     gap:10px;
-    margin-top:10px;
   }
 
-  .popupRow button{
+  .dialogBtn{
     flex:1;
     padding:12px;
-    border-radius: 16px;
+    border-radius:18px;
     border:none;
-    font-weight:900;
-    cursor:pointer;
-  }
-
-  .ok{background:#2563eb;color:white;}
-  .cancel{background:#e2e8f0;color:#0f172a;}
-
-  /* ====== FLOAT TEXT ====== */
-  .floatText{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform: translate(-50%,-50%);
     font-weight:1000;
-    pointer-events:none;
-    z-index:25;
-    text-shadow: 0 3px 10px rgba(0,0,0,0.15);
-    animation: floatUp 1.1s ease-out forwards;
-    white-space:nowrap;
+    cursor:pointer;
+    border:2px solid var(--line);
+    background:#fff;
   }
 
-  @keyframes floatUp{
-    0%{opacity:0; transform: translate(-50%,-50%) scale(0.8);}
-    20%{opacity:1; transform: translate(-50%,-58%) scale(1);}
-    100%{opacity:0; transform: translate(-50%,-95%) scale(1.05);}
+  .dialogBtn.primary{
+    background: linear-gradient(180deg,#ddfff2,#a8ffe2);
+    border-color:#7cf0c9;
   }
-
 </style>
 </head>
+
 <body>
-
 <div id="app">
-  <div id="phone">
+  <canvas id="canvas"></canvas>
 
-    <canvas id="game" width="900" height="1600"></canvas>
+  <div id="toast"></div>
 
-    <!-- TOPBAR -->
-    <div id="topbar">
-      <div class="chip">
-        <div class="title">AENO</div>
-        <div class="val" id="aenoVal">0</div>
+  <div id="topHud">
+    <div class="chip">
+      <div>
+        <div class="label">AENO</div>
+        <div class="value" id="aenoVal">0</div>
       </div>
-      <div class="chip">
-        <div class="title">星球</div>
-        <div class="val" id="planetVal">翠綠星</div>
+      <div style="font-size:22px;">🪙</div>
+    </div>
+
+    <div class="chip">
+      <div>
+        <div class="label">資源</div>
+        <div class="value" id="resVal">0</div>
       </div>
-      <div class="chip">
-        <div class="title">機械人</div>
-        <div class="val" id="botVal">1</div>
+      <div style="font-size:22px;">🧱</div>
+    </div>
+
+    <div class="chip">
+      <div>
+        <div class="label">能量</div>
+        <div class="value" id="energyVal">100</div>
+      </div>
+      <div style="font-size:22px;">⚡</div>
+    </div>
+  </div>
+
+  <div id="assistant">
+    <div id="assistantAvatar">🦊</div>
+    <div id="assistantBubble">你好！我係 <b>FENIX</b> 🦊<br>點「建築」可以起第一間屋！</div>
+  </div>
+
+  <div id="reopenHandle">📌 打開功能</div>
+
+  <div id="bottomBar">
+    <button class="btn primary" id="btnBuild">🏗 建築</button>
+    <button class="btn blue" id="btnUpgrade">⬆ 升級</button>
+    <button class="btn green" id="btnCollect">💰 收集</button>
+    <button class="btn red" id="btnPlanet">🪐 行星</button>
+  </div>
+
+  <div class="panel" id="panelBuild">
+    <div class="panelHeader">
+      <div class="panelTitle">🏗 建築清單</div>
+      <button class="closeBtn" data-close="panelBuild">收起</button>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h4>🏠 小屋</h4>
+        <p>+2 資源/秒<br>成本：50 資源</p>
+        <button class="smallBtn" onclick="build('house')">建造</button>
+      </div>
+      <div class="card">
+        <h4>🌳 森林樹</h4>
+        <p>+1 能量/秒<br>成本：30 資源</p>
+        <button class="smallBtn" onclick="build('tree')">建造</button>
+      </div>
+      <div class="card">
+        <h4>🏛 圓頂屋</h4>
+        <p>+1 AENO/10秒<br>成本：120 資源</p>
+        <button class="smallBtn" onclick="build('dome')">建造</button>
+      </div>
+      <div class="card">
+        <h4>🤖 採集站</h4>
+        <p>+5 資源/秒<br>成本：200 資源</p>
+        <button class="smallBtn" onclick="build('robot')">建造</button>
       </div>
     </div>
+  </div>
 
-    <!-- LEFT PANEL -->
-    <div id="leftPanel">
-      <div class="panelTitle">資源倉庫</div>
-      <div class="row"><span>木材</span><span id="woodVal">0</span></div>
-      <div class="row"><span>水晶</span><span id="crystalVal">0</span></div>
-      <div class="row"><span>鐵礦</span><span id="ironVal">0</span></div>
-      <div class="row"><span>食物</span><span id="foodVal">0</span></div>
-      <button class="btn secondary" id="harvestBtn">採集一次</button>
-      <button class="btn gray" id="toggleLeftBtn">收起面板</button>
+  <div class="panel" id="panelUpgrade">
+    <div class="panelHeader">
+      <div class="panelTitle">⬆ 升級中心</div>
+      <button class="closeBtn" data-close="panelUpgrade">收起</button>
     </div>
 
-    <!-- RIGHT PANEL -->
-    <div id="rightPanel">
-      <div class="panelTitle">功能表</div>
-      <button class="miniBtn" id="shopBtn">🛒 商店</button>
-      <button class="miniBtn" id="missionBtn">📜 任務</button>
-      <button class="miniBtn" id="assistantBtn">🐾 助手</button>
-      <button class="miniBtn" id="toggleRightBtn">收起功能</button>
-    </div>
+    <div class="grid">
+      <div class="card">
+        <h4>🏠 小屋升級</h4>
+        <p>提升產量 +50%<br>成本：80 資源</p>
+        <button class="smallBtn" onclick="upgrade('house')">升級</button>
+      </div>
 
-    <!-- DOCK -->
-    <div id="dock">
-      <button class="dockBtn" id="switchPlanetBtn">🪐 切換星球</button>
-      <button class="dockBtn" id="sendBotBtn">🤖 派遣機械人</button>
-      <button class="dockBtn" id="claimBtn">✨ 領取AENO</button>
-    </div>
+      <div class="card">
+        <h4>🏛 圓頂升級</h4>
+        <p>AENO 產量提升<br>成本：150 資源</p>
+        <button class="smallBtn" onclick="upgrade('dome')">升級</button>
+      </div>
 
-    <!-- POPUP -->
-    <div id="popupMask">
-      <div id="popup">
-        <h2 id="popupTitle">提示</h2>
-        <p id="popupText">內容</p>
-        <div class="popupRow">
-          <button class="cancel" id="popupCancel">關閉</button>
-          <button class="ok" id="popupOK">確定</button>
-        </div>
+      <div class="card">
+        <h4>🤖 採集站升級</h4>
+        <p>資源產量提升<br>成本：220 資源</p>
+        <button class="smallBtn" onclick="upgrade('robot')">升級</button>
+      </div>
+
+      <div class="card">
+        <h4>⚡ 能量上限</h4>
+        <p>能量上限 +50<br>成本：120 資源</p>
+        <button class="smallBtn" onclick="upgrade('energy')">升級</button>
       </div>
     </div>
+  </div>
 
+  <div id="dialogOverlay">
+    <div id="dialog">
+      <div id="dialogTitle">對話</div>
+      <div id="dialogText"></div>
+      <div id="dialogRow">
+        <button class="dialogBtn" onclick="closeDialog()">取消</button>
+        <button class="dialogBtn primary" id="dialogOkBtn">確定</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-/* =========================
-   AENO V3 - 直屏卡通城鎮
-   (整合 UI + 動畫 + 互動)
-   ========================= */
+/* ---------------------------
+   SAFE HELPERS
+---------------------------- */
+function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function format(n){
+  if(n>=1e9) return (n/1e9).toFixed(2)+"B";
+  if(n>=1e6) return (n/1e6).toFixed(2)+"M";
+  if(n>=1e3) return (n/1e3).toFixed(1)+"K";
+  return Math.floor(n).toString();
+}
 
-const canvas = document.getElementById("game");
+/* ---------------------------
+   GAME STATE
+---------------------------- */
+const state = {
+  aeno: 12,
+  res: 180,
+  energy: 100,
+  energyMax: 100,
+
+  planetIndex: 0,
+  planets: ["AENO-Prime", "Verdia", "Mizu", "Pyro", "Cryon"],
+
+  buildings: {
+    house: {count:0, level:1},
+    tree: {count:0, level:1},
+    dome: {count:0, level:1},
+    robot: {count:0, level:1},
+  },
+
+  production: {
+    resPerSec: 0,
+    energyPerSec: 0,
+    aenoPerSec: 0,
+  }
+};
+
+/* ---------------------------
+   UI
+---------------------------- */
+const aenoVal = document.getElementById("aenoVal");
+const resVal = document.getElementById("resVal");
+const energyVal = document.getElementById("energyVal");
+
+const panelBuild = document.getElementById("panelBuild");
+const panelUpgrade = document.getElementById("panelUpgrade");
+const reopenHandle = document.getElementById("reopenHandle");
+
+const toast = document.getElementById("toast");
+
+function showToast(msg){
+  toast.innerText = msg;
+  toast.style.display = "block";
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toast.style.display="none", 1400);
+}
+
+function updateProduction(){
+  // base production per building
+  const houseP = 2 * state.buildings.house.count * (1 + (state.buildings.house.level-1)*0.5);
+  const robotP = 5 * state.buildings.robot.count * (1 + (state.buildings.robot.level-1)*0.5);
+  const energyP = 1 * state.buildings.tree.count * (1 + (state.buildings.tree.level-1)*0.5);
+
+  // dome makes AENO slowly
+  const domeP = (state.buildings.dome.count * (1 + (state.buildings.dome.level-1)*0.4)) / 10;
+
+  state.production.resPerSec = houseP + robotP;
+  state.production.energyPerSec = energyP;
+  state.production.aenoPerSec = domeP;
+}
+
+function updateHUD(){
+  aenoVal.innerText = format(state.aeno);
+  resVal.innerText = format(state.res);
+  energyVal.innerText = Math.floor(state.energy) + "/" + state.energyMax;
+}
+
+/* ---------------------------
+   PANELS
+---------------------------- */
+function hideAllPanels(){
+  panelBuild.style.display = "none";
+  panelUpgrade.style.display = "none";
+  reopenHandle.style.display = "block";
+}
+
+function openPanel(panel){
+  hideAllPanels();
+  panel.style.display = "block";
+  reopenHandle.style.display = "none";
+}
+
+document.getElementById("btnBuild").onclick = ()=> openPanel(panelBuild);
+document.getElementById("btnUpgrade").onclick = ()=> openPanel(panelUpgrade);
+
+document.getElementById("btnCollect").onclick = ()=>{
+  const gain = Math.floor(20 + state.production.resPerSec*2);
+  state.res += gain;
+  popText("+"+gain+" 資源", W*0.5, H*0.7, "#0f172a");
+  showToast("收集成功 +"+gain+" 資源");
+  assistantSay("你收集咗資源！下一步可以起更多屋🏠");
+  updateHUD();
+};
+
+document.getElementById("btnPlanet").onclick = ()=>{
+  state.planetIndex = (state.planetIndex + 1) % state.planets.length;
+  showToast("切換行星：" + state.planets[state.planetIndex]);
+  assistantSay("你而家喺 🪐 " + state.planets[state.planetIndex] + "！");
+};
+
+document.querySelectorAll(".closeBtn").forEach(btn=>{
+  btn.onclick = ()=>{
+    const id = btn.getAttribute("data-close");
+    document.getElementById(id).style.display = "none";
+    reopenHandle.style.display = "block";
+  };
+});
+
+reopenHandle.onclick = ()=>{
+  // default reopen build panel
+  openPanel(panelBuild);
+};
+
+/* ---------------------------
+   DIALOG / ASSISTANT
+---------------------------- */
+const dialogOverlay = document.getElementById("dialogOverlay");
+const dialogText = document.getElementById("dialogText");
+const dialogTitle = document.getElementById("dialogTitle");
+const dialogOkBtn = document.getElementById("dialogOkBtn");
+
+function openDialog(title, text, okText, onOk){
+  dialogTitle.innerText = title;
+  dialogText.innerHTML = text;
+  dialogOkBtn.innerText = okText || "確定";
+  dialogOkBtn.onclick = ()=>{
+    closeDialog();
+    if(onOk) onOk();
+  };
+  dialogOverlay.style.display = "flex";
+}
+
+function closeDialog(){
+  dialogOverlay.style.display = "none";
+}
+
+const assistantBubble = document.getElementById("assistantBubble");
+const assistantAvatar = document.getElementById("assistantAvatar");
+
+function assistantSay(msg){
+  assistantBubble.innerHTML = msg;
+}
+
+assistantAvatar.onclick = ()=>{
+  openDialog("🦊 FENIX 助手", `
+    <b>提示：</b><br>
+    - 點「建築」可以起屋、森林、圓頂、採集站<br>
+    - 點「升級」提升產量<br>
+    - 點地圖建築會彈一下<br><br>
+    <b>你想做咩？</b>
+  `, "明白", ()=>{
+    showToast("FENIX：祝你發展領地！");
+  });
+};
+
+assistantBubble.onclick = ()=> assistantAvatar.onclick();
+
+/* ---------------------------
+   BUILD / UPGRADE
+---------------------------- */
+function build(type){
+  let cost = 0;
+  if(type==="house") cost = 50 + state.buildings.house.count*25;
+  if(type==="tree") cost = 30 + state.buildings.tree.count*20;
+  if(type==="dome") cost = 120 + state.buildings.dome.count*60;
+  if(type==="robot") cost = 200 + state.buildings.robot.count*80;
+
+  if(state.res < cost){
+    showToast("資源不足，需要 "+cost);
+    assistantSay("資源唔夠😅 你可以先按「收集」或者起多啲屋！");
+    return;
+  }
+
+  state.res -= cost;
+  state.buildings[type].count++;
+
+  updateProduction();
+  updateHUD();
+
+  spawnBuilding(type);
+  showToast("建造成功！");
+  assistantSay("建造成功！你嘅領地開始繁榮啦✨");
+}
+
+function upgrade(type){
+  let cost = 0;
+
+  if(type==="house") cost = 80 * state.buildings.house.level;
+  if(type==="dome") cost = 150 * state.buildings.dome.level;
+  if(type==="robot") cost = 220 * state.buildings.robot.level;
+  if(type==="energy") cost = 120 + (state.energyMax-100);
+
+  if(state.res < cost){
+    showToast("資源不足，需要 "+cost);
+    assistantSay("升級要更多資源！先收集/建造再升級🔥");
+    return;
+  }
+
+  state.res -= cost;
+
+  if(type==="energy"){
+    state.energyMax += 50;
+    state.energy = Math.min(state.energy, state.energyMax);
+    showToast("能量上限提升！");
+    assistantSay("你嘅能量上限提升咗⚡ 可以做更多事！");
+  }else{
+    state.buildings[type].level++;
+    showToast("升級成功！");
+    assistantSay("升級完成！產量會更高🚀");
+  }
+
+  updateProduction();
+  updateHUD();
+}
+
+/* ---------------------------
+   CANVAS WORLD (Isometric)
+---------------------------- */
+const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const W = canvas.width;
-const H = canvas.height;
-
-const gridSize = 120;
-const isoAngle = Math.PI / 6;
-
-const ui = {
-  aenoVal: document.getElementById("aenoVal"),
-  planetVal: document.getElementById("planetVal"),
-  botVal: document.getElementById("botVal"),
-  woodVal: document.getElementById("woodVal"),
-  crystalVal: document.getElementById("crystalVal"),
-  ironVal: document.getElementById("ironVal"),
-  foodVal: document.getElementById("foodVal"),
-
-  leftPanel: document.getElementById("leftPanel"),
-  rightPanel: document.getElementById("rightPanel"),
-
-  toggleLeftBtn: document.getElementById("toggleLeftBtn"),
-  toggleRightBtn: document.getElementById("toggleRightBtn"),
-
-  harvestBtn: document.getElementById("harvestBtn"),
-  shopBtn: document.getElementById("shopBtn"),
-  missionBtn: document.getElementById("missionBtn"),
-  assistantBtn: document.getElementById("assistantBtn"),
-
-  switchPlanetBtn: document.getElementById("switchPlanetBtn"),
-  sendBotBtn: document.getElementById("sendBotBtn"),
-  claimBtn: document.getElementById("claimBtn"),
-
-  popupMask: document.getElementById("popupMask"),
-  popupTitle: document.getElementById("popupTitle"),
-  popupText: document.getElementById("popupText"),
-  popupOK: document.getElementById("popupOK"),
-  popupCancel: document.getElementById("popupCancel"),
-};
-
-const colors = {
-  skyTop: "#dff6ff",
-  skyBottom: "#f0f9ff",
-  stroke: "#bae6fd",
-  shadow: "rgba(0,0,0,0.18)",
-
-  grassTop: "#dcfce7",
-  grassLeft: "#86efac",
-  grassRight: "#4ade80",
-  grassLine: "#bbf7d0",
-
-  sandTop: "#fef9c3",
-  sandLeft: "#fde68a",
-  sandRight: "#fbbf24",
-  sandLine: "#fde68a",
-
-  iceTop: "#e0f2fe",
-  iceLeft: "#bae6fd",
-  iceRight: "#7dd3fc",
-  iceLine: "#93c5fd",
-
-  lavaTop: "#ffedd5",
-  lavaLeft: "#fdba74",
-  lavaRight: "#fb923c",
-  lavaLine: "#f97316",
-
-  house: {
-    wall: "#fef3c7",
-    wall2: "#fde68a",
-    roof: "#fb923c",
-    roof2: "#f97316",
-    door: "#b45309",
-    win: "#bfdbfe",
-    trim: "#fff7ed"
-  },
-
-  dome: {
-    base: "#fde68a",
-    base2: "#fef3c7",
-    top: "#93c5fd",
-    top2: "#3b82f6",
-    trim: "#fbbf24",
-    door: "#92400e",
-    win: "#dbeafe"
-  },
-
-  tree: {
-    trunk: "#92400e",
-    trunk2: "#78350f",
-    leaf1: "#86efac",
-    leaf2: "#4ade80",
-    leaf3: "#22c55e"
-  }
-};
-
-const planets = [
-  { name:"翠綠星", theme:"grass" },
-  { name:"黃金沙", theme:"sand" },
-  { name:"冰晶界", theme:"ice" },
-  { name:"熔岩域", theme:"lava" },
-];
-
-let state = {
-  planetIndex: 0,
-  aeno: 0,
-  bots: 1,
-  wood: 0,
-  crystal: 0,
-  iron: 0,
-  food: 0,
-  tick: 0,
-  lastClaim: 0,
-};
-
-function fmt(n){
-  if(n >= 1000000) return (n/1000000).toFixed(2)+"M";
-  if(n >= 1000) return (n/1000).toFixed(2)+"K";
-  return String(Math.floor(n));
+let W = 0, H = 0;
+function resize(){
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.floor(rect.width * devicePixelRatio);
+  canvas.height = Math.floor(rect.height * devicePixelRatio);
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  W = rect.width;
+  H = rect.height;
 }
+window.addEventListener("resize", resize);
+resize();
 
-function syncUI(){
-  ui.aenoVal.textContent = fmt(state.aeno);
-  ui.planetVal.textContent = planets[state.planetIndex].name;
-  ui.botVal.textContent = state.bots;
+const gridSize = 62;
+const isoAngle = Math.PI/6;
 
-  ui.woodVal.textContent = fmt(state.wood);
-  ui.crystalVal.textContent = fmt(state.crystal);
-  ui.ironVal.textContent = fmt(state.iron);
-  ui.foodVal.textContent = fmt(state.food);
-}
-
-function showPopup(title, text, okText="確定", cancelText="關閉", onOK=null){
-  ui.popupTitle.textContent = title;
-  ui.popupText.textContent = text;
-  ui.popupOK.textContent = okText;
-  ui.popupCancel.textContent = cancelText;
-
-  ui.popupMask.classList.add("show");
-
-  ui.popupOK.onclick = () => {
-    ui.popupMask.classList.remove("show");
-    if(onOK) onOK();
-  };
-  ui.popupCancel.onclick = () => {
-    ui.popupMask.classList.remove("show");
-  };
-}
-
-function floatText(text, color="#2563eb"){
-  const el = document.createElement("div");
-  el.className = "floatText";
-  el.textContent = text;
-  el.style.color = color;
-  el.style.left = "50%";
-  el.style.top = "52%";
-  document.getElementById("phone").appendChild(el);
-
-  setTimeout(()=> el.remove(), 1150);
-}
-
-/* =========================
-   ISO DRAW HELPERS
-   ========================= */
-
-function gridToScreen(r, c){
+function gridToScreen(r,c){
   const x = (c - r) * (gridSize * Math.cos(isoAngle));
   const y = (c + r) * (gridSize * Math.sin(isoAngle));
-  return { x: W/2 + x, y: 420 + y };
+  return { x: W/2 + x, y: 170 + y };
 }
 
-function drawIsoTile(x, y, size, fill, stroke){
-  ctx.fillStyle = fill;
+function drawIsoTile(r,c){
+  const p = gridToScreen(r,c);
+  const w = gridSize * Math.cos(isoAngle);
+  const h = gridSize * Math.sin(isoAngle);
+
+  const grad = ctx.createLinearGradient(p.x-w, p.y, p.x+w, p.y+h*2);
+  grad.addColorStop(0, "#d9fbe6");
+  grad.addColorStop(1, "#b7f7d3");
+
+  ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
-  ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
-  ctx.lineTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
+  ctx.moveTo(p.x, p.y);
+  ctx.lineTo(p.x+w, p.y+h);
+  ctx.lineTo(p.x, p.y+h*2);
+  ctx.lineTo(p.x-w, p.y+h);
   ctx.closePath();
   ctx.fill();
 
-  if(stroke){
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
+  ctx.strokeStyle = "rgba(0,0,0,0.06)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
 }
 
-function drawIsoBlock(x, y, size, height, top, left, right, stroke){
-  drawIsoTile(x,y,size,top,stroke);
-
-  // left face
-  ctx.fillStyle = left;
-  ctx.beginPath();
-  ctx.moveTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
-  ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
-  ctx.lineTo(x, y + size*2*Math.sin(isoAngle) + height);
-  ctx.lineTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle) + height);
-  ctx.closePath();
-  ctx.fill();
-
-  // right face
-  ctx.fillStyle = right;
-  ctx.beginPath();
-  ctx.moveTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
-  ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
-  ctx.lineTo(x, y + size*2*Math.sin(isoAngle) + height);
-  ctx.lineTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle) + height);
-  ctx.closePath();
-  ctx.fill();
-
-  if(stroke){
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x - size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
-    ctx.lineTo(x, y + size*2*Math.sin(isoAngle));
-    ctx.lineTo(x + size*Math.cos(isoAngle), y + size*Math.sin(isoAngle));
-    ctx.stroke();
-  }
-}
-
-function shadowEllipse(x,y,rx,ry,a=0.18){
-  ctx.save();
-  ctx.globalAlpha = a;
-  ctx.fillStyle = "#000";
+function shadowEllipse(x,y,rx,ry,a){
+  ctx.fillStyle = "rgba(0,0,0,"+a+")";
   ctx.beginPath();
   ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
   ctx.fill();
-  ctx.restore();
 }
 
-/* =========================
-   BUILDINGS
-   ========================= */
+/* ---------------------------
+   BUILDINGS LIST (clickable)
+---------------------------- */
+const worldBuildings = [];
 
-let clicked = null;
+function spawnBuilding(type){
+  // place on random free tile
+  const r = Math.floor(rnd(1,6));
+  const c = Math.floor(rnd(1,6));
+  const pos = gridToScreen(r,c);
 
-const buildings = [
-  { id:"dome1", type:"dome", r:1, c:2, name:"圓頂研究所" },
-  { id:"house1", type:"house", r:2, c:3, name:"居民小屋" },
-  { id:"dome2", type:"dome", r:2, c:1, name:"星際倉庫" },
-  { id:"house2", type:"house", r:3, c:2, name:"機械人工坊" },
-];
+  worldBuildings.push({
+    id: Math.random().toString(16).slice(2),
+    type,
+    r,c,
+    x: pos.x,
+    y: pos.y,
+    bounce: 0,
+    sparkle: 0
+  });
 
-function drawHouse(r,c,pulse=0){
-  const p = gridToScreen(r,c);
-  const x = p.x;
-  const y = p.y - 40 - pulse;
+  popText("+"+typeName(type), pos.x, pos.y-20, "#0f172a");
+}
 
-  shadowEllipse(x, y+250, 70, 24, 0.22);
+function typeName(type){
+  if(type==="house") return "小屋";
+  if(type==="tree") return "森林";
+  if(type==="dome") return "圓頂";
+  if(type==="robot") return "採集站";
+  return type;
+}
 
-  // base
-  drawIsoBlock(x, y+150, 66, 55, colors.house.wall, "#fef9c3", colors.house.wall2, null);
+/* ---------------------------
+   DRAW BUILDINGS (3D CARTOON)
+---------------------------- */
+function drawHouse(x,y,scale=1){
+  shadowEllipse(x, y+50, 42*scale, 16*scale, 0.18);
 
-  ctx.save();
-  ctx.translate(x, y+90);
+  // left wall
+  ctx.fillStyle = "#fde68a";
+  ctx.beginPath();
+  ctx.moveTo(x-40*scale, y+10*scale);
+  ctx.lineTo(x, y+30*scale);
+  ctx.lineTo(x, y+80*scale);
+  ctx.lineTo(x-40*scale, y+60*scale);
+  ctx.closePath();
+  ctx.fill();
+
+  // right wall
+  ctx.fillStyle = "#fcd34d";
+  ctx.beginPath();
+  ctx.moveTo(x, y+30*scale);
+  ctx.lineTo(x+40*scale, y+10*scale);
+  ctx.lineTo(x+40*scale, y+60*scale);
+  ctx.lineTo(x, y+80*scale);
+  ctx.closePath();
+  ctx.fill();
 
   // roof
-  const roofGrad = ctx.createLinearGradient(-70,-80,70,120);
-  roofGrad.addColorStop(0, colors.house.roof);
-  roofGrad.addColorStop(1, colors.house.roof2);
-
+  const roofGrad = ctx.createLinearGradient(x, y-30*scale, x, y+20*scale);
+  roofGrad.addColorStop(0,"#fff1b8");
+  roofGrad.addColorStop(1,"#fbbf24");
   ctx.fillStyle = roofGrad;
   ctx.beginPath();
-  ctx.moveTo(0, -85);
-  ctx.quadraticCurveTo(95, -10, 70, 50);
-  ctx.quadraticCurveTo(0, 85, -70, 50);
-  ctx.quadraticCurveTo(-95, -10, 0, -85);
+  ctx.moveTo(x-50*scale, y+10*scale);
+  ctx.lineTo(x, y-30*scale);
+  ctx.lineTo(x+50*scale, y+10*scale);
+  ctx.lineTo(x, y+35*scale);
   ctx.closePath();
   ctx.fill();
 
-  // roof highlight
-  ctx.globalAlpha = 0.25;
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.ellipse(-20, -25, 30, 16, -0.3, 0, Math.PI*2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  // wall
-  const wallGrad = ctx.createLinearGradient(-55,40,55,170);
-  wallGrad.addColorStop(0, colors.house.wall);
-  wallGrad.addColorStop(1, "#fde68a");
-  ctx.fillStyle = wallGrad;
-  ctx.beginPath();
-  ctx.roundRect(-56, 45, 112, 110, 20);
-  ctx.fill();
-
-  // trim
-  ctx.strokeStyle = colors.house.trim;
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
   // door
-  ctx.fillStyle = colors.house.door;
+  ctx.fillStyle="#b45309";
   ctx.beginPath();
-  ctx.roundRect(-18, 100, 36, 55, 12);
+  ctx.roundRect(x-10*scale, y+55*scale, 20*scale, 25*scale, 6*scale);
   ctx.fill();
 
   // windows
-  ctx.fillStyle = colors.house.win;
+  ctx.fillStyle="#dbeafe";
   ctx.beginPath();
-  ctx.roundRect(-42, 75, 28, 24, 10);
-  ctx.roundRect(14, 75, 28, 24, 10);
+  ctx.roundRect(x-28*scale, y+40*scale, 16*scale, 12*scale, 5*scale);
+  ctx.roundRect(x+12*scale, y+32*scale, 16*scale, 12*scale, 5*scale);
   ctx.fill();
-  ctx.strokeStyle = "#60a5fa";
-  ctx.lineWidth = 2;
-  ctx.stroke();
 
-  ctx.restore();
+  ctx.strokeStyle="rgba(0,0,0,0.08)";
+  ctx.lineWidth=2;
+  ctx.stroke();
 }
 
-function drawDome(r,c,pulse=0){
-  const p = gridToScreen(r,c);
-  const x = p.x;
-  const y = p.y - 40 - pulse;
+function drawTree(x,y,scale=1, sway=0){
+  shadowEllipse(x+30*scale, y+58*scale, 28*scale, 12*scale, 0.16);
 
-  shadowEllipse(x, y+250, 70, 24, 0.22);
-
-  drawIsoBlock(x, y+150, 70, 55, colors.dome.base, colors.dome.base2, "#fcd34d", null);
-
-  ctx.save();
-  ctx.translate(x, y+105);
-
-  // dome main
-  const domeGrad = ctx.createRadialGradient(-18,-30,10, 0,0, 90);
-  domeGrad.addColorStop(0, "#dbeafe");
-  domeGrad.addColorStop(0.5, colors.dome.top);
-  domeGrad.addColorStop(1, colors.dome.top2);
-
-  ctx.fillStyle = domeGrad;
-  ctx.beginPath();
-  ctx.arc(0, 20, 68, 0, Math.PI*2);
-  ctx.fill();
-
-  // trim ring
-  ctx.strokeStyle = colors.dome.trim;
-  ctx.lineWidth = 9;
-  ctx.beginPath();
-  ctx.arc(0, 20, 56, 0, Math.PI*2);
-  ctx.stroke();
-
-  // gem
-  const gemGrad = ctx.createRadialGradient(-4,-60,0, 0,-60, 20);
-  gemGrad.addColorStop(0, "#fff7ed");
-  gemGrad.addColorStop(1, colors.dome.trim);
-  ctx.fillStyle = gemGrad;
-  ctx.beginPath();
-  ctx.arc(0, -60, 15, 0, Math.PI*2);
-  ctx.fill();
-
-  // door
-  ctx.fillStyle = colors.dome.door;
-  ctx.beginPath();
-  ctx.roundRect(-20, 70, 40, 55, 14);
-  ctx.fill();
-
-  // windows
-  ctx.fillStyle = colors.dome.win;
-  ctx.beginPath();
-  ctx.arc(-32, 40, 12, 0, Math.PI*2);
-  ctx.arc(32, 40, 12, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.strokeStyle = "#2563eb";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // highlight
-  ctx.globalAlpha = 0.25;
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.ellipse(-20, 0, 22, 14, -0.3, 0, Math.PI*2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  ctx.restore();
-}
-
-function drawTree(r,c,sway=0){
-  const p = gridToScreen(r,c);
-  const tx = p.x + 55;
-  const ty = p.y + 180;
-
-  shadowEllipse(tx, ty+40, 30, 12, 0.20);
-
-  ctx.save();
-  ctx.translate(tx, ty);
+  const sx = Math.sin(sway)*6*scale;
 
   // trunk
-  ctx.fillStyle = colors.tree.trunk2;
+  ctx.fillStyle="#92400e";
   ctx.beginPath();
-  ctx.roundRect(-10, 0, 20, 48, 8);
+  ctx.roundRect(x+22*scale+sx, y+35*scale, 14*scale, 30*scale, 6*scale);
   ctx.fill();
-
-  ctx.fillStyle = colors.tree.trunk;
-  ctx.beginPath();
-  ctx.roundRect(-8, 0, 16, 48, 7);
-  ctx.fill();
-
-  ctx.rotate(sway);
 
   // leaves
-  const g1 = ctx.createRadialGradient(-10,-45,5, 0,-40, 65);
-  g1.addColorStop(0, colors.tree.leaf1);
-  g1.addColorStop(1, colors.tree.leaf3);
+  const g = ctx.createRadialGradient(x+30*scale+sx, y+12*scale, 6*scale, x+30*scale+sx, y+12*scale, 40*scale);
+  g.addColorStop(0,"#b9ffcf");
+  g.addColorStop(1,"#22c55e");
+  ctx.fillStyle=g;
 
-  ctx.fillStyle = g1;
   ctx.beginPath();
-  ctx.arc(0, -50, 42, 0, Math.PI*2);
-  ctx.fill();
-
-  const g2 = ctx.createRadialGradient(-25,-20,5, -18,-25, 55);
-  g2.addColorStop(0, colors.tree.leaf1);
-  g2.addColorStop(1, colors.tree.leaf2);
-
-  ctx.fillStyle = g2;
-  ctx.beginPath();
-  ctx.arc(-22, -25, 32, 0, Math.PI*2);
-  ctx.fill();
-
-  const g3 = ctx.createRadialGradient(25,-20,5, 18,-25, 55);
-  g3.addColorStop(0, colors.tree.leaf1);
-  g3.addColorStop(1, colors.tree.leaf2);
-
-  ctx.fillStyle = g3;
-  ctx.beginPath();
-  ctx.arc(22, -25, 32, 0, Math.PI*2);
+  ctx.arc(x+30*scale+sx, y+12*scale, 28*scale, 0, Math.PI*2);
+  ctx.arc(x+12*scale+sx, y+25*scale, 22*scale, 0, Math.PI*2);
+  ctx.arc(x+48*scale+sx, y+25*scale, 22*scale, 0, Math.PI*2);
   ctx.fill();
 
   // highlight
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle="rgba(255,255,255,0.28)";
   ctx.beginPath();
-  ctx.ellipse(-12, -62, 12, 8, -0.2, 0, Math.PI*2);
+  ctx.arc(x+18*scale+sx, y+5*scale, 10*scale, 0, Math.PI*2);
   ctx.fill();
-  ctx.globalAlpha = 1;
-
-  ctx.restore();
 }
 
-/* =========================
-   CLOUDS + BACKGROUND
-   ========================= */
+function drawDome(x,y,scale=1, glow=0){
+  shadowEllipse(x, y+55*scale, 42*scale, 16*scale, 0.18);
 
-const clouds = [
-  { x: 160, y: 150, s: 1.25, spd: 0.22 },
-  { x: 600, y: 110, s: 0.95, spd: 0.16 },
-  { x: 860, y: 170, s: 1.05, spd: 0.19 },
-];
+  // base
+  const baseGrad = ctx.createRadialGradient(x-10*scale, y+50*scale, 10*scale, x, y+40*scale, 70*scale);
+  baseGrad.addColorStop(0,"#fff3c4");
+  baseGrad.addColorStop(1,"#fcd34d");
 
-function drawCloud(cx, cy, scale){
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(scale, scale);
-
-  ctx.globalAlpha = 0.88;
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle=baseGrad;
   ctx.beginPath();
-  ctx.arc(0, 0, 28, 0, Math.PI*2);
-  ctx.arc(26, -10, 22, 0, Math.PI*2);
-  ctx.arc(50, 0, 26, 0, Math.PI*2);
-  ctx.arc(25, 12, 24, 0, Math.PI*2);
+  ctx.ellipse(x, y+45*scale, 46*scale, 34*scale, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // dome top
+  const topGrad = ctx.createRadialGradient(x-10*scale, y-10*scale, 10*scale, x, y-10*scale, 60*scale);
+  topGrad.addColorStop(0,"#dbeafe");
+  topGrad.addColorStop(1,"#3b82f6");
+
+  ctx.fillStyle=topGrad;
+  ctx.beginPath();
+  ctx.arc(x, y+5*scale, 40*scale, Math.PI, 0);
+  ctx.lineTo(x+40*scale, y+5*scale);
+  ctx.arc(x, y+5*scale, 40*scale, 0, Math.PI);
   ctx.closePath();
   ctx.fill();
 
-  ctx.globalAlpha = 0.20;
-  ctx.fillStyle = "#93c5fd";
+  // golden cap
+  ctx.fillStyle="#fbbf24";
   ctx.beginPath();
-  ctx.ellipse(25, 12, 45, 12, 0, 0, Math.PI*2);
+  ctx.arc(x, y-5*scale, 12*scale, 0, Math.PI*2);
   ctx.fill();
 
-  ctx.restore();
+  if(glow>0){
+    ctx.fillStyle="rgba(255,255,255,"+(0.12*glow)+")";
+    ctx.beginPath();
+    ctx.arc(x, y+5*scale, 52*scale, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // door
+  ctx.fillStyle="#7c2d12";
+  ctx.beginPath();
+  ctx.roundRect(x-12*scale, y+55*scale, 24*scale, 24*scale, 7*scale);
+  ctx.fill();
+
+  // windows
+  ctx.fillStyle="#bfdbfe";
+  ctx.beginPath();
+  ctx.arc(x-22*scale, y+45*scale, 10*scale, 0, Math.PI*2);
+  ctx.arc(x+22*scale, y+45*scale, 10*scale, 0, Math.PI*2);
+  ctx.fill();
 }
 
-function drawBackground(){
-  const sky = ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0, colors.skyTop);
-  sky.addColorStop(1, colors.skyBottom);
-  ctx.fillStyle = sky;
-  ctx.fillRect(0,0,W,H);
+function drawRobotStation(x,y,scale=1, spin=0){
+  shadowEllipse(x, y+55*scale, 44*scale, 16*scale, 0.18);
 
-  // far hills
-  ctx.globalAlpha = 0.20;
-  ctx.fillStyle = "#60a5fa";
+  // platform
+  ctx.fillStyle="#e2e8f0";
   ctx.beginPath();
-  ctx.moveTo(0, 450);
-  ctx.quadraticCurveTo(260, 360, 460, 440);
-  ctx.quadraticCurveTo(720, 560, 900, 420);
-  ctx.lineTo(900, 650);
-  ctx.lineTo(0, 650);
-  ctx.closePath();
+  ctx.roundRect(x-46*scale, y+40*scale, 92*scale, 36*scale, 14*scale);
   ctx.fill();
+
+  // machine body
+  const g = ctx.createLinearGradient(x-30*scale, y+10*scale, x+30*scale, y+70*scale);
+  g.addColorStop(0,"#e0f2fe");
+  g.addColorStop(1,"#93c5fd");
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  ctx.roundRect(x-30*scale, y+10*scale, 60*scale, 44*scale, 14*scale);
+  ctx.fill();
+
+  // core
+  ctx.fillStyle="#0ea5e9";
+  ctx.beginPath();
+  ctx.arc(x, y+32*scale, 10*scale, 0, Math.PI*2);
+  ctx.fill();
+
+  // antenna
+  ctx.strokeStyle="#334155";
+  ctx.lineWidth=4;
+  ctx.beginPath();
+  ctx.moveTo(x, y+10*scale);
+  ctx.lineTo(x, y-10*scale);
+  ctx.stroke();
+
+  ctx.fillStyle="#f43f5e";
+  ctx.beginPath();
+  ctx.arc(x, y-12*scale, 6*scale, 0, Math.PI*2);
+  ctx.fill();
+
+  // drone rotor
+  const rx = x + Math.cos(spin)*30*scale;
+  const ry = y - 20*scale + Math.sin(spin)*8*scale;
+  ctx.fillStyle="rgba(255,255,255,0.9)";
+  ctx.beginPath();
+  ctx.ellipse(rx, ry, 18*scale, 8*scale, spin, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="rgba(0,0,0,0.12)";
+  ctx.beginPath();
+  ctx.ellipse(rx, ry+20*scale, 14*scale, 5*scale, 0, 0, Math.PI*2);
+  ctx.fill();
+}
+
+/* ---------------------------
+   POP TEXT FX
+---------------------------- */
+const popTexts = [];
+function popText(text,x,y,color){
+  popTexts.push({text,x,y,vy:-0.7,life:1,color});
+}
+
+function drawPopTexts(dt){
+  for(let i=popTexts.length-1;i>=0;i--){
+    const p = popTexts[i];
+    p.y += p.vy * dt*60;
+    p.life -= dt*0.9;
+
+    ctx.globalAlpha = clamp(p.life,0,1);
+    ctx.fillStyle = p.color || "#111";
+    ctx.font = "900 14px system-ui";
+    ctx.fillText(p.text, p.x-30, p.y);
+
+    if(p.life<=0) popTexts.splice(i,1);
+  }
   ctx.globalAlpha = 1;
 }
 
-/* =========================
-   TILE THEMES
-   ========================= */
-
-function getThemeColors(){
-  const theme = planets[state.planetIndex].theme;
-  if(theme==="sand"){
-    return {
-      top: colors.sandTop,
-      left: colors.sandLeft,
-      right: colors.sandRight,
-      line: colors.sandLine
-    };
-  }
-  if(theme==="ice"){
-    return {
-      top: colors.iceTop,
-      left: colors.iceLeft,
-      right: colors.iceRight,
-      line: colors.iceLine
-    };
-  }
-  if(theme==="lava"){
-    return {
-      top: colors.lavaTop,
-      left: colors.lavaLeft,
-      right: colors.lavaRight,
-      line: colors.lavaLine
-    };
-  }
-  return {
-    top: colors.grassTop,
-    left: colors.grassLeft,
-    right: colors.grassRight,
-    line: colors.grassLine
-  };
-}
-
-function drawGround(){
-  const th = getThemeColors();
-
-  for(let r=0;r<5;r++){
-    for(let c=0;c<5;c++){
-      const p = gridToScreen(r,c);
-      const height = 18 + ((r+c)%2)*4;
-
-      drawIsoBlock(
-        p.x,
-        p.y,
-        gridSize,
-        height,
-        th.top,
-        th.left,
-        th.right,
-        th.line
-      );
-
-      // texture dots
-      ctx.save();
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = "#0f172a";
-      for(let i=0;i<5;i++){
-        const px = p.x + (Math.random()*2-1)*40;
-        const py = p.y + 60 + Math.random()*40;
-        ctx.beginPath();
-        ctx.arc(px, py, 2.1, 0, Math.PI*2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-  }
-}
-
-/* =========================
-   INTERACTION
-   ========================= */
-
-function hitTest(mx,my){
-  for(const b of buildings){
-    const p = gridToScreen(b.r, b.c);
-    const dx = mx - p.x;
-    const dy = my - (p.y+120);
-    if(dx*dx + dy*dy < 95*95){
-      return b;
-    }
-  }
-  return null;
-}
-
+/* ---------------------------
+   CLICK DETECTION
+---------------------------- */
 canvas.addEventListener("click", (e)=>{
   const rect = canvas.getBoundingClientRect();
-  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
 
-  const b = hitTest(mx,my);
-  if(b){
-    clicked = { b, time: 0 };
+  // check buildings from top to bottom
+  for(let i=worldBuildings.length-1;i>=0;i--){
+    const b = worldBuildings[i];
+    const dx = mx - b.x;
+    const dy = my - (b.y+35);
 
-    if(b.type==="house"){
-      state.food += 3;
-      state.wood += 2;
-      floatText("+2 木材  +3 食物", "#16a34a");
-    }else{
-      state.crystal += 2;
-      state.iron += 2;
-      floatText("+2 水晶  +2 鐵礦", "#2563eb");
+    // simple hit circle
+    if(dx*dx + dy*dy < 55*55){
+      b.bounce = 1;
+      b.sparkle = 1;
+
+      if(b.type==="house"){
+        assistantSay("🏠 小屋：產生資源！你可以升級提升效率。");
+      }
+      if(b.type==="tree"){
+        assistantSay("🌳 森林：產生能量⚡ 能量越高越強。");
+      }
+      if(b.type==="dome"){
+        assistantSay("🏛 圓頂：慢慢產生 AENO🪙 非常重要！");
+      }
+      if(b.type==="robot"){
+        assistantSay("🤖 採集站：高速資源生產機器！");
+      }
+
+      showToast(typeName(b.type)+" 已選中");
+      return;
     }
-
-    syncUI();
   }
 });
 
-/* =========================
-   UI BUTTON EVENTS
-   ========================= */
-
-ui.toggleLeftBtn.onclick = ()=>{
-  ui.leftPanel.classList.toggle("hidden");
-  ui.toggleLeftBtn.textContent = ui.leftPanel.classList.contains("hidden") ? "打開面板" : "收起面板";
-};
-
-ui.toggleRightBtn.onclick = ()=>{
-  ui.rightPanel.classList.toggle("hidden");
-  ui.toggleRightBtn.textContent = ui.rightPanel.classList.contains("hidden") ? "打開功能" : "收起功能";
-};
-
-ui.harvestBtn.onclick = ()=>{
-  const gainW = 2 + Math.floor(Math.random()*4);
-  const gainF = 1 + Math.floor(Math.random()*3);
-  const gainC = Math.floor(Math.random()*3);
-  const gainI = Math.floor(Math.random()*2);
-
-  state.wood += gainW;
-  state.food += gainF;
-  state.crystal += gainC;
-  state.iron += gainI;
-
-  floatText(`+${gainW}木 +${gainF}食 +${gainC}晶 +${gainI}鐵`, "#16a34a");
-  syncUI();
-};
-
-ui.switchPlanetBtn.onclick = ()=>{
-  state.planetIndex = (state.planetIndex + 1) % planets.length;
-  floatText("🪐 星球切換成功", "#2563eb");
-  syncUI();
-};
-
-ui.sendBotBtn.onclick = ()=>{
-  if(state.bots <= 0){
-    floatText("冇機械人", "#ef4444");
-    return;
-  }
-
-  showPopup(
-    "🤖 派遣機械人",
-    "機械人將會自動採集資源。\n(示範版：立即獲得少量資源)",
-    "派遣",
-    "取消",
-    ()=>{
-      const gain = 3 + Math.floor(Math.random()*6);
-      state.wood += gain;
-      state.crystal += Math.floor(gain/2);
-      state.food += gain;
-      floatText(`🤖 +${gain}資源`, "#0f172a");
-      syncUI();
-    }
-  );
-};
-
-ui.claimBtn.onclick = ()=>{
-  const now = Date.now();
-  if(now - state.lastClaim < 5000){
-    floatText("⏳ 冷卻中...", "#ef4444");
-    return;
-  }
-  state.lastClaim = now;
-
-  // AENO reward depends on resources + bots
-  const base = 1 + Math.floor(state.bots * 0.5);
-  const bonus = Math.min(10, Math.floor((state.wood + state.food + state.crystal + state.iron)/40));
-  const reward = base + bonus;
-
-  state.aeno += reward;
-  floatText(`✨ +${reward} AENO`, "#f59e0b");
-  syncUI();
-};
-
-ui.shopBtn.onclick = ()=>{
-  showPopup(
-    "🛒 商店（示範）",
-    "購買：\n- 機械人 +1 (需要 20 AENO)\n- 翻譯包 (需要 50 AENO)\n\n目前只做示範按鈕。",
-    "買機械人",
-    "關閉",
-    ()=>{
-      if(state.aeno < 20){
-        floatText("AENO 不足", "#ef4444");
-        return;
-      }
-      state.aeno -= 20;
-      state.bots += 1;
-      floatText("🤖 機械人 +1", "#2563eb");
-      syncUI();
-    }
-  );
-};
-
-ui.missionBtn.onclick = ()=>{
-  showPopup(
-    "📜 今日任務",
-    "1) 點擊建築 3 次\n2) 採集一次\n3) 領取 AENO\n\n完成後會得到獎勵 (示範版)。",
-    "領取獎勵",
-    "關閉",
-    ()=>{
-      state.aeno += 5;
-      floatText("🎁 +5 AENO", "#f59e0b");
-      syncUI();
-    }
-  );
-};
-
-ui.assistantBtn.onclick = ()=>{
-  showPopup(
-    "🐾 助手：AEN狐",
-    "你好！我係 AEN狐 🦊\n\n建議：\n- 多派遣機械人\n- 收集水晶用於 FTL\n- 累積 AENO 等候黑洞移民\n\n(示範版助手面板)",
-    "知道",
-    "關閉",
-    ()=>{}
-  );
-};
-
-/* =========================
-   GAME LOOP
-   ========================= */
-
-function update(){
-  state.tick++;
-
-  // cloud movement
-  for(const cl of clouds){
-    cl.x += cl.spd;
-    if(cl.x > W + 160) cl.x = -200;
-  }
-
-  // idle resource trickle (放置感)
-  if(state.tick % 80 === 0){
-    state.food += 1;
-    state.wood += 1;
-  }
-
-  if(clicked){
-    clicked.time++;
-    if(clicked.time > 35) clicked = null;
-  }
+/* ---------------------------
+   BACKGROUND FX
+---------------------------- */
+const clouds = [];
+for(let i=0;i<5;i++){
+  clouds.push({
+    x:rnd(-200,W+200),
+    y:rnd(70,160),
+    s:rnd(0.7,1.3),
+    sp:rnd(10,22)
+  });
 }
 
-function drawBuildings(){
-  const sway = Math.sin(state.tick*0.03)*0.06;
-
-  for(const b of buildings){
-    let pulse = 0;
-    if(clicked && clicked.b === b){
-      pulse = Math.sin(clicked.time*0.35)*10 * Math.max(0, 1 - clicked.time/30);
-    }
-
-    if(b.type==="house") drawHouse(b.r,b.c,pulse);
-    if(b.type==="dome") drawDome(b.r,b.c,pulse);
-
-    drawTree(b.r,b.c,sway);
-  }
-}
-
-function drawHUDText(){
-  ctx.save();
-  ctx.globalAlpha = 0.92;
-  ctx.fillStyle = "#ffffff";
+function drawCloud(c){
+  ctx.globalAlpha=0.85;
+  ctx.fillStyle="#ffffff";
   ctx.beginPath();
-  ctx.roundRect(20, 250, 360, 78, 18);
+  ctx.arc(c.x, c.y, 24*c.s, 0, Math.PI*2);
+  ctx.arc(c.x+22*c.s, c.y+6*c.s, 18*c.s, 0, Math.PI*2);
+  ctx.arc(c.x-20*c.s, c.y+8*c.s, 16*c.s, 0, Math.PI*2);
+  ctx.arc(c.x+4*c.s, c.y-10*c.s, 18*c.s, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha=1;
+}
+
+/* ---------------------------
+   GAME LOOP
+---------------------------- */
+let last = performance.now();
+
+function loop(now){
+  const dt = (now-last)/1000;
+  last = now;
+
+  // economy tick
+  state.res += state.production.resPerSec * dt;
+  state.energy += state.production.energyPerSec * dt;
+  state.aeno += state.production.aenoPerSec * dt;
+
+  state.energy = clamp(state.energy, 0, state.energyMax);
+
+  // background
+  ctx.clearRect(0,0,W,H);
+
+  // sky gradient
+  const sky = ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,"#dff6ff");
+  sky.addColorStop(1,"#f6fbff");
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,W,H);
+
+  // clouds move
+  for(const c of clouds){
+    c.x += c.sp * dt;
+    if(c.x > W+240) c.x = -240;
+    drawCloud(c);
+  }
+
+  // island base
+  ctx.fillStyle="rgba(0,0,0,0.06)";
+  ctx.beginPath();
+  ctx.ellipse(W/2, H*0.62, 170, 45, 0, 0, Math.PI*2);
   ctx.fill();
 
-  ctx.strokeStyle = colors.stroke;
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  ctx.fillStyle = "#0f172a";
-  ctx.font = "900 26px system-ui";
-  ctx.fillText("AENO V3 · 卡通城鎮", 40, 285);
-
-  ctx.fillStyle = "#2563eb";
-  ctx.font = "700 15px system-ui";
-  ctx.fillText("點建築可獲資源 / 右下領AENO", 40, 310);
-  ctx.restore();
-}
-
-function draw(){
-  drawBackground();
-
-  for(const cl of clouds){
-    drawCloud(cl.x, cl.y, cl.s);
+  // tiles
+  for(let r=0;r<7;r++){
+    for(let c=0;c<7;c++){
+      drawIsoTile(r,c);
+    }
   }
 
-  drawGround();
-  drawBuildings();
-  drawHUDText();
-}
+  // draw buildings
+  // sort by y for depth
+  worldBuildings.sort((a,b)=> (a.r+a.c)-(b.r+b.c));
 
-function loop(){
-  update();
-  draw();
-  syncUI();
+  let sway = now*0.0018;
+
+  for(const b of worldBuildings){
+    const base = gridToScreen(b.r,b.c);
+
+    // bounce effect
+    if(b.bounce>0) b.bounce -= dt*2.6;
+    const bounceY = Math.sin(clamp(b.bounce,0,1)*Math.PI) * -18;
+
+    if(b.sparkle>0) b.sparkle -= dt*1.4;
+
+    if(b.type==="house") drawHouse(base.x, base.y + bounceY, 1);
+    if(b.type==="tree") drawTree(base.x, base.y + bounceY, 1, sway);
+    if(b.type==="dome") drawDome(base.x, base.y + bounceY, 1, b.sparkle);
+    if(b.type==="robot") drawRobotStation(base.x, base.y + bounceY, 1, now*0.006);
+  }
+
+  drawPopTexts(dt);
+
+  // update HUD 6 times/sec
+  loop._t = (loop._t||0) + dt;
+  if(loop._t > 0.16){
+    loop._t = 0;
+    updateHUD();
+  }
+
   requestAnimationFrame(loop);
 }
 
-/* roundRect polyfill */
-if(!CanvasRenderingContext2D.prototype.roundRect){
-  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
-    if(w<2*r) r=w/2;
-    if(h<2*r) r=h/2;
-    this.beginPath();
-    this.moveTo(x+r, y);
-    this.arcTo(x+w, y, x+w, y+h, r);
-    this.arcTo(x+w, y+h, x, y+h, r);
-    this.arcTo(x, y+h, x, y, r);
-    this.arcTo(x, y, x+w, y, r);
-    this.closePath();
-    return this;
-  };
-}
+/* ---------------------------
+   INIT
+---------------------------- */
+updateProduction();
+updateHUD();
 
-syncUI();
-loop();
+assistantSay("你好！我係 <b>FENIX</b> 🦊<br>你而家喺領地中心，試下起第一間小屋🏠");
+
+showToast("AENO V3 已啟動");
+
+requestAnimationFrame(loop);
 </script>
-
 </body>
 </html>
