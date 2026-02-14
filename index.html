@@ -1,183 +1,229 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>AENO 3D 修復版</title>
-<style>
-  :root { --accent: #3b82f6; --bg: #f0f9ff; }
-  body { margin: 0; background: var(--bg); overflow: hidden; font-family: sans-serif; }
-  
-  /* 頂部資源欄 */
-  #status {
-    position: absolute; top: 10px; left: 10px; right: 10px;
-    display: flex; justify-content: space-between; z-index: 100;
-  }
-  .res { background: white; padding: 5px 10px; border-radius: 15px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>AENO 量子潛力 - 3D 旗艦還原版</title>
+    <style>
+        :root { --primary: #3b82f6; --gold: #f59e0b; --grass: #7cfc00; }
+        body { margin: 0; background: #ccefff; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        
+        /* 頂部數據欄 */
+        #hud {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; gap: 6px; z-index: 100;
+        }
+        .res-box {
+            background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 12px;
+            font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 13px;
+            display: flex; align-items: center; gap: 4px; border: 1px solid #fff;
+        }
 
-  /* 遊戲畫布 */
-  canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+        canvas { display: block; width: 100vw; height: 100vh; }
 
-  /* 控制中心 (底部可伸縮) */
-  #control-panel {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: white; border-top-left-radius: 20px; border-top-right-radius: 20px;
-    transition: transform 0.3s; z-index: 200; padding: 15px;
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
-  }
-  .collapsed { transform: translateY(80%); } /* 縮小狀態 */
-  
-  .panel-toggle { width: 40px; height: 5px; background: #ccc; margin: 0 auto 10px; border-radius: 5px; cursor: pointer; }
-  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .btn { padding: 12px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 14px; }
-  .btn-blue { background: #3b82f6; }
-  .btn-green { background: #22c55e; }
-  .btn-gold { background: #f59e0b; }
-
-  /* AI 助手 */
-  #ai-bubble {
-    position: absolute; top: 60px; right: 10px; left: 10px;
-    background: rgba(255,255,255,0.9); border-radius: 10px; padding: 10px;
-    font-size: 12px; border-left: 4px solid var(--accent); z-index: 90;
-  }
-</style>
+        /* 建築面板 - 重新設計，不遮擋視線 */
+        #panel {
+            position: absolute; bottom: 15px; left: 15px; right: 15px;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(10px);
+            border-radius: 20px; padding: 18px; z-index: 200;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid #fff;
+        }
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .action-btn {
+            border: none; padding: 14px; border-radius: 15px; color: white;
+            font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px;
+        }
+        .btn-harvest { background: #3b82f6; grid-column: span 2; }
+        .btn-farm { background: #22c55e; }
+        .btn-mine { background: #64748b; }
+        
+        #ai-status {
+            position: absolute; top: 65px; left: 15px; right: 15px;
+            background: rgba(255,255,255,0.7); padding: 10px; border-radius: 12px;
+            font-size: 12px; font-weight: bold; color: #1e40af; z-index: 90;
+        }
+    </style>
 </head>
 <body>
 
-<div id="status">
-  <div class="res">💰 <span id="gold">500</span></div>
-  <div class="res">🪵 <span id="wood">150</span></div>
-  <div class="res">💎 <span id="aeno">0</span></div>
+<div id="hud">
+    <div class="res-box">💰 <span id="gold">500</span></div>
+    <div class="res-box">🪵 <span id="wood">200</span></div>
+    <div class="res-box">🪨 <span id="stone">100</span></div>
 </div>
 
-<div id="ai-bubble"><b>Aenko:</b> 爸爸，3D 引擎已重新啟動！按下方「手動採集」或「建造」。</div>
+<div id="ai-status">Aenko: 爸爸，3D 深度引擎已修復！點擊地圖選擇地塊，再按按鈕建造。</div>
 
-<canvas id="game"></canvas>
+<canvas id="gameCanvas"></canvas>
 
-<div id="control-panel" id="panel">
-  <div class="panel-toggle" onclick="togglePanel()"></div>
-  <div style="margin-bottom:10px; font-weight:bold;">🏗️ 建設與資源</div>
-  <div class="btn-grid">
-    <button class="btn btn-green" onclick="collect()">⛏️ 手動採集 (+5)</button>
-    <button class="btn btn-blue" onclick="build('farm')">🌾 蓋農田 (100金)</button>
-    <button class="btn btn-gold" onclick="build('mine')">⚒️ 蓋礦場 (200金)</button>
-    <button class="btn" style="background:#64748b" onclick="togglePanel()">收起面板</button>
-  </div>
+<div id="panel">
+    <div style="font-weight:bold; color:#334155;">📍 選中座標: <span id="coord">10, 10</span></div>
+    <div class="grid-layout">
+        <button class="action-btn btn-harvest" onclick="doHarvest()">⛏️ 手動採集 (獲取金幣/木材)</button>
+        <button class="action-btn btn-farm" onclick="doBuild('farm')">🌾 蓋農田<br><small>100金 | 50木</small></button>
+        <button class="action-btn btn-mine" onclick="doBuild('mine')">⚒️ 蓋礦場<br><small>200金 | 80石</small></button>
+    </div>
 </div>
 
 <script>
-const cv = document.getElementById('game');
-const ctx = cv.getContext('2d');
-let width, height;
+const cvs = document.getElementById('gameCanvas');
+const ctx = cvs.getContext('2d');
+const TILE_W = 64; // 寬度
+const TILE_H = 32; // 高度 (1:2 比例是 Isometric 標準)
+const MAP_SIZE = 15;
 
-// 遊戲狀態
 let state = {
-  gold: 500, wood: 100,
-  buildings: [],
-  gridSize: 10,
-  tileSize: 40
+    gold: 500, wood: 200, stone: 100,
+    selected: { x: 7, y: 7 },
+    buildings: [], // {x, y, type}
+    map: []
 };
 
-// 響應式畫布
-function resize() {
-  width = cv.width = window.innerWidth;
-  height = cv.height = window.innerHeight;
+// 初始化地圖地形
+function initMap() {
+    for (let y = 0; y < MAP_SIZE; y++) {
+        state.map[y] = [];
+        for (let x = 0; x < MAP_SIZE; x++) {
+            let type = 'grass';
+            if (Math.random() > 0.8) type = 'forest';
+            if (Math.random() > 0.92) type = 'rock';
+            state.map[y][x] = type;
+        }
+    }
 }
-window.addEventListener('resize', resize);
-resize();
 
-// 坐標轉換 (Isometric 3D)
-function toIso(x, y) {
-  return {
-    x: (x - y) * state.tileSize + width / 2,
-    y: (x + y) * (state.tileSize / 2) + height / 4
-  };
+// 坐標轉換：地圖(x,y) -> 螢幕(x,y)
+function getPos(tx, ty) {
+    return {
+        x: (tx - ty) * (TILE_W / 2) + cvs.width / 2,
+        y: (tx + ty) * (TILE_H / 2) + cvs.height / 4
+    };
 }
 
 // 繪製循環
 function draw() {
-  ctx.clearRect(0, 0, width, height);
-
-  // 1. 畫地塊
-  for (let x = 0; x < state.gridSize; x++) {
-    for (let y = 0; y < state.gridSize; y++) {
-      const pos = toIso(x, y);
-      drawDiamond(pos.x, pos.y, state.tileSize, "#b9fbc0");
-      
-      // 2. 檢查並畫建築
-      const b = state.buildings.find(b => b.x === x && b.y === y);
-      if(b) {
-        drawBuilding(pos.x, pos.y, b.type);
-      }
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    
+    // 渲染地塊
+    for (let y = 0; y < MAP_SIZE; y++) {
+        for (let x = 0; x < MAP_SIZE; x++) {
+            const p = getPos(x, y);
+            const isSel = (state.selected.x === x && state.selected.y === y);
+            
+            drawTile(p.x, p.y, isSel ? '#3b82f6' : getTileColor(state.map[y][x]));
+            
+            // 繪製裝飾（森林/岩石）
+            if (state.map[y][x] === 'forest') drawTree(p.x, p.y);
+            if (state.map[y][x] === 'rock') drawRock(p.x, p.y);
+            
+            // 繪製建築
+            const b = state.buildings.find(b => b.x === x && b.y === y);
+            if (b) drawBuilding(p.x, p.y, b.type);
+        }
     }
-  }
-  requestAnimationFrame(draw);
+    requestAnimationFrame(draw);
 }
 
-function drawDiamond(x, y, size, color) {
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + size, y + size / 2);
-  ctx.lineTo(x, y + size);
-  ctx.lineTo(x - size, y + size / 2);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.strokeStyle = "rgba(0,0,0,0.05)";
-  ctx.stroke();
+function drawTile(x, y, color) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + TILE_W/2, y + TILE_H/2);
+    ctx.lineTo(x, y + TILE_H);
+    ctx.lineTo(x - TILE_W/2, y + TILE_H/2);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.stroke();
+}
+
+function drawTree(x, y) {
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath(); ctx.arc(x, y+5, 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#78350f'; ctx.fillRect(x-2, y+10, 4, 6);
+}
+
+function drawRock(x, y) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.beginPath(); ctx.moveTo(x-10, y+10); ctx.lineTo(x, y-5); ctx.lineTo(x+10, y+10); ctx.fill();
 }
 
 function drawBuilding(x, y, type) {
-  ctx.fillStyle = type === 'farm' ? "#fbbf24" : "#94a3b8";
-  // 畫一個簡單的立方體感
-  ctx.beginPath();
-  ctx.rect(x - 10, y, 20, -25);
-  ctx.fill();
-  ctx.strokeStyle = "white";
-  ctx.stroke();
+    // 繪製具有高度感的立體建築
+    ctx.fillStyle = type === 'farm' ? '#f59e0b' : '#475569';
+    ctx.beginPath();
+    ctx.moveTo(x-12, y+10); ctx.lineTo(x+12, y+10); 
+    ctx.lineTo(x+12, y-10); ctx.lineTo(x-12, y-10);
+    ctx.closePath(); ctx.fill();
+    // 屋頂
+    ctx.fillStyle = type === 'farm' ? '#fbbf24' : '#1e293b';
+    ctx.beginPath();
+    ctx.moveTo(x-12, y-10); ctx.lineTo(x, y-22); ctx.lineTo(x+12, y-10);
+    ctx.closePath(); ctx.fill();
 }
 
-// 功能函數
-function collect() {
-  state.gold += 5;
-  state.wood += 2;
-  updateUI();
-}
+// 點擊判定：螢幕 -> 地圖坐標
+cvs.addEventListener('touchstart', (e) => {
+    const rect = cvs.getBoundingClientRect();
+    const mx = e.touches[0].clientX - rect.left - cvs.width / 2;
+    const my = e.touches[0].clientY - rect.top - cvs.height / 4;
+    
+    // Isometric 反向矩陣算法
+    const tx = Math.floor((my / (TILE_H / 2) + mx / (TILE_W / 2)) / 2);
+    const ty = Math.floor((my / (TILE_H / 2) - mx / (TILE_W / 2)) / 2);
+    
+    if (tx >= 0 && tx < MAP_SIZE && ty >= 0 && ty < MAP_SIZE) {
+        state.selected = { x: tx, y: ty };
+        document.getElementById('coord').innerText = `${tx}, ${ty}`;
+    }
+});
 
-function build(type) {
-  const cost = type === 'farm' ? 100 : 200;
-  if(state.gold >= cost) {
-    state.gold -= cost;
-    // 隨機找個空位蓋
-    let rx = Math.floor(Math.random() * state.gridSize);
-    let ry = Math.floor(Math.random() * state.gridSize);
-    state.buildings.push({ x: rx, y: ry, type: type });
+// 遊戲功能
+function doHarvest() {
+    state.gold += 5;
+    state.wood += 2;
     updateUI();
-    document.getElementById('ai-bubble').innerText = "Aenko: 建築成功！資源每秒自動增加中。";
-  } else {
-    alert("錢不夠呀，爸爸！");
-  }
+    msg("採集成功！金幣+5, 木材+2");
 }
 
-// 自動產資源
+function doBuild(type) {
+    const cost = type === 'farm' ? {g:100, w:50} : {g:200, s:80};
+    if (state.gold >= cost.g && (cost.w ? state.wood >= cost.w : true)) {
+        if (state.buildings.some(b => b.x === state.selected.x && b.y === state.selected.y)) {
+            msg("這裡已經有建築了！"); return;
+        }
+        state.gold -= cost.g; if(cost.w) state.wood -= cost.w;
+        state.buildings.push({ x: state.selected.x, y: state.selected.y, type });
+        updateUI();
+        msg(`成功建造了 ${type === 'farm' ? '農田' : '礦場'}！`);
+    } else {
+        msg("資源不足，無法建造！");
+    }
+}
+
+// 自動產資源核心
 setInterval(() => {
-  state.buildings.forEach(b => {
-    if(b.type === 'farm') state.gold += 2;
-    if(b.type === 'mine') state.gold += 5;
-  });
-  updateUI();
+    state.buildings.forEach(b => {
+        if (b.type === 'farm') state.gold += 1;
+        if (b.type === 'mine') state.gold += 2;
+    });
+    updateUI();
 }, 1000);
 
+function getTileColor(t) {
+    return t === 'forest' ? '#4ade80' : (t === 'rock' ? '#cbd5e1' : '#b9fbc0');
+}
 function updateUI() {
-  document.getElementById('gold').innerText = state.gold;
-  document.getElementById('wood').innerText = state.wood;
+    document.getElementById('gold').innerText = Math.floor(state.gold);
+    document.getElementById('wood').innerText = Math.floor(state.wood);
+    document.getElementById('stone').innerText = Math.floor(state.stone);
 }
+function msg(m) { document.getElementById('ai-status').innerText = `Aenko: ${m}`; }
 
-function togglePanel() {
-  document.getElementById('control-panel').classList.toggle('collapsed');
-}
-
-// 啟動
+// 初始化並執行
+cvs.width = window.innerWidth; cvs.height = window.innerHeight;
+initMap();
+updateUI();
 draw();
 </script>
 </body>
