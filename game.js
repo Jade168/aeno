@@ -1281,3 +1281,73 @@
 
   init();
 })();
+
+// =====================================================
+// AENO V3 PATCH: 防止切走/回來跳去選星球 & 鏡頭跳位
+// =====================================================
+
+// ⚠️ 如果你原本變量名唔係呢幾個，改成你實際使用的：
+// cameraX / cameraY / zoomLevel / currentPlanetId
+
+function AENO_saveCameraState() {
+  try {
+    const camState = {
+      cameraX: (typeof cameraX === "number") ? cameraX : 0,
+      cameraY: (typeof cameraY === "number") ? cameraY : 0,
+      zoomLevel: (typeof zoomLevel === "number") ? zoomLevel : 1,
+      currentPlanetId: (typeof currentPlanetId === "string") ? currentPlanetId : "planet_1",
+      ts: Date.now()
+    };
+    localStorage.setItem("AENO_CAMERA_STATE_V3", JSON.stringify(camState));
+  } catch (e) {}
+}
+
+function AENO_loadCameraState() {
+  try {
+    const raw = localStorage.getItem("AENO_CAMERA_STATE_V3");
+    if (!raw) return;
+
+    const s = JSON.parse(raw);
+
+    if (typeof s.cameraX === "number") cameraX = s.cameraX;
+    if (typeof s.cameraY === "number") cameraY = s.cameraY;
+    if (typeof s.zoomLevel === "number") zoomLevel = s.zoomLevel;
+    if (typeof s.currentPlanetId === "string") currentPlanetId = s.currentPlanetId;
+  } catch (e) {}
+}
+
+// 防止某些版本 init() 強行 reset planet/camera
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    AENO_loadCameraState();
+  }, 200);
+});
+
+// 手機切走、鎖屏、切 App
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    AENO_saveCameraState();
+    if (typeof saveGame === "function") saveGame();
+  } else {
+    setTimeout(() => {
+      AENO_loadCameraState();
+    }, 50);
+  }
+});
+
+// iOS / Android 常用
+window.addEventListener("pagehide", () => {
+  AENO_saveCameraState();
+  if (typeof saveGame === "function") saveGame();
+});
+
+// 保險
+window.addEventListener("beforeunload", () => {
+  AENO_saveCameraState();
+  if (typeof saveGame === "function") saveGame();
+});
+
+// 每 10 秒自動存一次鏡頭，防止崩潰/閃退
+setInterval(() => {
+  AENO_saveCameraState();
+}, 10000);
