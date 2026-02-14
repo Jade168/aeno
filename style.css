@@ -1,0 +1,410 @@
+:root{
+  --bg:#eaf6ff;
+  --card:#ffffffcc;
+  --stroke:#bfe6ff;
+  --shadow:0 14px 30px rgba(0,0,0,.15);
+  --round:18px;
+  --txt:#0f172a;
+  --accent:#38bdf8;
+  --accent2:#fbbf24;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  background:var(--bg);
+  overflow:hidden;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans TC,Arial;
+  color:var(--txt);
+}
+
+#gameCanvas{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100vw;
+  height:100vh;
+  background:linear-gradient(#eaf6ff,#f0f9ff);
+}
+
+#bootScreen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+  background:linear-gradient(#dbeafe,#f0f9ff);
+}
+
+.bootCard{
+  width:280px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:26px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  text-align:center;
+}
+
+.logo{
+  font-size:36px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:#0284c7;
+}
+
+.bootText{
+  margin-top:10px;
+  font-size:16px;
+  font-weight:700;
+}
+
+.bootHint{
+  margin-top:10px;
+  opacity:.75;
+  font-size:12px;
+}
+
+#uiRoot{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+button, input, select{
+  pointer-events:auto;
+  font-size:14px;
+}
+
+#assistant{
+  position:absolute;
+  left:14px;
+  bottom:170px;
+  width:110px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:22px;
+  padding:10px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  z-index:40;
+  user-select:none;
+  pointer-events:auto;
+}
+
+.assistantFace{
+  font-size:44px;
+}
+
+.assistantName{
+  font-size:12px;
+  font-weight:800;
+  text-align:center;
+  line-height:1.1;
+}
+
+#assistantTalkBtn{
+  border:none;
+  border-radius:14px;
+  padding:8px 12px;
+  background:var(--accent);
+  color:white;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.assistantAdFlag{
+  position:absolute;
+  right:-10px;
+  top:-10px;
+  background:var(--accent2);
+  border-radius:12px;
+  padding:4px 7px;
+  font-weight:900;
+  font-size:12px;
+  border:2px solid #fff;
+  box-shadow:0 8px 16px rgba(0,0,0,.12);
+}
+
+#chatBox{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  width:330px;
+  height:240px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:60;
+  pointer-events:auto;
+}
+
+.hidden{ display:none !important; }
+
+.chatHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  background:#dbeafe;
+  font-weight:900;
+}
+
+#chatClose{
+  border:none;
+  background:#ef4444;
+  color:white;
+  border-radius:12px;
+  padding:6px 10px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+#chatLog{
+  flex:1;
+  padding:10px;
+  overflow:auto;
+  font-size:13px;
+}
+
+.chatInputRow{
+  display:flex;
+  gap:6px;
+  padding:10px;
+  border-top:2px solid var(--stroke);
+  background:#ffffffaa;
+}
+
+#chatInput{
+  flex:1;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  padding:8px 10px;
+  outline:none;
+}
+
+#chatSend{
+  border:none;
+  border-radius:14px;
+  padding:8px 12px;
+  background:#22c55e;
+  color:white;
+  font-weight:900;
+}
+
+#mainPanel{
+  position:absolute;
+  right:10px;
+  top:10px;
+  width:330px;
+  height:560px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  z-index:50;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  pointer-events:auto;
+  touch-action:none;
+}
+
+#panelHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  background:#dbeafe;
+  font-weight:900;
+  cursor:grab;
+}
+
+.panelTitle{
+  font-size:14px;
+}
+
+.panelBtns{
+  display:flex;
+  gap:6px;
+}
+
+#panelMinBtn,#panelHideBtn{
+  border:none;
+  border-radius:12px;
+  padding:6px 10px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+#panelMinBtn{ background:#38bdf8; color:white; }
+#panelHideBtn{ background:#64748b; color:white; }
+
+#panelTabs{
+  display:flex;
+  gap:6px;
+  padding:8px;
+  overflow:auto;
+  border-bottom:2px solid var(--stroke);
+}
+
+.tabBtn{
+  border:none;
+  padding:8px 10px;
+  border-radius:14px;
+  background:#e2e8f0;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.tabBtn.active{
+  background:#38bdf8;
+  color:white;
+}
+
+#panelBody{
+  flex:1;
+  overflow:auto;
+  padding:10px;
+}
+
+.tabPage{ display:none; }
+.tabPage.active{ display:block; }
+
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.statCard{
+  background:#ffffffaa;
+  border:2px solid var(--stroke);
+  border-radius:16px;
+  padding:8px 10px;
+}
+
+.statCard .k{
+  font-size:12px;
+  font-weight:900;
+  opacity:.8;
+}
+
+.statCard .v{
+  margin-top:3px;
+  font-size:16px;
+  font-weight:900;
+  color:#0284c7;
+}
+
+.mt8{ margin-top:8px; }
+.mt10{ margin-top:10px; }
+
+.btnRow{
+  display:flex;
+  gap:8px;
+}
+
+.btnRow button{
+  flex:1;
+  border:none;
+  border-radius:16px;
+  padding:10px 10px;
+  font-weight:900;
+  cursor:pointer;
+  background:#38bdf8;
+  color:white;
+}
+
+.btnRow button:nth-child(2){
+  background:#22c55e;
+}
+
+.buildList{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.buildBtn, .techBtn{
+  border:none;
+  border-radius:16px;
+  padding:12px 10px;
+  font-weight:900;
+  background:#fbbf24;
+  cursor:pointer;
+}
+
+.techList{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.marketRow{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.marketRow select, .marketRow input{
+  flex:1;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  padding:10px;
+}
+
+.hint{
+  background:#ffffffaa;
+  border:2px dashed #93c5fd;
+  border-radius:16px;
+  padding:10px;
+  font-size:13px;
+  line-height:1.4;
+}
+
+#sysLog{
+  margin-top:10px;
+  background:#ffffffaa;
+  border:2px solid var(--stroke);
+  border-radius:16px;
+  padding:10px;
+  height:380px;
+  overflow:auto;
+  font-size:12px;
+}
+
+#panelRestoreBtn{
+  position:absolute;
+  right:12px;
+  top:12px;
+  z-index:55;
+  border:none;
+  border-radius:18px;
+  padding:12px 14px;
+  font-weight:900;
+  background:#38bdf8;
+  color:white;
+  box-shadow:var(--shadow);
+  pointer-events:auto;
+}
+
+@media(max-width:420px){
+  #mainPanel{
+    width:310px;
+    height:540px;
+  }
+  #chatBox{
+    width:300px;
+  }
+}
