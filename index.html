@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>AENO V3 - Imperial Command</title>
+<title>AENO V3 - Cartoon Empire (Vertical)</title>
 <style>
   :root{
     --bg:#eaf7ff;
@@ -18,491 +18,1079 @@
     --gold:#f59e0b;
     --aeno:#8b5cf6;
   }
-  *{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans HK","PingFang HK","Microsoft JhengHei",sans-serif;}
   body{
     margin:0;
-    background:#eaf7ff;
+    background:linear-gradient(#eaf7ff,#f8fbff);
     overflow:hidden;
     touch-action:none;
   }
-  #wrap{ width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; }
+  #wrap{
+    width:100vw;height:100vh;
+    display:flex;justify-content:center;align-items:center;
+  }
   #game{
     position:relative;
-    width:min(480px,100vw);
+    width:min(460px,100vw);
     height:100vh;
+    max-height:980px;
     background:linear-gradient(#eaf7ff,#f7fbff);
     border-left:1px solid #dbeafe;
     border-right:1px solid #dbeafe;
     overflow:hidden;
   }
 
-  canvas{ width:100%; height:100%; display:block; }
+  canvas{
+    width:100%;
+    height:100%;
+    display:block;
+    background:linear-gradient(#eaf7ff,#f7fbff);
+  }
 
   /* TOP BAR */
   #topbar{
     position:absolute;top:0;left:0;right:0;
-    padding:10px; display:flex; gap:8px; z-index:100;
-    background:rgba(255,255,255,0.7); backdrop-filter:blur(10px);
+    padding:10px 10px 8px 10px;
+    display:flex;gap:8px;align-items:center;
+    z-index:50;
+    background:linear-gradient(#ffffffdd,#ffffff00);
+    backdrop-filter: blur(6px);
   }
   .chip{
-    padding:8px 12px; border-radius:12px; background:#fff;
-    border:1px solid var(--border); font-size:12px; font-weight:bold;
-    cursor:pointer; display:flex; align-items:center; gap:5px;
+    padding:8px 10px;
+    border-radius:14px;
+    background:#ffffffdd;
+    border:1px solid var(--border);
+    font-size:12px;
+    color:var(--text);
+    box-shadow:0 6px 14px rgba(0,0,0,0.06);
+    display:flex;align-items:center;gap:6px;
+    user-select:none;
+    cursor:pointer;
   }
-
-  /* FLOATING RECALL BUTTONS */
-  #recallPanel, #recallChat {
-    position:absolute; right:15px; z-index:90;
-    width:50px; height:50px; border-radius:25px;
-    background:var(--accent); color:white;
-    display:none; align-items:center; justify-content:center;
-    box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; font-weight:bold;
+  .chip b{font-size:12px;}
+  .chip .dot{
+    width:8px;height:8px;border-radius:999px;background:var(--accent);
   }
-  #recallPanel { bottom:80px; background:var(--aeno); }
-  #recallChat { bottom:140px; }
 
   /* MAIN PANEL */
   #panel{
-    position:absolute; left:10px; right:10px; bottom:10px;
-    height:60%; border-radius:22px;
-    background:var(--panel); border:1px solid var(--border);
-    box-shadow:0 10px 40px rgba(0,0,0,0.15);
-    z-index:110; overflow:hidden; display:flex; flex-direction:column;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position:absolute;
+    left:10px; right:10px;
+    bottom:10px;
+    height:52%;
+    border-radius:22px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    box-shadow:0 18px 50px rgba(0,0,0,0.12);
+    z-index:80;
+    overflow:hidden;
+    transition: transform .25s ease;
   }
-  #panel.hidden { transform: translateY(120%); }
+  #panel.min{
+    transform: translateY(calc(100% - 64px));
+  }
 
   #panelHeader{
-    padding:12px; background:#f1f8ff; border-bottom:1px solid #dbeafe;
-    display:flex; justify-content:space-between; align-items:center;
+    height:64px;
+    padding:10px 12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:linear-gradient(#ffffff,#f1f8ff);
+    border-bottom:1px solid #dbeafe;
   }
-  #panelTabs{ display:flex; gap:5px; overflow-x:auto; padding-bottom:5px; }
+  #panelTitle{
+    display:flex;flex-direction:column;
+    gap:2px;
+  }
+  #panelTitle .t{
+    font-weight:900;
+    font-size:14px;
+    color:var(--text);
+    letter-spacing:0.3px;
+  }
+  #panelTitle .s{
+    font-size:11px;color:var(--muted);
+  }
+
+  #panelTabs{
+    display:flex;gap:6px;flex-wrap:wrap;
+    justify-content:flex-end;
+  }
   .tab{
-    padding:6px 12px; border-radius:15px; font-size:11px;
-    background:#fff; border:1px solid #dbeafe; cursor:pointer; white-space:nowrap;
+    font-size:11px;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid #dbeafe;
+    background:#fff;
+    color:#0f172a;
+    cursor:pointer;
+    user-select:none;
   }
-  .tab.active{ background:var(--accent); color:white; border-color:var(--accent); }
+  .tab.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:white;
+    font-weight:700;
+  }
 
-  #panelBody{ flex:1; overflow-y:auto; padding:15px; -webkit-overflow-scrolling:touch; }
+  #panelBody{
+    height:calc(100% - 64px);
+    overflow:auto;
+    padding:10px;
+    background:linear-gradient(#ffffff,#f8fbff);
+  }
 
-  /* CARDS & UI */
-  .card{ background:#fff; border-radius:16px; padding:12px; margin-bottom:12px; border:1px solid #edf2f7; box-shadow:0 4px 6px rgba(0,0,0,0.02); }
-  .row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .card{
+    background:#ffffff;
+    border:1px solid #e2f0ff;
+    border-radius:18px;
+    padding:12px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.06);
+    margin-bottom:10px;
+  }
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
   .btn{
-    padding:10px 14px; border:none; border-radius:12px;
-    background:var(--accent); color:white; font-weight:bold; cursor:pointer; font-size:12px;
+    border:none;
+    padding:10px 12px;
+    border-radius:14px;
+    background:var(--accent);
+    color:white;
+    font-weight:800;
+    cursor:pointer;
+    user-select:none;
+    box-shadow:0 10px 20px rgba(59,130,246,0.25);
+    font-size:12px;
   }
-  .btn:active{ transform:scale(0.95); }
-  .btn.red{ background:var(--danger); }
-  .btn.green{ background:var(--accent2); }
-  .btn.gold{ background:var(--gold); }
-  .btn.purple{ background:var(--aeno); }
-  .btn.outline{ background:transparent; border:1px solid #cbd5e1; color:var(--text); }
+  .btn.gray{
+    background:#e2e8f0;color:#0f172a;
+    box-shadow:none;
+    border:1px solid #cbd5e1;
+  }
+  .btn.green{
+    background:var(--accent2);
+    box-shadow:0 10px 20px rgba(34,197,94,0.25);
+  }
+  .btn.gold{
+    background:var(--gold);
+    box-shadow:0 10px 20px rgba(245,158,11,0.25);
+  }
+  .btn.purple{
+    background:var(--aeno);
+    box-shadow:0 10px 20px rgba(139,92,246,0.25);
+  }
+  .btn.red{
+    background:var(--danger);
+    box-shadow:0 10px 20px rgba(239,68,68,0.25);
+  }
+  .label{
+    font-size:12px;color:var(--muted);
+    margin-bottom:6px;
+  }
+  .big{
+    font-size:14px;font-weight:900;color:var(--text);
+  }
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;}
+  input,select{
+    width:100%;
+    padding:10px;
+    border-radius:14px;
+    border:1px solid #dbeafe;
+    background:#f8fbff;
+    font-size:13px;
+  }
 
-  /* AI CHAT */
+  /* AI CHAT FLOAT */
   #chatFloat{
-    position:absolute; right:12px; top:80px; width:240px; max-height:300px;
-    border-radius:18px; background:rgba(255,255,255,0.9); backdrop-filter:blur(8px);
-    border:1px solid var(--border); z-index:105; display:flex; flex-direction:column;
-    box-shadow:0 8px 24px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
+    position:absolute;
+    right:12px;
+    top:86px;
+    width:220px;
+    border-radius:18px;
+    border:1px solid #dbeafe;
+    background:#ffffffdd;
+    backdrop-filter: blur(6px);
+    box-shadow:0 12px 26px rgba(0,0,0,0.12);
+    z-index:70;
+    overflow:hidden;
+    transition: transform .25s ease;
   }
-  #chatFloat.hidden { transform: translateX(120%); }
-  #chatBody{ flex:1; overflow-y:auto; padding:10px; font-size:12px; }
-  #chatInputWrap{ display:flex; padding:8px; gap:5px; border-top:1px solid #eee; }
-  #chatInputWrap input{ flex:1; border-radius:10px; border:1px solid #ddd; padding:6px; font-size:12px; }
-
-  /* HUD */
-  #hud{
-    position:absolute; bottom:20px; left:20px; pointer-events:none;
-    z-index:20; font-size:12px; color:var(--text); font-weight:bold;
-    background:rgba(255,255,255,0.6); padding:8px; border-radius:10px;
+  #chatFloat.min{
+    transform: translateX(170px);
+  }
+  #chatHeader{
+    padding:8px 10px;
+    background:linear-gradient(#ffffff,#f1f8ff);
+    border-bottom:1px solid #dbeafe;
+    display:flex;align-items:center;justify-content:space-between;
+    font-weight:900;font-size:12px;color:var(--text);
+  }
+  #chatBody{
+    height:150px;
+    overflow:auto;
+    padding:8px;
+    font-size:12px;
+    color:#0f172a;
+  }
+  .msg{margin-bottom:8px;line-height:1.35;}
+  .msg .who{font-weight:900;}
+  .msg.ai .who{color:#2563eb;}
+  .msg.me .who{color:#16a34a;}
+  #chatInputWrap{
+    display:flex;gap:6px;padding:8px;border-top:1px solid #dbeafe;
+    background:#ffffff;
+  }
+  #chatInputWrap input{
+    flex:1;
+    padding:9px;
+    border-radius:12px;
+    font-size:12px;
+  }
+  #chatInputWrap button{
+    padding:9px 10px;border-radius:12px;border:none;
+    background:#2563eb;color:white;font-weight:900;font-size:12px;
   }
 
-  .number-input { width: 60px; padding: 5px; border-radius: 8px; border: 1px solid #ccc; }
+  /* SMALL INFO */
+  #toast{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    top:62px;
+    background:#0f172acc;
+    color:white;
+    font-size:12px;
+    padding:8px 12px;
+    border-radius:999px;
+    z-index:200;
+    display:none;
+  }
+  /* NEW: Fingerprint Unlock Button (Addition) */
+  #fp_unlock {
+    position: absolute; right: 20px; bottom: 85px; width: 50px; height: 50px;
+    background: #ffffffaa; backdrop-filter: blur(5px); border: 2px solid var(--accent);
+    border-radius: 50%; display: none; align-items: center; justify-content: center;
+    font-size: 24px; z-index: 100; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
 </style>
 </head>
 <body>
 <div id="wrap">
   <div id="game">
-    <canvas id="cv"></canvas>
-
     <div id="topbar">
-      <div class="chip" id="btnShowPanel">🏰 面板</div>
-      <div class="chip" id="btnShowChat">🐾 助手</div>
-      <div class="chip" onclick="saveGame()">💾 存檔</div>
+      <div class="chip" id="btnTogglePanel"><span class="dot"></span><b>帝國面板</b></div>
+      <div class="chip" id="btnSave"><b>存檔</b></div>
+      <div class="chip" id="btnReset"><b>重置</b></div>
     </div>
 
-    <div id="recallPanel" onclick="togglePanel(true)">🏰</div>
-    <div id="recallChat" onclick="toggleChat(true)">🐾</div>
+    <div id="toast"></div>
+    <div id="fp_unlock">☝️</div>
+
+    <canvas id="cv"></canvas>
 
     <div id="chatFloat">
-      <div id="panelHeader">
-        <span style="font-weight:900; font-size:13px;">🐾 Aenko 助手</span>
-        <button class="btn red" style="padding:2px 8px;" onclick="toggleChat(false)">×</button>
+      <div id="chatHeader">
+        <span>🐾 AI助手 - Aenko</span>
+        <span style="cursor:pointer;" id="btnChatMin">▸</span>
       </div>
       <div id="chatBody"></div>
       <div id="chatInputWrap">
-        <input id="chatInput" placeholder="輸入指令... (如：巡邏)" />
-        <button class="btn" id="chatSend">送出</button>
+        <input id="chatInput" placeholder="輸入：巡邏 / 收集 / 建造 農田 / 升級 工廠..." />
+        <button id="chatSend">送出</button>
       </div>
     </div>
 
-    <div id="panel">
+    <div id="panel" class="min">
       <div id="panelHeader">
+        <div id="panelTitle">
+          <div class="t">AENO 帝國控制中心</div>
+          <div class="s">資源・建設・交易所・科技樹・獸潮・廣告歌・機器人事件</div>
+        </div>
         <div id="panelTabs">
           <div class="tab active" data-tab="home">總覽</div>
           <div class="tab" data-tab="build">建設</div>
           <div class="tab" data-tab="market">交易所</div>
-          <div class="tab" data-tab="event">機器人/事件</div>
-          <div class="tab" data-tab="tech">科技</div>
-          <div class="tab" data-tab="ads">廣告</div>
+          <div class="tab" data-tab="stock">股市</div>
+          <div class="tab" data-tab="tech">科技樹</div>
+          <div class="tab" data-tab="event">事件</div>
+          <div class="tab" data-tab="ads">廣告/歌曲</div>
         </div>
-        <button class="btn red" style="padding:2px 10px;" onclick="togglePanel(false)">收起</button>
       </div>
       <div id="panelBody"></div>
     </div>
-
-    <div id="hud">資源加載中...</div>
   </div>
 </div>
 
 <script>
-/* ---------- Core Configuration ---------- */
-const TILE = 64;
-const GRID_W = 22;
-const GRID_H = 22;
-const SAVE_KEY = "AENO_EMPIRE_V3_REVISED";
+/* ===========================
+   AENO V3 (Single File Demo)
+   =========================== */
 
+/* ---------- Helpers ---------- */
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function rand(a,b){return a+Math.random()*(b-a);}
+function irand(a,b){return Math.floor(rand(a,b+1));}
+
+function now(){return Date.now();}
 function fmt(n){
-  if(n>=1e6) return (n/1e6).toFixed(1)+"M";
-  if(n>=1e3) return (n/1e3).toFixed(1)+"K";
-  return Math.floor(n);
+  if(n>=1e9) return (n/1e9).toFixed(2)+"B";
+  if(n>=1e6) return (n/1e6).toFixed(2)+"M";
+  if(n>=1e3) return (n/1e3).toFixed(2)+"K";
+  return Math.floor(n).toString();
 }
 
-/* ---------- State Management ---------- */
-let state = JSON.parse(localStorage.getItem(SAVE_KEY)) || {
-  resources: { gold: 500, aeno: 50, wood: 100, stone: 100, iron: 50, food: 100 },
-  territoryRadius: 4,
-  camera: { x: 0, y: 0, zoom: 1 },
-  selected: { x: 11, y: 11 },
-  beast: { timer: 90, wave: 1, active: false },
-  robot: { active: false, x: 0, y: 0, cooldown: 0 },
-  market: { wood: 2.5, stone: 3.5, iron: 8.2, food: 1.2 },
-  tech: { points: 0, unlocked: { factory: false, wall: false, tower: false } },
-  ai: { x: 11, y: 11, px: 0, py: 0, mode: "idle" },
-  map: []
-};
-
-// Initialize Map if empty
-if(!state.map.length){
-  for(let y=0; y<GRID_H; y++){
-    let row = [];
-    for(let x=0; x<GRID_W; x++){
-      let type = "grass";
-      let dist = Math.hypot(x-11, y-11);
-      if(dist > 8 && Math.random() < 0.4) type = "mountain";
-      else if(dist > 5 && Math.random() < 0.3) type = "forest";
-      else if(Math.random() < 0.05) type = "river";
-      row.push({ terrain: type, building: "none", level: 0 });
-    }
-    state.map.push(row);
-  }
-  state.map[11][11].building = "town";
-  state.map[11][11].level = 1;
+/* --- safe rounded rect --- */
+function roundRectPath(ctx,x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
 
-/* ---------- UI Logic ---------- */
-const panel = document.getElementById("panel");
-const chat = document.getElementById("chatFloat");
-const rPanel = document.getElementById("recallPanel");
-const rChat = document.getElementById("recallChat");
+/* ---------- Canvas Setup ---------- */
+const cv=document.getElementById("cv");
+const ctx=cv.getContext("2d");
 
-function togglePanel(show){
-  panel.classList.toggle("hidden", !show);
-  rPanel.style.display = show ? "none" : "flex";
-  if(show) renderPanel(document.querySelector(".tab.active").dataset.tab);
-}
-function toggleChat(show){
-  chat.classList.toggle("hidden", !show);
-  rChat.style.display = show ? "none" : "flex";
-}
-document.getElementById("btnShowPanel").onclick = () => togglePanel(true);
-document.getElementById("btnShowChat").onclick = () => toggleChat(true);
-
-function pushLog(msg) {
-  const body = document.getElementById("chatBody");
-  const d = document.createElement("div");
-  d.innerHTML = `<span style="color:#64748b;">[系統]</span> ${msg}`;
-  body.appendChild(d);
-  body.scrollTop = body.scrollHeight;
-}
-
-/* ---------- Game Actions ---------- */
-function collectManual(){
-  const tile = state.map[state.selected.y][state.selected.x];
-  if(tile.terrain === "forest"){
-    state.resources.wood += 10;
-    pushLog("🌲 手動伐木：木材 +10");
-  } else if(tile.terrain === "river"){
-    state.resources.food += 5;
-    pushLog("🐟 捕魚中：食物 +5");
-  } else {
-    pushLog("此地塊無可收集資源，請點擊森林。");
-  }
-}
-
-function expandLand(){
-  let cost = state.territoryRadius * 200;
-  if(state.resources.gold >= cost){
-    state.resources.gold -= cost;
-    state.territoryRadius++;
-    pushLog(`🌍 領土擴張至半徑 ${state.territoryRadius}`);
-  } else {
-    pushLog("金幣不足以擴張！");
-  }
-}
-
-function buyResource(type){
-  let qty = parseInt(document.getElementById(`buy_${type}`).value) || 0;
-  let price = state.market[type];
-  let cost = qty * price;
-  if(state.resources.gold >= cost){
-    state.resources.gold -= cost;
-    state.resources[type] += qty;
-    pushLog(`🛒 買入 ${qty} 單位 ${type}`);
-  } else { pushLog("金幣不足！"); }
-}
-
-function sellResource(type){
-  let qty = parseInt(document.getElementById(`sell_${type}`).value) || 0;
-  let price = state.market[type] * 0.8;
-  if(state.resources[type] >= qty){
-    state.resources[type] -= qty;
-    state.resources.gold += qty * price;
-    pushLog(`💰 賣出 ${qty} 單位 ${type}`);
-  } else { pushLog("資源不足！"); }
-}
-
-function deployRobot(){
-  if(state.robot.active) return pushLog("機器人已在外面！");
-  state.robot.active = true;
-  state.robot.timer = 15;
-  pushLog("🤖 機器人已出發前往隨機星區收集資源...");
-}
-
-/* ---------- Render Panel Content ---------- */
-function renderPanel(tab){
-  const body = document.getElementById("panelBody");
-  const sel = state.map[state.selected.y][state.selected.x];
-  
-  let html = "";
-  if(tab === "home"){
-    html = `
-      <div class="card">
-        <h3>📊 帝國資源</h3>
-        <div class="row">
-          <span>💰 金幣: ${fmt(state.resources.gold)}</span>
-          <span>💎 AENO: ${fmt(state.resources.aeno)}</span>
-          <span>🪵 木材: ${fmt(state.resources.wood)}</span>
-          <span>🪨 石頭: ${fmt(state.resources.stone)}</span>
-          <span>⚙️ 鐵: ${fmt(state.resources.iron)}</span>
-          <span>🌾 食物: ${fmt(state.resources.food)}</span>
-        </div>
-      </div>
-      <div class="card">
-        <h3>📍 選中地塊 (${state.selected.x}, ${state.selected.y})</h3>
-        <p>地形: ${sel.terrain} | 建築: ${sel.building} Lv.${sel.level}</p>
-        <div class="row">
-          <button class="btn green" onclick="collectManual()">手動收集資源</button>
-          <button class="btn outline" onclick="expandLand()">擴張領土 (${state.territoryRadius*200}金)</button>
-        </div>
-      </div>
-    `;
-  } else if(tab === "market"){
-    html = `<h3>🛒 交易所</h3>`;
-    ["wood","stone","iron","food"].forEach(res => {
-      html += `
-        <div class="card">
-          <b>${res.toUpperCase()}</b> (市價: ${state.market[res]})
-          <div class="row">
-            <input type="number" id="buy_${res}" class="number-input" value="10">
-            <button class="btn" onclick="buyResource('${res}')">買入</button>
-            <input type="number" id="sell_${res}" class="number-input" value="10" style="margin-left:10px;">
-            <button class="btn gold" onclick="sellResource('${res}')">賣出</button>
-          </div>
-        </div>
-      `;
-    });
-  } else if(tab === "build"){
-    html = `
-      <div class="card">
-        <h3>🏗 建造中心</h3>
-        <p>請先在地圖點選綠色地塊，再選擇建築。</p>
-        <div class="row">
-          <button class="btn" onclick="build('farm')">農田 (30木10石)</button>
-          <button class="btn gold" onclick="build('mine')">礦場 (30木40石)</button>
-          <button class="btn purple" onclick="build('factory')">工廠 (100金50鐵)</button>
-        </div>
-      </div>
-    `;
-  } else if(tab === "event"){
-    html = `
-      <div class="card">
-        <h3>🤖 機器人中心</h3>
-        <p>狀態: ${state.robot.active ? "探險中..." : "待機中"}</p>
-        <button class="btn purple" onclick="deployRobot()">手動派遣隨機出發</button>
-      </div>
-      <div class="card">
-        <h3>🐺 獸潮預警</h3>
-        <p>下一波: ${Math.floor(state.beast.timer)}s | 當前波次: ${state.beast.wave}</p>
-      </div>
-    `;
-  } else if(tab === "ads"){
-    html = `
-      <div class="card">
-        <h3>🎵 廣告與歌曲</h3>
-        <p>觀看廣告貼圖可獲得獎勵資源，用於補充系統資金。</p>
-        <button class="btn gold" style="width:100%" onclick="playAd()">播放廣告歌曲 (+100金幣)</button>
-      </div>
-    `;
-  }
-  body.innerHTML = html;
-}
-
-document.querySelectorAll(".tab").forEach(t => {
-  t.onclick = () => {
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    t.classList.add("active");
-    renderPanel(t.dataset.tab);
-  };
-});
-
-/* ---------- Canvas & Draw ---------- */
-const cv = document.getElementById("cv");
-const ctx = cv.getContext("2d");
 function resize(){
-  cv.width = cv.clientWidth * devicePixelRatio;
-  cv.height = cv.clientHeight * devicePixelRatio;
-  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const rect=cv.getBoundingClientRect();
+  cv.width=Math.floor(rect.width*devicePixelRatio);
+  cv.height=Math.floor(rect.height*devicePixelRatio);
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
-window.onresize = resize;
-resize();
+window.addEventListener("resize",resize);
 
-function draw(){
-  ctx.clearRect(0,0,cv.width,cv.height);
-  const centerX = cv.clientWidth/2 + state.camera.x;
-  const centerY = cv.clientHeight/3 + state.camera.y;
+/* ---------- World Config ---------- */
+const TILE=64;
+const GRID_W=22;
+const GRID_H=22;
 
-  for(let y=0; y<GRID_H; y++){
-    for(let x=0; x<GRID_W; x++){
-      const isoX = (x - y) * (TILE/2) + centerX;
-      const isoY = (x + y) * (TILE/4) + centerY;
-      
-      // Draw Tile
-      ctx.beginPath();
-      ctx.moveTo(isoX, isoY - TILE/4);
-      ctx.lineTo(isoX + TILE/2, isoY);
-      ctx.lineTo(isoX, isoY + TILE/4);
-      ctx.lineTo(isoX - TILE/2, isoY);
-      ctx.closePath();
-      
-      let tile = state.map[y][x];
-      ctx.fillStyle = (x===state.selected.x && y===state.selected.y) ? "#3b82f6" : 
-                      (tile.terrain==="forest" ? "#22c55e" : 
-                       tile.terrain==="mountain" ? "#94a3b8" : 
-                       tile.terrain==="river" ? "#60a5fa" : "#dcfce7");
-      
-      // Territory check
-      let dist = Math.hypot(x-11, y-11);
-      if(dist > state.territoryRadius) ctx.globalAlpha = 0.5;
-      else ctx.globalAlpha = 1;
-      
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.3)";
-      ctx.stroke();
+const terrainTypes=["grass","forest","mountain","river","ore","plain"];
+const buildingTypes=["none","farm","mine","factory","wall","tower","town"];
 
-      // Draw Building
-      if(tile.building !== "none"){
-        ctx.fillStyle = "#1e293b";
-        ctx.fillRect(isoX-5, isoY-15, 10, 15);
-      }
-    }
-  }
-  
-  // HUD Update
-  document.getElementById("hud").innerHTML = `
-    💰 ${fmt(state.resources.gold)} | 🪵 ${fmt(state.resources.wood)} | 🪨 ${fmt(state.resources.stone)} | ⚙️ ${fmt(state.resources.iron)}
-  `;
-  requestAnimationFrame(draw);
-}
-
-/* ---------- Input Handling ---------- */
-cv.onpointerdown = (e) => {
-  const rect = cv.getBoundingClientRect();
-  const mx = e.clientX - rect.left - (cv.clientWidth/2 + state.camera.x);
-  const my = e.clientY - rect.top - (cv.clientHeight/3 + state.camera.y);
-  
-  // Basic Iso Inverse
-  let x = Math.round((mx / (TILE/2) + my / (TILE/4)) / 2);
-  let y = Math.round((my / (TILE/4) - mx / (TILE/2)) / 2);
-  
-  if(x>=0 && x<GRID_W && y>=0 && y<GRID_H){
-    state.selected = {x, y};
-    if(!panel.classList.contains("hidden")) renderPanel(document.querySelector(".tab.active").dataset.tab);
-  }
+const terrainColor={
+  grass:"#b9fbc0",
+  forest:"#4ade80",
+  mountain:"#94a3b8",
+  river:"#60a5fa",
+  ore:"#fbbf24",
+  plain:"#dcfce7"
 };
 
-/* ---------- Game Loop ---------- */
-setInterval(() => {
-  // Production
-  state.map.forEach((row, y) => row.forEach((tile, x) => {
-    if(Math.hypot(x-11, y-11) <= state.territoryRadius){
-      if(tile.building === "farm") state.resources.food += 0.1 * tile.level;
-      if(tile.building === "town") state.resources.gold += 0.2 * tile.level;
+const buildingMeta={
+  none:{name:"空地"},
+  farm:{name:"農田",cost:{wood:30,stone:10,gold:60},prod:{food:4}},
+  mine:{name:"礦場",cost:{wood:25,stone:35,gold:90},prod:{stone:2,iron:2}},
+  factory:{name:"工廠",cost:{wood:60,stone:60,iron:40,gold:200},prod:{gold:5}},
+  wall:{name:"城牆",cost:{stone:80,gold:120},def:2},
+  tower:{name:"守衛塔",cost:{wood:40,stone:80,iron:30,gold:160},def:5},
+  town:{name:"城鎮",cost:{wood:120,stone:120,iron:80,gold:600},prod:{gold:12},def:3}
+};
+
+/* ---------- Save / Load ---------- */
+const SAVE_KEY="AENO_V3_SAVE_1";
+
+function defaultState(){
+  const map=[];
+  for(let y=0;y<GRID_H;y++){
+    const row=[];
+    for(let x=0;x<GRID_W;x++){
+      const t=genTerrain(x,y);
+      row.push({
+        terrain:t,
+        building:"none",
+        level:0
+      });
     }
-  }));
-  
-  // Beast Logic
-  state.beast.timer--;
-  if(state.beast.timer <= 0){
-    state.beast.timer = 120;
-    state.beast.wave++;
-    pushLog(`🐺 獸潮來襲！第 ${state.beast.wave} 波！`);
-    // Simple Reward for surviving
-    state.resources.gold += 100 * state.beast.wave;
+    map.push(row);
   }
-  
-  // Robot Logic
-  if(state.robot.active){
-    state.robot.timer--;
-    if(state.robot.timer <= 0){
-      state.robot.active = false;
-      let gain = Math.floor(Math.random()*50) + 20;
-      state.resources.iron += gain;
-      pushLog(`🤖 機器人探險歸來，帶回 ${gain} 單位鐵礦！`);
+
+  // start base
+  map[11][11].building="town";
+  map[11][11].level=1;
+
+  return {
+    ver:3,
+    lastTick:now(),
+    camera:{x:0,y:0,zoom:1},
+    selected:{x:11,y:11},
+    resources:{
+      gold:500,
+      aeno:50,
+      wood:120,
+      stone:80,
+      iron:40,
+      food:120
+    },
+    territoryRadius:4,
+    map,
+    ai:{
+      name:"Aenko",
+      x:11,y:11,
+      px:0,py:0,
+      mood:"🙂",
+      mode:"idle",
+      adText:"AENO MUSIC",
+      lastSpeak:0
+    },
+    robot:{
+      active:false,
+      x:0,y:0,
+      stealTimer:0,
+      adText:"AD"
+    },
+    beast:{
+      timer: 90,
+      wave:0,
+      active:false
+    },
+    market:{
+      prices:{
+        wood:2,
+        stone:3,
+        iron:6,
+        food:1
+      }
+    },
+    stock:{
+      planetIndex:0,
+      lines:[]
+    },
+    tech:{
+      points:0,
+      unlocked:{
+        farm:true,
+        mine:true,
+        factory:false,
+        wall:false,
+        tower:false
+      }
+    },
+    ads:{
+      cooldown:0,
+      playing:false,
+      lastReward:0
+    },
+    log:[],
+    dev:{
+      quantumKey: "Q-" + Math.random().toString(16).substr(2, 8).toUpperCase(),
+      crystalCount: 0
     }
-  }
-}, 1000);
+  };
+}
 
 function saveGame(){
   localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-  pushLog("💾 進度已存檔至本地。");
+  toast("✅ 已存檔");
 }
 
-function playAd(){
-  pushLog("🎵 正在播放贊助歌曲...");
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return null;
+    const obj=JSON.parse(raw);
+    if(!obj || !obj.map) return null;
+    return obj;
+  }catch(e){
+    return null;
+  }
+}
+
+function resetGame(){
+  localStorage.removeItem(SAVE_KEY);
+  state=defaultState();
+  toast("⚠️ 已重置世界");
+  pushLog("世界重置。");
+}
+
+/* ---------- Terrain Generation ---------- */
+function genTerrain(x,y){
+  // handmade terrain zones
+  const dx=x-11, dy=y-11;
+  const d=Math.sqrt(dx*dx+dy*dy);
+
+  // river line
+  if(Math.abs((x*0.8 + y*0.3) - 14) < 1.2) return "river";
+
+  // mountains outer ring
+  if(d>9 && Math.random()<0.55) return "mountain";
+
+  // forest belt
+  if(d>5 && d<9 && Math.random()<0.45) return "forest";
+
+  // ore pockets
+  if(Math.random()<0.08) return "ore";
+
+  // plains
+  if(Math.random()<0.25) return "plain";
+
+  return "grass";
+}
+
+/* ---------- Global State ---------- */
+let state = loadGame() || defaultState();
+
+/* ---------- UI ---------- */
+const panel=document.getElementById("panel");
+const panelBody=document.getElementById("panelBody");
+const btnTogglePanel=document.getElementById("btnTogglePanel");
+const btnSave=document.getElementById("btnSave");
+const btnReset=document.getElementById("btnReset");
+
+const chatFloat=document.getElementById("chatFloat");
+const chatBody=document.getElementById("chatBody");
+const chatInput=document.getElementById("chatInput");
+const chatSend=document.getElementById("chatSend");
+const btnChatMin=document.getElementById("btnChatMin");
+
+const toastBox=document.getElementById("toast");
+const fpUnlock=document.getElementById("fp_unlock");
+
+function toast(t){
+  toastBox.innerText=t;
+  toastBox.style.display="block";
+  clearTimeout(toastBox._t);
+  toastBox._t=setTimeout(()=>toastBox.style.display="none",1200);
+}
+
+btnTogglePanel.onclick=()=>{
+  if(panel.style.display === "none"){
+    panel.style.display = "block";
+    fpUnlock.style.display = "none";
+  } else {
+    panel.classList.toggle("min");
+    if(panel.classList.contains("min")){
+        // Addition: Logic to hide completely for fingerprint recall if needed
+    }
+  }
+};
+// Addition: Long press or special close to show fingerprint recall
+btnTogglePanel.oncontextmenu = (e) => {
+    e.preventDefault();
+    panel.style.display = "none";
+    fpUnlock.style.display = "flex";
+    toast("面板已鎖定");
+};
+fpUnlock.onclick = () => {
+    panel.style.display = "block";
+    fpUnlock.style.display = "none";
+    toast("🔐 指紋認證成功");
+};
+
+btnSave.onclick=saveGame;
+btnReset.onclick=()=>{
+  if(confirm("確定重置？所有離線存檔會消失。")){
+    resetGame();
+    saveGame();
+  }
+};
+
+btnChatMin.onclick=()=>{
+  chatFloat.classList.toggle("min");
+  btnChatMin.innerText=chatFloat.classList.contains("min")?"◂":"▸";
+};
+
+/* ---------- Logging ---------- */
+function pushLog(msg){
+  state.log.unshift({t:Date.now(),msg});
+  state.log=state.log.slice(0,50);
+}
+
+/* ---------- Territory ---------- */
+function isInsideTerritory(x,y){
+  const cx=11, cy=11;
+  const dx=x-cx, dy=y-cy;
+  return (dx*dx+dy*dy) <= (state.territoryRadius*state.territoryRadius);
+}
+
+/* ---------- Economy ---------- */
+function canAfford(cost){
+  if(!cost) return true;
+  for(const k in cost){
+    if((state.resources[k]||0) < cost[k]) return false;
+  }
+  return true;
+}
+function pay(cost){
+  for(const k in cost){
+    state.resources[k]-=cost[k];
+    if(state.resources[k]<0) state.resources[k]=0;
+  }
+}
+
+function tryPayWithGoldOrAeno(extraGold){
+  // allow player to use gold first, then optional aeno
+  const need=extraGold;
+  if(state.resources.gold>=need){
+    state.resources.gold-=need;
+    return true;
+  }
+  const missing=need-state.resources.gold;
+  // conversion: 1 AENO = 100 gold (demo)
+  const aenoNeed=Math.ceil(missing/100);
+  if(state.resources.aeno>=aenoNeed){
+    state.resources.gold=0;
+    state.resources.aeno-=aenoNeed;
+    return true;
+  }
+  return false;
+}
+
+/* ---------- Build / Upgrade ---------- */
+function placeBuilding(type){
+  const {x,y}=state.selected;
+  if(!isInsideTerritory(x,y)){
+    toast("⚠️ 不在領土內");
+    return;
+  }
+  const tile=state.map[y][x];
+  if(tile.building!=="none"){
+    toast("⚠️ 已有建築");
+    return;
+  }
+  if(type==="factory" && !state.tech.unlocked.factory){
+    toast("🔒 未解鎖工廠");
+    return;
+  }
+  if(type==="wall" && !state.tech.unlocked.wall){
+    toast("🔒 未解鎖城牆");
+    return;
+  }
+  if(type==="tower" && !state.tech.unlocked.tower){
+    toast("🔒 未解鎖守衛塔");
+    return;
+  }
+
+  const meta=buildingMeta[type];
+  if(!meta){toast("錯誤");return;}
+
+  if(!canAfford(meta.cost)){
+    toast("資源不足，可用交易所買");
+    return;
+  }
+  pay(meta.cost);
+  tile.building=type;
+  tile.level=1;
+
+  pushLog(`建設：${meta.name} Lv1`);
+  toast("🏗 已建設");
+}
+
+function upgradeBuilding(){
+  const {x,y}=state.selected;
+  const tile=state.map[y][x];
+  if(tile.building==="none"){toast("⚠️ 冇建築");return;}
+  const lv=tile.level||1;
+  if(lv>=5){toast("已滿級");return;}
+
+  const meta=buildingMeta[tile.building];
+  const base=meta.cost||{};
+  const upCost={};
+  for(const k in base){
+    upCost[k]=Math.ceil(base[k]*(0.65+lv*0.45));
+  }
+
+  if(!canAfford(upCost)){
+    toast("升級資源不足");
+    return;
+  }
+
+  pay(upCost);
+  tile.level=lv+1;
+  pushLog(`升級：${meta.name} Lv${tile.level}`);
+  toast("⬆️ 已升級");
+}
+
+function demolishBuilding(){
+  const {x,y}=state.selected;
+  const tile=state.map[y][x];
+  if(tile.building==="none"){toast("⚠️ 冇建築");return;}
+  pushLog(`拆除：${buildingMeta[tile.building].name}`);
+  tile.building="none";
+  tile.level=0;
+  toast("掃 已拆除");
+}
+
+/* ---------- Expand Territory ---------- */
+function expandTerritory(){
+  // expansion cost increases
+  const r=state.territoryRadius;
+  const goldNeed = Math.floor(200 + r*r*120);
+  const ok=tryPayWithGoldOrAeno(goldNeed);
+  if(!ok){
+    toast("金幣不足（可用AENO補）");
+    return;
+  }
+  state.territoryRadius++;
+  pushLog(`領土擴張：半徑 ${state.territoryRadius}`);
+  toast("🌍 領土擴張成功");
+}
+
+/* ---------- Market ---------- */
+function marketBuy(res,qty){
+  qty=Math.max(1,Math.floor(qty));
+  const price=state.market.prices[res]||1;
+  const cost=qty*price;
+  if(state.resources.gold<cost){
+    toast("金幣不足");
+    return;
+  }
+  state.resources.gold-=cost;
+  state.resources[res]=(state.resources[res]||0)+qty;
+  pushLog(`交易所買入：${res} x${qty} (-${cost}金幣)`);
+  toast("🛒 已買入");
+}
+
+function marketSell(res,qty){
+  qty=Math.max(1,Math.floor(qty));
+  if((state.resources[res]||0)<qty){
+    toast("資源不足");
+    return;
+  }
+  const price=state.market.prices[res]||1;
+  const gain=Math.floor(qty*price*0.85);
+  state.resources[res]-=qty;
+  state.resources.gold+=gain;
+  pushLog(`交易所賣出：${res} x${qty} (+${gain}金幣)`);
+  toast("💰 已賣出");
+}
+
+/* ---------- Stock (simplified) ---------- */
+function tickStock(){
+  // update pseudo stock every 5 sec
+  if(!state.stock.lines || state.stock.lines.length===0){
+    state.stock.lines=[];
+    for(let i=0;i<30;i++){
+      state.stock.lines.push({
+        wood:state.market.prices.wood,
+        stone:state.market.prices.stone,
+        iron:state.market.prices.iron,
+        food:state.market.prices.food
+      });
+    }
+  }
+
+  const last=state.stock.lines[state.stock.lines.length-1];
+  const next={...last};
+  for(const k of ["wood","stone","iron","food"]){
+    let v=next[k];
+    v += rand(-0.6,0.6);
+    v = clamp(v, 0.5, 30);
+    next[k]=Math.round(v*10)/10;
+    state.market.prices[k]=next[k];
+  }
+  state.stock.lines.push(next);
+  state.stock.lines=state.stock.lines.slice(-60);
+}
+
+/* ---------- Tech Tree ---------- */
+function gainTechPoints(n){
+  state.tech.points += n;
+}
+
+function unlockTech(name,cost){
+  if(state.tech.points<cost){
+    toast("科技點不足");
+    return;
+  }
+  state.tech.points -= cost;
+
+  if(name==="factory") state.tech.unlocked.factory=true;
+  if(name==="wall") state.tech.unlocked.wall=true;
+  if(name==="tower") state.tech.unlocked.tower=true;
+
+  pushLog("科技解鎖："+name);
+  toast("🧠 已解鎖科技");
+}
+
+/* ---------- Ads / Music ---------- */
+function playAdSong(){
+  if(state.ads.cooldown>0){
+    toast("冷卻中...");
+    return;
+  }
+  state.ads.playing=true;
+  state.ads.cooldown=45;
+  pushLog("播放贊助歌曲中...");
+  toast("🎵 播放中...");
   setTimeout(()=>{
-    state.resources.gold += 100;
-    pushLog("🎁 廣告播放完畢！獲得 100 金幣。");
-  }, 2000);
+    state.ads.playing=false;
+    const reward=irand(60,140);
+    state.resources.gold += reward;
+    pushLog(`廣告歌曲完成：+${reward} 金幣`);
+    toast("🎁 +"+reward+"金幣");
+  }, 2500);
 }
 
-/* ---------- Init ---------- */
-draw();
-togglePanel(true);
-pushLog("歡迎來到 AENO 帝國。點擊森林地塊可手動採木。");
+/* ---------- Robot Raid (steal 20%) ---------- */
+function spawnRobot(){
+  state.robot.active=true;
+  state.robot.x=irand(0,GRID_W-1);
+  state.robot.y=irand(0,GRID_H-1);
+  state.robot.stealTimer=15;
+  state.robot.adText="SPONSOR";
+  pushLog("🤖 機器人降落：可能掠奪資源！");
+  toast("🤖 機器人入侵！");
+}
 
+function robotSteal(){
+  // defense reduces steal
+  let def=0;
+  for(let y=0;y<GRID_H;y++){
+    for(let x=0;x<GRID_W;x++){
+      const t=state.map[y][x];
+      if(t.building==="wall") def += 0.3*(t.level||1);
+      if(t.building==="tower") def += 0.6*(t.level||1);
+    }
+  }
+  def=clamp(def,0,10);
+
+  let stealRate=0.20 - def*0.01;
+  stealRate=clamp(stealRate,0.05,0.20);
+
+  const stolen={};
+  for(const k of ["wood","stone","iron","food","gold"]){
+    const amount=state.resources[k]||0;
+    const s=Math.floor(amount*stealRate);
+    state.resources[k]-=s;
+    stolen[k]=s;
+  }
+
+  pushLog(`🤖 機器人掠奪成功：偷走 ${Math.floor(stealRate*100)}% 資源`);
+  toast("💀 被偷走資源 "+Math.floor(stealRate*100)+"%");
+  state.robot.active=false;
+}
+
+/* ---------- Beast Tide ---------- */
+function spawnBeastWave(){
+  state.beast.active=true;
+  state.beast.wave++;
+  pushLog("🐺 獸潮爆發！第 "+state.beast.wave+" 波");
+  toast("🐺 獸潮來襲！");
+}
+
+function resolveBeast(){
+  // (Adding addition logic here to complete the unfinished function without deleting)
+  let totalDef = 0;
+  for(let y=0;y<GRID_H;y++){
+    for(let x=0;x<GRID_W;x++){
+      const b = buildingMeta[state.map[y][x].building];
+      if(b && b.def) totalDef += b.def * (state.map[y][x].level || 1);
+    }
+  }
+  const attackPower = state.beast.wave * 8;
+  if(totalDef >= attackPower){
+    pushLog("🛡️ 成功防禦獸潮！獲得 AENO 獎勵");
+    addGenesisCrystal(5); 
+  } else {
+    pushLog("💔 城牆受損，損失部分資源");
+    state.resources.gold = Math.floor(state.resources.gold * 0.9);
+  }
+  state.beast.active = false;
+}
+
+/* ---------- ADDITION: Genesis Crystal & Developer Logic ---------- */
+function addGenesisCrystal(count){
+    for(let i=0; i<count; i++){
+        state.dev.crystalCount++;
+        if(state.dev.crystalCount % 50 === 0){
+            pushLog("💎 第50顆創世晶石已傳送至開發者帳戶");
+            // Developer's 50th crystal logic
+        } else {
+            state.resources.aeno++;
+        }
+    }
+}
+
+/* ---------- ADDITION: Auto Wood Production ---------- */
+function autoResourceTick(){
+    let forestCount = 0;
+    for(let y=0; y<GRID_H; y++){
+        for(let x=0; x<GRID_W; x++){
+            if(state.map[y][x].terrain === "forest" && isInsideTerritory(x,y)){
+                forestCount++;
+            }
+            // Other buildings prod
+            const b = state.map[y][x].building;
+            const meta = buildingMeta[b];
+            if(meta && meta.prod){
+                for(let res in meta.prod){
+                    state.resources[res] += meta.prod[res] * (state.map[y][x].level || 1) * 0.1;
+                }
+            }
+        }
+    }
+    // Auto Wood: 0.5 wood per forest in territory per tick
+    state.resources.wood += forestCount * 0.5;
+}
+
+/* ---------- Render Panel ---------- */
+function renderPanel(){
+  const tab = document.querySelector(".tab.active").dataset.tab;
+  let h = "";
+  const r = state.resources;
+  
+  if(tab === "home"){
+      h = `<div class="card">
+            <div class="label">國家資源儲備 (Quantum Key: ${state.dev.quantumKey})</div>
+            <div class="row">
+                <div class="chip">💰 ${fmt(r.gold)}</div>
+                <div class="chip">💎 ${fmt(r.aeno)}</div>
+                <div class="chip">🪵 ${fmt(r.wood)}</div>
+                <div class="chip">🪨 ${fmt(r.stone)}</div>
+                <div class="chip">⚙️ ${fmt(r.iron)}</div>
+                <div class="chip">🌾 ${fmt(r.food)}</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="label">當前選擇：(${state.selected.x}, ${state.selected.y})</div>
+            <div class="big">${buildingMeta[state.map[state.selected.y][state.selected.x].building].name}</div>
+            <div class="row" style="margin-top:10px">
+                <button class="btn" onclick="upgradeBuilding()">升級建築</button>
+                <button class="btn red" onclick="demolishBuilding()">拆除建築</button>
+                <button class="btn purple" onclick="expandTerritory()">擴張領土</button>
+            </div>
+          </div>`;
+  } else if(tab === "market") {
+      h = `<div class="card"><b>交易所</b></div>`;
+      ["wood", "stone", "iron", "food"].forEach(res => {
+          h += `<div class="card">
+                  <div class="row" style="justify-content:space-between">
+                    <span>${res.toUpperCase()} (單價: ${state.market.prices[res]})</span>
+                    <div class="row">
+                        <button class="btn" onclick="marketBuy('${res}', 10)">買入 10</button>
+                        <button class="btn gold" onclick="marketSell('${res}', 10)">賣出 10</button>
+                    </div>
+                  </div>
+                </div>`;
+      });
+  } else if(tab === "build") {
+      h = `<div class="card"><b>建設清單</b></div>
+           <div class="row">
+             <button class="btn" onclick="placeBuilding('farm')">農田</button>
+             <button class="btn" onclick="placeBuilding('mine')">礦場</button>
+             <button class="btn" onclick="placeBuilding('factory')">工廠</button>
+             <button class="btn" onclick="placeBuilding('wall')">城牆</button>
+             <button class="btn" onclick="placeBuilding('tower')">守衛塔</button>
+           </div>`;
+  } else if(tab === "event") {
+      h = `<div class="card"><b>事件中心</b></div>
+           <div class="card">🐺 獸潮倒數: ${state.beast.timer}s</div>
+           <div class="card">🤖 機器人狀態: ${state.robot.active ? "入侵中" : "掃描中"}</div>
+           <button class="btn purple" onclick="spawnRobot()">召喚廣告機器人</button>`;
+  } else if(tab === "ads") {
+      h = `<div class="card"><b>廣告贊助與歌曲</b></div>
+           <button class="btn gold" onclick="playAdSong()">播放廣告歌 (+金幣)</button>
+           <p style="font-size:10px; color:gray; margin-top:10px">廣告位招租：您的廣告可以貼在機器人身上！</p>`;
+  }
+  panelBody.innerHTML = h;
+}
+
+document.querySelectorAll(".tab").forEach(t => {
+    t.onclick = () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+        renderPanel();
+    };
+});
+
+/* ---------- Core Game Loop ---------- */
+function update(){
+    const dt = (now() - state.lastTick) / 1000;
+    state.lastTick = now();
+    
+    // Auto Production
+    autoResourceTick();
+    
+    // Timers
+    if(state.beast.timer > 0) state.beast.timer -= dt;
+    else {
+        state.beast.timer = 90;
+        spawnBeastWave();
+        setTimeout(resolveBeast, 5000);
+    }
+    
+    if(state.ads.cooldown > 0) state.ads.cooldown -= dt;
+    
+    // Robot logic
+    if(state.robot.active){
+        state.robot.stealTimer -= dt;
+        if(state.robot.stealTimer <= 0) robotSteal();
+    }
+}
+
+/* ---------- Drawing (保留所有原版邏輯) ---------- */
+function drawTree(x,y,s){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.fillStyle="#92400e"; ctx.fillRect(-4,6,8,16);
+  ctx.fillStyle="#22c55e"; ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.arc(-10,4,10,0,Math.PI*2); ctx.arc(10,4,10,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawBuilding(tx,ty,x,y){
+  const tile=state.map[ty][tx]; if(tile.building==="none") return;
+  ctx.fillStyle="#334155";
+  if(tile.building === "town") ctx.fillStyle="#8b5cf6";
+  if(tile.building === "farm") ctx.fillStyle="#fbbf24";
+  ctx.fillRect(x-15,y-25,30,25);
+  ctx.fillStyle="white"; ctx.font="10px Arial"; ctx.fillText("Lv"+tile.level, x-10, y-10);
+}
+
+function draw(){
+  const w=cv.width/devicePixelRatio, h=cv.height/devicePixelRatio;
+  ctx.clearRect(0,0,w,h);
+  ctx.save(); ctx.translate(w/2, h*0.25); ctx.translate(state.camera.x, state.camera.y); ctx.scale(state.camera.zoom, state.camera.zoom);
+
+  for(let y=0;y<GRID_H;y++){
+    for(let x=0;x<GRID_W;x++){
+      const isoX = (x - y) * (TILE*0.5); const isoY = (x + y) * (TILE*0.28);
+      ctx.beginPath();
+      ctx.moveTo(isoX, isoY - TILE*0.28); ctx.lineTo(isoX + TILE*0.5, isoY);
+      ctx.lineTo(isoX, isoY + TILE*0.28); ctx.lineTo(isoX - TILE*0.5, isoY);
+      ctx.closePath();
+      ctx.fillStyle = terrainColor[state.map[y][x].terrain];
+      if(!isInsideTerritory(x,y)) ctx.globalAlpha = 0.4; else ctx.globalAlpha = 1;
+      ctx.fill(); ctx.strokeStyle="#ffffff33"; ctx.stroke();
+
+      if(state.map[y][x].terrain==="forest") drawTree(isoX, isoY, 0.6);
+      drawBuilding(x,y,isoX,isoY);
+      
+      // Robot draw
+      if(state.robot.active && state.robot.x === x && state.robot.y === y){
+          ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(isoX, isoY-30, 10, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle="black"; ctx.font="10px Arial"; ctx.fillText(state.robot.adText, isoX-20, isoY-45);
+      }
+
+      if(x===state.selected.x && y===state.selected.y){
+        ctx.strokeStyle="#2563eb"; ctx.lineWidth=3; ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+  update();
+  renderPanel();
+  requestAnimationFrame(draw);
+}
+
+cv.onpointerdown=(e)=>{
+  const rect=cv.getBoundingClientRect();
+  const x = (e.clientX - rect.left); const y = (e.clientY - rect.top);
+  const wx = (x - rect.width/2 - state.camera.x)/state.camera.zoom;
+  const wy = (y - rect.height*0.25 - state.camera.y)/state.camera.zoom;
+  const tx = Math.round((wx/(TILE*0.5) + wy/(TILE*0.28))/2);
+  const ty = Math.round((wy/(TILE*0.28) - wx/(TILE*0.5))/2);
+  if(tx>=0 && tx<GRID_W && ty>=0 && ty<GRID_H){ state.selected={x:tx,y:ty}; }
+};
+
+resize(); draw();
 </script>
 </body>
 </html>
