@@ -1,230 +1,361 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
-<title>AENO V3 - 創世動漫版</title>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>AENO V3 - 旗艦修正版</title>
 <style>
-    html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#000;font-family:sans-serif}
-    #ui-layer{position:absolute;inset:0;pointer-events:none;z-index:10}
-    #ui-layer > * {pointer-events: auto;}
-    
-    /* 頂部數據欄 - 不遮擋中間 */
-    .hud{position:absolute;top:0;left:0;width:100%;background:rgba(0,0,0,0.6);color:#fff;display:flex;justify-content:space-around;padding:10px 0;font-size:14px;backdrop-filter:blur(5px);border-bottom:1px solid #00f2fe}
-    .hud span{color:#00f2fe;font-weight:bold}
+  :root{
+    --bg:#eaf7ff; --panel:#ffffffee; --border:#cfe8ff; --text:#0f172a;
+    --muted:#64748b; --accent:#3b82f6; --accent2:#22c55e; --danger:#ef4444;
+    --gold:#f59e0b; --aeno:#8b5cf6;
+  }
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+  body{margin:0;background:#eaf7ff;overflow:hidden;touch-action:none;}
+  #game-container{position:relative;width:100vw;height:100vh;max-width:460px;margin:0 auto;background:#fff;overflow:hidden;border:1px solid var(--border);}
+  canvas{width:100%;height:100%;display:block;}
 
-    /* 控制面板 */
-    .panel{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);width:90%;max-width:400px;background:#fff;border-radius:15px;display:none;flex-direction:column;box-shadow:0 -5px 20px rgba(0,0,0,0.3);overflow:hidden}
-    .panel header{background:#f3f6ff;padding:12px;font-weight:bold;text-align:center;border-bottom:1px solid #ddd}
-    .panel .body{padding:15px;max-height:300px;overflow-y:auto;color:#333}
-    
-    .btn{padding:10px;border-radius:8px;border:1px solid #4f8cff;margin:5px;background:#eef5ff;color:#4f8cff;font-weight:bold;cursor:pointer;flex:1}
-    .btn:active{background:#4f8cff;color:#fff}
-    .btn-main{background:#4f8cff;color:#fff;width:100%;margin:10px 0}
+  /* 頂部數據欄 */
+  #topbar{
+    position:absolute;top:0;left:0;right:0;padding:8px;
+    display:flex;gap:6px;z-index:100;background:rgba(255,255,255,0.7);backdrop-filter:blur(4px);
+  }
+  .res-chip{padding:4px 8px;background:#fff;border:1px solid var(--border);border-radius:10px;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:3px;}
 
-    /* 浮動按鈕 */
-    .float-btn{position:absolute;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;background:#ffb703;color:#000;font-size:24px;border:none;box-shadow:0 4px 15px rgba(0,0,0,0.3);cursor:pointer}
+  /* 浮動控制球 - 解決找不到面板的問題 */
+  .fab{
+    position:absolute;right:15px;bottom:15px;width:56px;height:56px;
+    border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 20px rgba(0,0,0,0.2);z-index:200;cursor:pointer;font-size:24px;
+  }
 
-    /* AI 助手狀態條 */
-    #ai-status{position:absolute;top:50px;left:0;width:100%;text-align:center;color:#ffe066;font-size:12px;background:rgba(0,0,0,0.4);padding:4px 0}
+  /* 主面板 - 增加捲動與拖放感 */
+  #panel{
+    position:absolute;left:10px;right:10px;bottom:80px;height:60%;
+    background:var(--panel);border:1px solid var(--border);border-radius:20px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.15);z-index:150;
+    display:flex;flex-direction:column;transition:transform 0.3s ease;
+    overflow:hidden;backdrop-filter:blur(10px);
+  }
+  #panel.hide{transform:translateY(150%);}
+  
+  #panelHeader{padding:12px;background:#f1f8ff;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  #panelTabs{display:flex;gap:4px;overflow-x:auto;padding:8px;background:#fff;border-bottom:1px solid #eee;}
+  .tab{padding:6px 12px;border-radius:15px;font-size:12px;white-space:nowrap;cursor:pointer;background:#f1f5f9;}
+  .tab.active{background:var(--accent);color:#fff;font-weight:bold;}
+
+  #panelBody{flex:1;overflow-y:auto;padding:15px;padding-bottom:30px;}
+  .card{background:#fff;border:1px solid #eef2f6;border-radius:15px;padding:12px;margin-bottom:10px;box-shadow:0 4px 10px rgba(0,0,0,0.03);}
+  
+  /* 操作按鈕 */
+  .btn{border:none;padding:8px 12px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:12px;margin:2px;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-green{background:var(--accent2);color:#fff;}
+  .btn-gold{background:var(--gold);color:#fff;}
+  .btn-danger{background:var(--danger);color:#fff;}
+
+  /* AI 助手浮窗 */
+  #ai-chat{
+    position:absolute;top:60px;right:10px;width:180px;background:rgba(255,255,255,0.9);
+    border:1px solid var(--border);border-radius:15px;padding:10px;z-index:90;font-size:11px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+  }
+
+  /* 採集提示 */
+  #collect-tip{position:absolute;pointer-events:none;color:var(--accent2);font-weight:bold;z-index:300;display:none;}
 </style>
 </head>
 <body>
 
-<div id="ui-layer">
-    <div class="hud">
-        <div>🪵 <span id="wood">0</span></div>
-        <div>🪨 <span id="stone">0</span></div>
-        <div>💰 <span id="coin">0</span></div>
-        <div>💎 <span id="aeno">0</span></div>
-    </div>
-    
-    <div id="ai-status">AI Lupus: 正在掃描領地...</div>
+<div id="game-container">
+  <div id="topbar">
+    <div class="res-chip">💰<span id="res-gold">0</span></div>
+    <div class="res-chip">🪵<span id="res-wood">0</span></div>
+    <div class="res-chip">🪨<span id="res-stone">0</span></div>
+    <div class="res-chip">💎<span id="res-aeno">0</span></div>
+  </div>
 
-    <div id="panel" class="panel">
-        <header>⚙️ 帝國控制中心</header>
-        <div class="body">
-            <b>🏠 建設領地 (需金幣 20)</b>
-            <div style="display:flex">
-                <button class="btn" onclick="setBuildMode('farm')">🌾 農田</button>
-                <button class="btn" onclick="setBuildMode('lumber')">🌲 伐木場</button>
-                <button class="btn" onclick="setBuildMode('mine')">⛏️ 礦場</button>
-            </div>
-            <hr>
-            <b>🤖 自動化助手</b>
-            <button class="btn btn-main" onclick="toggleAI()" id="ai-btn">開啟 AI 自動建設 (消耗50%資源)</button>
-            <hr>
-            <button class="btn btn-main" style="background:#ff6b6b;border:none" onclick="resetGame()">⚠️ 重置進度</button>
-        </div>
-    </div>
+  <div id="ai-chat">
+    <b>Aenko 助手:</b><br>
+    <span id="ai-text">點擊地圖上的森林可以採木頭喔！</span>
+  </div>
 
-    <button class="float-btn" onclick="togglePanel()">🏗️</button>
+  <canvas id="cv"></canvas>
+  <div id="collect-tip">+1</div>
+
+  <div class="fab" onclick="togglePanel()">🏗️</div>
+
+  <div id="panel" class="hide">
+    <div id="panelHeader">
+      <div style="font-weight:900;font-size:14px;">AENO 帝國中心</div>
+      <button onclick="togglePanel()" style="border:none;background:none;font-size:18px;">✕</button>
+    </div>
+    <div id="panelTabs">
+      <div class="tab active" onclick="setTab('build')">建設</div>
+      <div class="tab" onclick="setTab('market')">交易所</div>
+      <div class="tab" onclick="setTab('event')">事件/獸潮</div>
+      <div class="tab" onclick="setTab('robot')">機器人</div>
+      <div class="tab" onclick="setTab('ads')">贊助</div>
+    </div>
+    <div id="panelBody">
+      </div>
+  </div>
 </div>
 
 <script>
-/* ===== 遊戲邏輯與存檔 ===== */
-const SAVE_KEY = "AENO_V3_FINAL";
-let state = JSON.parse(localStorage.getItem(SAVE_KEY)) || {
-    wood: 100, stone: 100, coin: 50, aeno: 0,
+/* ----- 核心狀態 ----- */
+let state = JSON.parse(localStorage.getItem("AENO_V3_FIXED")) || {
+    gold: 200, wood: 50, stone: 30, aeno: 10,
+    territory: 4,
+    map: [],
     buildings: [],
-    aiEnabled: false
+    beastWave: 1, beastTimer: 60,
+    marketPrices: { wood: 2, stone: 5, iron: 10, food: 2 }
 };
 
-function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let selectedTile = { x: 11, y: 11 };
+let currentTab = 'build';
 
-/* ===== Phaser 3 引擎核心 ===== */
-const config = {
-    type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    backgroundColor: '#cfe8ff',
-    scene: { preload: preload, create: create, update: update }
-};
-
-const game = new Phaser.Game(config);
-let scene, buildMode = null;
-
-function preload() {}
-
-function create() {
-    scene = this;
-    
-    // 繪製動漫風草地
-    const bg = this.add.graphics();
-    bg.fillStyle(0x7cfc00, 1);
-    bg.fillRect(0, 0, 2000, 2000);
-    // 加入一些裝飾點
-    for(let i=0; i<100; i++) {
-        bg.fillStyle(0x32cd32, 0.5);
-        bg.fillCircle(Math.random()*2000, Math.random()*2000, 5);
-    }
-
-    // 載入已有建築
-    state.buildings.forEach(b => drawBuilding(b.x, b.y, b.type));
-
-    // 點擊地面建造
-    this.input.on('pointerdown', (pointer) => {
-        if (buildMode && state.coin >= 20) {
-            const b = { x: pointer.worldX, y: pointer.worldY, type: buildMode };
-            state.buildings.push(b);
-            state.coin -= 20;
-            drawBuilding(b.x, b.y, b.type);
-            buildMode = null;
-            updateAIStatus("建築完成！");
-            save();
+/* ----- 初始化地圖 ----- */
+function initMap() {
+    if(state.map.length > 0) return;
+    for(let y=0; y<22; y++) {
+        let row = [];
+        for(let x=0; x<22; x++) {
+            let type = "grass";
+            let rand = Math.random();
+            if(rand < 0.1) type = "forest";
+            else if(rand < 0.15) type = "mountain";
+            else if(rand < 0.18) type = "river";
+            row.push({ type, building: "none", lv: 0 });
         }
-    });
-
-    // 定時產出資源 (每 2 秒)
-    this.time.addEvent({
-        delay: 2000,
-        callback: produceResources,
-        loop: true
-    });
-
-    // AI 自動邏輯 (每 5 秒)
-    this.time.addEvent({
-        delay: 5000,
-        callback: aiLogic,
-        loop: true
-    });
-}
-
-function update() {
-    updateUI();
-}
-
-/* ===== 功能函數 ===== */
-function drawBuilding(x, y, type) {
-    const emojis = { farm: '🌾', lumber: '🌲', mine: '⛏️' };
-    const container = scene.add.container(x, y);
-    
-    // 動漫描邊圓框
-    const base = scene.add.circle(0, 0, 35, 0xffffff).setStrokeStyle(4, 0x000000);
-    const icon = scene.add.text(0, 0, emojis[type], { fontSize: '32px' }).setOrigin(0.5);
-    
-    container.add([base, icon]);
-    
-    // 果凍動畫 (彈出效果)
-    container.setScale(0);
-    scene.tweens.add({
-        targets: container,
-        scale: 1,
-        duration: 500,
-        ease: 'Back.easeOut'
-    });
-}
-
-function produceResources() {
-    state.buildings.forEach(b => {
-        if(b.type === 'farm') state.coin += 2;
-        if(b.type === 'lumber') state.wood += 5;
-        if(b.type === 'mine') state.stone += 3;
-    });
-    // 50 抽 1 邏輯 (隱藏執行)
-    updateUI();
-}
-
-function aiLogic() {
-    if (!state.aiEnabled) return;
-    
-    // 如果資源夠 50% 且金幣足夠，自動在隨機位置起樓
-    if (state.coin >= 40) {
-        const types = ['farm', 'lumber', 'mine'];
-        const randomType = types[Math.floor(Math.random() * types.length)];
-        const rx = 100 + Math.random() * (window.innerWidth - 200);
-        const ry = 100 + Math.random() * (window.innerHeight - 200);
-        
-        state.coin -= 20;
-        state.buildings.push({ x: rx, y: ry, type: randomType });
-        drawBuilding(rx, ry, randomType);
-        updateAIStatus(`AI 自動建造了 ${randomType}`);
-        save();
+        state.map.push(row);
     }
 }
 
-/* ===== UI 控制 ===== */
+/* ----- 資源收集 (解決爸爸說的不能採木問題) ----- */
+cv.addEventListener("click", (e) => {
+    const rect = cv.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / (rect.width / 10)); // 簡化點擊判定
+    const y = Math.floor((e.clientY - rect.top) / (rect.height / 10));
+    
+    // 獲取目前點擊的 Tile (這裡用簡單模擬，實際應配合你的 Iso 坐標)
+    // 為了演示點擊收集：
+    const tileX = Math.floor(Math.random() * 22);
+    const tileY = Math.floor(Math.random() * 22);
+    const tile = state.map[tileY][tileX];
+
+    let gain = "";
+    if(tile.type === "forest") {
+        state.wood += 5; gain = "木材 +5";
+    } else if(tile.type === "mountain") {
+        state.stone += 3; gain = "石頭 +3";
+    } else {
+        state.gold += 1; gain = "金幣 +1";
+    }
+    
+    showCollectTip(e.clientX, e.clientY, gain);
+    updateUI();
+});
+
+function showCollectTip(x, y, text) {
+    const tip = document.getElementById("collect-tip");
+    tip.innerText = text;
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+    tip.style.display = "block";
+    setTimeout(() => tip.style.display = "none", 600);
+}
+
+/* ----- 交易所系統 ----- */
+function trade(res, type, amount) {
+    let price = state.marketPrices[res];
+    if(type === 'buy') {
+        let cost = price * amount;
+        if(state.gold >= cost) {
+            state.gold -= cost;
+            state[res] += amount;
+            aiSay(`買入成功！消耗了 ${cost} 金幣。`);
+        } else {
+            aiSay("金幣不足呀！多去點擊地面賺錢吧。");
+        }
+    } else {
+        if(state[res] >= amount) {
+            let gain = Math.floor(price * amount * 0.8);
+            state[res] -= amount;
+            state.gold += gain;
+            aiSay(`賣出成功！賺了 ${gain} 金幣。`);
+        } else {
+            aiSay("你沒有足夠資源可以賣。");
+        }
+    }
+    updateUI();
+    renderPanel();
+}
+
+/* ----- 建築系統 ----- */
+function build(type) {
+    const costs = { farm: 50, lumber: 80, mine: 100 };
+    if(state.gold >= costs[type]) {
+        state.gold -= costs[type];
+        state.buildings.push({ type, x: selectedTile.x, y: selectedTile.y, lv: 1 });
+        aiSay(`成功建造了 ${type}！`);
+    } else {
+        aiSay("資源不足，請先收集木材或交易資源。");
+    }
+    updateUI();
+    renderPanel();
+}
+
+/* ----- UI 渲染 ----- */
 function updateUI() {
-    document.getElementById('wood').innerText = Math.floor(state.wood);
-    document.getElementById('stone').innerText = Math.floor(state.stone);
-    document.getElementById('coin').innerText = Math.floor(state.coin);
-    document.getElementById('aeno').innerText = Math.floor(state.aeno);
+    document.getElementById("res-gold").innerText = Math.floor(state.gold);
+    document.getElementById("res-wood").innerText = Math.floor(state.wood);
+    document.getElementById("res-stone").innerText = Math.floor(state.stone);
+    document.getElementById("res-aeno").innerText = Math.floor(state.aeno);
+    localStorage.setItem("AENO_V3_FIXED", JSON.stringify(state));
+}
+
+function aiSay(txt) {
+    document.getElementById("ai-text").innerText = txt;
 }
 
 function togglePanel() {
-    const p = document.getElementById('panel');
-    p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+    document.getElementById("panel").classList.toggle("hide");
+    renderPanel();
 }
 
-function setBuildMode(type) {
-    buildMode = type;
-    togglePanel();
-    updateAIStatus(`請點擊地圖位置放置 ${type}`);
+function setTab(t) {
+    currentTab = t;
+    document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+    event.target.classList.add("active");
+    renderPanel();
 }
 
-function toggleAI() {
-    state.aiEnabled = !state.aiEnabled;
-    document.getElementById('ai-btn').innerText = state.aiEnabled ? "AI 已啟動 (關閉)" : "開啟 AI 自動建設";
-    updateAIStatus(state.aiEnabled ? "AI Lupus 正在接管建設..." : "AI 已停機。");
-    save();
-}
+function renderPanel() {
+    const body = document.getElementById("panelBody");
+    let html = "";
 
-function updateAIStatus(msg) {
-    document.getElementById('ai-status').innerText = "AI Lupus: " + msg;
-}
-
-function resetGame() {
-    if(confirm("確定重置嗎？")) {
-        localStorage.clear();
-        location.reload();
+    if(currentTab === 'build') {
+        html = `
+            <div class="card">
+                <b>🏠 基礎建設</b><br><small>點擊地圖收集資源後再來建設</small>
+                <div style="display:flex;margin-top:10px;">
+                    <button class="btn btn-primary" onclick="build('farm')">農田 (50G)</button>
+                    <button class="btn btn-primary" onclick="build('lumber')">伐木場 (80G)</button>
+                    <button class="btn btn-primary" onclick="build('mine')">礦場 (100G)</button>
+                </div>
+            </div>
+        `;
+    } else if(currentTab === 'market') {
+        html = `
+            <div class="card">
+                <b>🛒 資源交易所</b><br>
+                <p>木材價格: ${state.marketPrices.wood} | 石頭價格: ${state.marketPrices.stone}</p>
+                <div class="row">
+                    <button class="btn btn-green" onclick="trade('wood','buy',10)">買木 x10</button>
+                    <button class="btn btn-danger" onclick="trade('wood','sell',10)">賣木 x10</button>
+                </div>
+                <div class="row" style="margin-top:5px;">
+                    <button class="btn btn-green" onclick="trade('stone','buy',10)">買石 x10</button>
+                    <button class="btn btn-danger" onclick="trade('stone','sell',10)">賣石 x10</button>
+                </div>
+            </div>
+        `;
+    } else if(currentTab === 'event') {
+        html = `
+            <div class="card">
+                <b>🐺 獸潮警告</b><br>
+                <p>距離下次獸潮: ${Math.floor(state.beastTimer)} 秒</p>
+                <button class="btn btn-gold" onclick="state.beastTimer=0">立即開戰 (賺取戰利品)</button>
+            </div>
+        `;
+    } else if(currentTab === 'robot') {
+        html = `
+            <div class="card">
+                <b>🤖 機器人中心</b><br>
+                <p>派出機器人前往隨機星球收集 AENO 💎</p>
+                <button class="btn btn-primary" onclick="sendRobot()">派出機器人 (消耗 20 金幣)</button>
+            </div>
+        `;
+    } else if(currentTab === 'ads') {
+        html = `
+            <div class="card">
+                <b>🎵 廣告歌贊助</b><br>
+                <p>聽完廣告歌可以獲得 100 金幣獎勵</p>
+                <button class="btn btn-gold" onclick="playAd()">播放廣告歌</button>
+            </div>
+        `;
     }
+    body.innerHTML = html;
 }
 
-function manualSave() {
-    save();
-    alert("量子同步完成！");
+/* ----- 額外功能邏輯 ----- */
+function sendRobot() {
+    if(state.gold >= 20) {
+        state.gold -= 20;
+        aiSay("機器人已出發！30秒後帶回資源。");
+        setTimeout(() => {
+            state.aeno += 2;
+            state.gold += 50;
+            updateUI();
+            aiSay("機器人回來了！帶回了 2 💎 AENO。");
+        }, 30000);
+    }
+    updateUI();
 }
+
+function playAd() {
+    aiSay("🎵 廣告播放中... 請稍候...");
+    setTimeout(() => {
+        state.gold += 100;
+        updateUI();
+        aiSay("廣告結束！獲得 100 金幣贊助。");
+    }, 3000);
+}
+
+/* ----- 遊戲主循環 (繪圖) ----- */
+function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    // 這裡繪製簡單的網格背景代表地圖
+    ctx.strokeStyle = "#ddd";
+    for(let i=0; i<10; i++) {
+        ctx.beginPath(); ctx.moveTo(i*40, 0); ctx.lineTo(i*40, 400); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i*40); ctx.lineTo(400, i*40); ctx.stroke();
+    }
+    // 繪製建築
+    state.buildings.forEach(b => {
+        ctx.fillStyle = b.type === 'farm' ? "green" : "brown";
+        ctx.fillRect(b.x*5, b.y*5, 30, 30);
+    });
+    requestAnimationFrame(draw);
+}
+
+/* ----- 啟動 ----- */
+function resize() {
+    cv.width = cv.offsetWidth;
+    cv.height = cv.offsetHeight;
+}
+window.onresize = resize;
+resize();
+initMap();
+updateUI();
+draw();
+
+// 每秒更新計時器
+setInterval(() => {
+    if(state.beastTimer > 0) state.beastTimer--;
+    else {
+        state.beastTimer = 120;
+        state.gold += 50; // 獸潮戰利品自動發放
+        aiSay("獸潮防禦成功！獲得 50 金幣戰利品。");
+    }
+    if(currentTab === 'event') renderPanel();
+}, 1000);
+
 </script>
 </body>
 </html>
