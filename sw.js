@@ -1,37 +1,23 @@
-const CACHE_NAME = "AENO-V2-CACHE-001";
+// AENO SW v3 - FORCE UPDATE (NO CACHE)
 
-const FILES_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./game.js",
-  "./manifest.json"
-];
-
-// install
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
-  );
   self.skipWaiting();
 });
 
-// activate
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => {
-        if (k !== CACHE_NAME) return caches.delete(k);
-      }))
-    )
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
   );
   self.clients.claim();
 });
 
-// fetch
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((res) => {
-      return res || fetch(event.request);
+    fetch(event.request, { cache: "no-store" }).catch(() => {
+      return new Response("Offline - AENO cannot load", {
+        status: 503,
+        headers: { "Content-Type": "text/plain" },
+      });
     })
   );
 });
