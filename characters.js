@@ -1,19 +1,39 @@
-class CharacterManager {
-  constructor(scene) {
-    this.scene = scene;
-    this.char = null;
-  }
+window.AENO_CHARACTERS = {
+  assistants: [
+    {
+      id: "lupus",
+      name: "LUPUS",
+      species: "wolf",
+      emoji: "🐺",
+      bodyColor: "#94a3b8",
+      shirtColor: "#38bdf8",
+      adSlot: true
+    },
+    {
+      id: "felis",
+      name: "FELIS",
+      species: "cat",
+      emoji: "🐱",
+      bodyColor: "#fbbf24",
+      shirtColor: "#22c55e",
+      adSlot: true
+    },
+    {
+      id: "ursus",
+      name: "URSUS",
+      species: "bear",
+      emoji: "🐻",
+      bodyColor: "#a16207",
+      shirtColor: "#fb7185",
+      adSlot: true
+    }
+  ],
 
-  createAnimeCharacter(x, y) {
-    const char = this.scene.add.circle(x, y, 26, 0xffb6e1).setStrokeStyle(4, 0x222);
-    this.scene.tweens.add({
-      targets: char,
-      scale: 1.1,
-      duration: 900,
-      yoyo: true,
-      repeat: -1
-    });
-    this.char = char;
-    return char;
-  }
-}
+  robots: [
+    {
+      id: "r1",
+      name: "R-Explorer",
+      stickerAdSlot: true
+    }
+  ]
+};
