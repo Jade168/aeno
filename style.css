@@ -7,6 +7,8 @@
   --txt:#0f172a;
   --accent:#38bdf8;
   --accent2:#fbbf24;
+  --good:#22c55e;
+  --bad:#ef4444;
 }
 
 html,body{
@@ -19,15 +21,17 @@ html,body{
   color:var(--txt);
 }
 
-#gameCanvas{
+/* Canvas */
+#game{
   position:absolute;
   left:0;
   top:0;
   width:100vw;
   height:100vh;
-  background:linear-gradient(#eaf6ff,#f0f9ff);
+  background:linear-gradient(#dbeafe,#f0f9ff);
 }
 
+/* Boot screen */
 #bootScreen{
   position:absolute;
   inset:0;
@@ -39,7 +43,7 @@ html,body{
 }
 
 .bootCard{
-  width:280px;
+  width:310px;
   background:var(--card);
   border:2px solid var(--stroke);
   border-radius:26px;
@@ -57,16 +61,18 @@ html,body{
 
 .bootText{
   margin-top:10px;
-  font-size:16px;
-  font-weight:700;
+  font-size:15px;
+  font-weight:800;
 }
 
 .bootHint{
   margin-top:10px;
   opacity:.75;
   font-size:12px;
+  line-height:1.3;
 }
 
+/* Global UI Root */
 #uiRoot{
   position:absolute;
   inset:0;
@@ -75,143 +81,82 @@ html,body{
 
 button, input, select{
   pointer-events:auto;
-  font-size:14px;
-}
-
-#assistant{
-  position:absolute;
-  left:14px;
-  bottom:170px;
-  width:110px;
-  background:var(--card);
-  border:2px solid var(--stroke);
-  border-radius:22px;
-  padding:10px;
-  box-shadow:var(--shadow);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  z-index:40;
-  user-select:none;
-  pointer-events:auto;
-}
-
-.assistantFace{
-  font-size:44px;
-}
-
-.assistantName{
-  font-size:12px;
-  font-weight:800;
-  text-align:center;
-  line-height:1.1;
-}
-
-#assistantTalkBtn{
-  border:none;
-  border-radius:14px;
-  padding:8px 12px;
-  background:var(--accent);
-  color:white;
-  font-weight:800;
-  cursor:pointer;
-}
-
-.assistantAdFlag{
-  position:absolute;
-  right:-10px;
-  top:-10px;
-  background:var(--accent2);
-  border-radius:12px;
-  padding:4px 7px;
-  font-weight:900;
-  font-size:12px;
-  border:2px solid #fff;
-  box-shadow:0 8px 16px rgba(0,0,0,.12);
-}
-
-#chatBox{
-  position:absolute;
-  left:10px;
-  bottom:10px;
-  width:330px;
-  height:240px;
-  background:var(--card);
-  border:2px solid var(--stroke);
-  border-radius:22px;
-  box-shadow:var(--shadow);
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  z-index:60;
-  pointer-events:auto;
+  font-size:13px;
 }
 
 .hidden{ display:none !important; }
 
-.chatHeader{
+/* HUD Top (small and not blocking) */
+#hudTop{
+  position:absolute;
+  left:8px;
+  top:8px;
+  width:calc(100% - 16px);
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  padding:10px 12px;
-  background:#dbeafe;
-  font-weight:900;
+  gap:8px;
+  z-index:30;
+  pointer-events:none;
 }
 
-#chatClose{
-  border:none;
-  background:#ef4444;
-  color:white;
-  border-radius:12px;
-  padding:6px 10px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-#chatLog{
-  flex:1;
-  padding:10px;
-  overflow:auto;
-  font-size:13px;
-}
-
-.chatInputRow{
-  display:flex;
-  gap:6px;
-  padding:10px;
-  border-top:2px solid var(--stroke);
-  background:#ffffffaa;
-}
-
-#chatInput{
-  flex:1;
-  border-radius:14px;
+.hudBox{
+  pointer-events:auto;
+  background:var(--card);
   border:2px solid var(--stroke);
+  border-radius:18px;
   padding:8px 10px;
-  outline:none;
+  box-shadow:0 10px 20px rgba(0,0,0,.10);
+  max-width:48%;
+  overflow:hidden;
 }
 
-#chatSend{
-  border:none;
+.hudRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 8px;
   border-radius:14px;
-  padding:8px 12px;
-  background:#22c55e;
-  color:white;
-  font-weight:900;
+  background:#ffffffaa;
+  border:1px solid #dbeafe;
+  font-weight:800;
+  font-size:12px;
+  white-space:nowrap;
 }
 
-#mainPanel{
+/* Panel Toggle Button (fixed, not bottom nav blocked) */
+#togglePanelBtn{
+  position:absolute;
+  right:12px;
+  bottom:90px; /* avoid mobile navbar */
+  z-index:90;
+  border:none;
+  border-radius:18px;
+  padding:12px 14px;
+  font-weight:900;
+  background:var(--accent);
+  color:white;
+  box-shadow:var(--shadow);
+  pointer-events:auto;
+}
+
+/* Main Panel (<= 1/4 screen rule) */
+#panel{
   position:absolute;
   right:10px;
-  top:10px;
-  width:330px;
-  height:560px;
+  top:78px;
+  width:320px;
+  height:420px; /* small enough */
   background:var(--card);
   border:2px solid var(--stroke);
   border-radius:22px;
   box-shadow:var(--shadow);
-  z-index:50;
+  z-index:80;
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -223,22 +168,14 @@ button, input, select{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 12px;
+  padding:8px 10px;
   background:#dbeafe;
   font-weight:900;
   cursor:grab;
+  user-select:none;
 }
 
-.panelTitle{
-  font-size:14px;
-}
-
-.panelBtns{
-  display:flex;
-  gap:6px;
-}
-
-#panelMinBtn,#panelHideBtn{
+#panelHeader button{
   border:none;
   border-radius:12px;
   padding:6px 10px;
@@ -246,29 +183,13 @@ button, input, select{
   cursor:pointer;
 }
 
-#panelMinBtn{ background:#38bdf8; color:white; }
-#panelHideBtn{ background:#64748b; color:white; }
-
-#panelTabs{
-  display:flex;
-  gap:6px;
-  padding:8px;
-  overflow:auto;
-  border-bottom:2px solid var(--stroke);
+#btnSave{
+  background:var(--good);
+  color:white;
 }
 
-.tabBtn{
-  border:none;
-  padding:8px 10px;
-  border-radius:14px;
-  background:#e2e8f0;
-  font-weight:800;
-  cursor:pointer;
-  white-space:nowrap;
-}
-
-.tabBtn.active{
-  background:#38bdf8;
+#btnHidePanel{
+  background:#64748b;
   color:white;
 }
 
@@ -276,176 +197,244 @@ button, input, select{
   flex:1;
   overflow:auto;
   padding:10px;
-}
-
-.tabPage{ display:none; }
-.tabPage.active{ display:block; }
-
-.grid2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.statCard{
-  background:#ffffffaa;
-  border:2px solid var(--stroke);
-  border-radius:16px;
-  padding:8px 10px;
-}
-
-.statCard .k{
   font-size:12px;
-  font-weight:900;
-  opacity:.8;
 }
 
-.statCard .v{
-  margin-top:3px;
-  font-size:16px;
-  font-weight:900;
-  color:#0284c7;
+.muted{
+  opacity:.7;
+  font-size:12px;
 }
-
-.mt8{ margin-top:8px; }
-.mt10{ margin-top:10px; }
 
 .btnRow{
   display:flex;
-  gap:8px;
+  gap:6px;
+  margin-top:8px;
 }
 
 .btnRow button{
   flex:1;
   border:none;
-  border-radius:16px;
-  padding:10px 10px;
+  border-radius:14px;
+  padding:9px 8px;
   font-weight:900;
   cursor:pointer;
-  background:#38bdf8;
+  background:var(--accent);
   color:white;
+  font-size:12px;
 }
 
 .btnRow button:nth-child(2){
-  background:#22c55e;
+  background:var(--good);
 }
 
-.buildList{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
+.btnRow button:nth-child(3){
+  background:var(--accent2);
+  color:#0f172a;
 }
 
-.buildBtn, .techBtn{
+/* Priority buttons */
+.prioBtn{
   border:none;
-  border-radius:16px;
-  padding:12px 10px;
-  font-weight:900;
-  background:#fbbf24;
-  cursor:pointer;
-}
-
-.techList{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.marketRow{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
-.marketRow select, .marketRow input{
-  flex:1;
   border-radius:14px;
-  border:2px solid var(--stroke);
-  padding:10px;
+  padding:8px 8px;
+  font-weight:900;
+  background:#e2e8f0;
+  cursor:pointer;
+  font-size:12px;
 }
 
-.hint{
-  background:#ffffffaa;
-  border:2px dashed #93c5fd;
-  border-radius:16px;
-  padding:10px;
-  font-size:13px;
-  line-height:1.4;
+.prioBtn.active{
+  background:var(--accent);
+  color:white;
 }
 
+/* System Log */
 #sysLog{
   margin-top:10px;
   background:#ffffffaa;
   border:2px solid var(--stroke);
   border-radius:16px;
   padding:10px;
-  height:380px;
+  height:170px;
   overflow:auto;
   font-size:12px;
 }
 
-#panelRestoreBtn{
+/* Assistant Character (not at bottom) */
+#assistant{
   position:absolute;
-  right:12px;
-  top:12px;
-  z-index:55;
+  left:12px;
+  bottom:120px; /* avoid navbar */
+  width:120px;
+  background:transparent;
   border:none;
-  border-radius:18px;
-  padding:12px 14px;
-  font-weight:900;
-  background:#38bdf8;
-  color:white;
+  z-index:60;
+  user-select:none;
+  pointer-events:auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.assistantBody{
+  width:110px;
+  height:130px;
+  border-radius:26px;
+  border:2px solid var(--stroke);
+  background:var(--card);
   box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+
+.assistantFace{
+  font-size:46px;
+  line-height:1;
+}
+
+.assistantName{
+  margin-top:6px;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+}
+
+.assistantShirt{
+  margin-top:6px;
+  width:70px;
+  height:22px;
+  border-radius:12px;
+  background:var(--accent);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-weight:900;
+  font-size:11px;
+  color:white;
+}
+
+.assistantAdFlag{
+  position:absolute;
+  right:-8px;
+  top:-10px;
+  background:var(--accent2);
+  border-radius:12px;
+  padding:4px 7px;
+  font-weight:900;
+  font-size:11px;
+  border:2px solid #fff;
+  box-shadow:0 8px 16px rgba(0,0,0,.12);
+}
+
+/* Assistant Talk Button */
+#assistantTalkBtn{
+  margin-top:8px;
+  border:none;
+  border-radius:16px;
+  padding:10px 12px;
+  background:var(--accent);
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  width:120px;
+  box-shadow:0 10px 20px rgba(0,0,0,.10);
+}
+
+/* Chat Box */
+#chatBox{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  width:300px;
+  height:220px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:100;
   pointer-events:auto;
 }
 
+.chatHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 10px;
+  background:#dbeafe;
+  font-weight:900;
+}
+
+#chatClose{
+  border:none;
+  background:var(--bad);
+  color:white;
+  border-radius:12px;
+  padding:6px 10px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+#chatLog{
+  flex:1;
+  padding:10px;
+  overflow:auto;
+  font-size:12px;
+}
+
+.chatLine{
+  margin-bottom:6px;
+  line-height:1.35;
+}
+
+.chatLine .who{
+  font-weight:900;
+}
+
+.chatInputRow{
+  display:flex;
+  gap:6px;
+  padding:8px;
+  border-top:2px solid var(--stroke);
+  background:#ffffffaa;
+}
+
+#chatInput{
+  flex:1;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  padding:8px 10px;
+  outline:none;
+  font-size:13px;
+}
+
+#chatSend{
+  border:none;
+  border-radius:14px;
+  padding:8px 12px;
+  background:var(--good);
+  color:white;
+  font-weight:900;
+}
+
+/* Mobile */
 @media(max-width:420px){
-  #mainPanel{
-    width:310px;
-    height:540px;
+  #panel{
+    width:290px;
+    height:400px;
   }
   #chatBox{
-    width:300px;
+    width:280px;
   }
-}
-/* ===== AENO V3 HOTFIX: 面板縮細 + 避開手機底部三鍵 ===== */
-
-:root{
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* 主面板：限制最大只佔 1/4 畫面 */
-#mainPanel{
-  max-height: 25vh !important;
-  height: auto !important;
-  bottom: calc(10px + var(--safe-bottom)) !important;
-  top: auto !important;
-  width: min(320px, 46vw) !important;
-  font-size: 12px !important;
-}
-
-/* 面板內文字縮細 */
-#mainPanel *{
-  font-size: 12px !important;
-}
-
-/* 面板 body 可以滾動 */
-#panelBody{
-  max-height: 18vh !important;
-  overflow-y: auto !important;
-}
-
-/* 按鈕縮細 */
-.btnRow button,
-.buildBtn,
-.techBtn{
-  padding: 7px 8px !important;
-  border-radius: 12px !important;
-  font-size: 12px !important;
-}
-
-/* 系統 log 縮細 */
-#sysLog{
-  height: 120px !important;
-  font-size: 11px !important;
+  .hudBox{
+    padding:7px 8px;
+  }
+  .pill{
+    font-size:11px;
+  }
 }
