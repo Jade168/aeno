@@ -408,3 +408,44 @@ button, input, select{
     width:300px;
   }
 }
+/* ===== AENO V3 HOTFIX: 面板縮細 + 避開手機底部三鍵 ===== */
+
+:root{
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 主面板：限制最大只佔 1/4 畫面 */
+#mainPanel{
+  max-height: 25vh !important;
+  height: auto !important;
+  bottom: calc(10px + var(--safe-bottom)) !important;
+  top: auto !important;
+  width: min(320px, 46vw) !important;
+  font-size: 12px !important;
+}
+
+/* 面板內文字縮細 */
+#mainPanel *{
+  font-size: 12px !important;
+}
+
+/* 面板 body 可以滾動 */
+#panelBody{
+  max-height: 18vh !important;
+  overflow-y: auto !important;
+}
+
+/* 按鈕縮細 */
+.btnRow button,
+.buildBtn,
+.techBtn{
+  padding: 7px 8px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+}
+
+/* 系統 log 縮細 */
+#sysLog{
+  height: 120px !important;
+  font-size: 11px !important;
+}
