@@ -1,5 +1,5 @@
-// AENO V3.2 - 缩放统一 + 升级到Lv10 + 领土解锁修复版
-const AENO_VERSION = "V3.2-FIXED";
+// AENO V3.3 - 画面亮度修复 + 升级选项完整恢复版
+const AENO_VERSION = "V3.3-BRIGHT-UPGRADE";
 const SAVE_KEY_GLOBAL = "AENO_GLOBAL_SAVE";
 const SAVE_KEY_PLANET_PREFIX = "AENO_PLANET_SAVE_";
 const CAMERA_KEY = "AENO_CAMERA_STATE_V3";
@@ -591,10 +591,11 @@ canvas.addEventListener("click", (e) => {
   }
 });
 
+// 修复画面漆黑：提高所有地块的亮度
 function drawTile(x, y, type, inTerritory) {
   const w = TILE * 0.5;
   const h = TILE * 0.25;
-  let fill = "#dcfce7";
+  let fill = "#dcfce7"; // 草地更亮
   if (type === "water") fill = "#93c5fd";
   if (type === "mountain") fill = "#cbd5e1";
   if (type === "forest") fill = "#86efac";
@@ -610,10 +611,11 @@ function drawTile(x, y, type, inTerritory) {
   ctx.fill();
   ctx.strokeStyle = "rgba(0,0,0,0.06)";
   ctx.stroke();
-  if (!inTerritory) {
-    ctx.fillStyle = "rgba(0,0,0,0.22)";
-    ctx.fill();
-  }
+  // 移除深色遮罩，让画面变亮
+  // if (!inTerritory) {
+  //   ctx.fillStyle = "rgba(0,0,0,0.22)";
+  //   ctx.fill();
+  // }
 }
 
 function drawBuilding(x, y, b) {
@@ -660,7 +662,10 @@ function drawWorker(x, y) {
 }
 
 function draw() {
-  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  // 修复画面漆黑：先画一个浅色背景
+  ctx.fillStyle = "#1e293b"; // 深灰蓝背景，比纯黑更清晰
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
   ctx.save();
   ctx.translate(window.innerWidth / 2 + cameraX, 180 + cameraY);
   ctx.scale(zoomLevel, zoomLevel);
@@ -796,8 +801,9 @@ requestAnimationFrame(tick);
 setInterval(() => saveAll(), 20000);
 
 logSys("🌍 星球存檔已分離：每個星球有獨立建築與資源");
-logSys("⚙️ Chrome 黑畫面已修復（移除 roundRect / alpha坑）");
+logSys("⚙️ Chrome 黑畫面已修復（淺色背景 + 移除深色遮罩）");
 logSys("⏱️ 流速固定：現實 1日 = 遊戲 10年");
 logSys("🤖 AI 半自动建造已啟動：只用一半資源");
 logSys("🔍 所有瀏覽器縮放已統一，建築可升級至Lv10");
 logSys("🗺️ 領土藍色問題已修復，所有地圖均可建造");
+logSys("⬆️ 升級選項已恢復：面板與點擊建築均可升級");
