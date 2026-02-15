@@ -1,17 +1,23 @@
 {
-  "songs": [
+  "version": "2026-02-15",
+  "defaultVolume": 0.7,
+  "playlistMode": "loop",
+  "tracks": [
     {
-      "id": "ad_song_01",
-      "title": "AENO Ad Song - Sample Loop",
-      "artist": "Public Domain / Demo",
-      "url": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_4f7a1b37a8.mp3?filename=future-bass-beat-117039.mp3",
-      "reward": {
-        "coins": 120,
-        "aenoChance": 0.08,
-        "aenoMin": 0.0001,
-        "aenoMax": 0.0015,
-        "pronunciationShard": 2
-      }
+      "id": "track001",
+      "title": "AENO Ad Song 01",
+      "artist": "Public Domain",
+      "file": "assets/ad_song_01.mp3",
+      "lengthHintSec": 90,
+      "rewardWeight": 1.0
+    },
+    {
+      "id": "track002",
+      "title": "AENO Ad Song 02",
+      "artist": "Public Domain",
+      "file": "assets/ad_song_02.mp3",
+      "lengthHintSec": 120,
+      "rewardWeight": 1.2
     }
   ]
 }
