@@ -1,39 +1,21 @@
-const CACHE_NAME = "aeno-v3-cache-3000";
-
-const ASSETS = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./game.js",
-  "./manifest.json"
-];
-
+// sw.js - AENO FIX VERSION
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((k) => {
-          if (k !== CACHE_NAME) return caches.delete(k);
-        })
-      )
-    )
+    (async () => {
+      const keys = await caches.keys();
+      for (const k of keys) {
+        await caches.delete(k);
+      }
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
+// NEVER cache anything (development safe)
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    fetch(event.request).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-      return res;
-    }).catch(() => caches.match(event.request))
-  );
+  event.respondWith(fetch(event.request));
 });
