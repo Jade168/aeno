@@ -1,6 +1,17 @@
 {
-  "playlist":[
-    {"title":"Sponsor - Galaxy Cola Theme", "rewardGold":25, "rewardAeno":0.0002, "duration":12},
-    {"title":"Sponsor - AENO Crystal Anthem", "rewardGold":35, "rewardAeno":0.0003, "duration":15}
+  "songs": [
+    {
+      "id": "ad_song_01",
+      "title": "AENO Ad Song - Sample Loop",
+      "artist": "Public Domain / Demo",
+      "url": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_4f7a1b37a8.mp3?filename=future-bass-beat-117039.mp3",
+      "reward": {
+        "coins": 120,
+        "aenoChance": 0.08,
+        "aenoMin": 0.0001,
+        "aenoMax": 0.0015,
+        "pronunciationShard": 2
+      }
+    }
   ]
 }
