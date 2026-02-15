@@ -1,103 +1,129 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-
-  <title>AENO - Lively Empire</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>AENO - Planet Civilization</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#38bdf8">
 
-  <link rel="stylesheet" href="style.css" />
+  <!-- 防 cache（必須，GitHub Pages 更新先即時） -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 
+  <link rel="stylesheet" href="style.css?v=20260215"/>
 </head>
-<body>
 
+<body>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- Boot Screen -->
+  <!-- Boot / Login Screen -->
   <div id="bootScreen">
     <div class="bootCard">
       <div class="logo">AENO</div>
-      <div class="bootText">正在載入宇宙...</div>
-      <div class="bootHint">支援離線遊戲｜支援保存紀錄｜Chrome 可用</div>
-      <div class="bootHint muted">Version: <span id="verText">?</span></div>
+      <div class="bootText">文明育成・星球探索</div>
+      <div class="bootHint">注意：此版本已加入登入/註冊（本地保存）</div>
+
+      <div style="margin-top:14px;text-align:left;font-weight:900;">帳號系統</div>
+      <input id="loginUser" placeholder="用戶名 (username)" style="width:100%;padding:10px;border-radius:14px;border:2px solid #bfe6ff;margin-top:8px;"/>
+      <input id="loginPass" placeholder="密碼 (password)" type="password" style="width:100%;padding:10px;border-radius:14px;border:2px solid #bfe6ff;margin-top:8px;"/>
+
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button id="btnRegister" style="flex:1;border:none;border-radius:14px;padding:10px;background:#22c55e;color:white;font-weight:900;">註冊</button>
+        <button id="btnLogin" style="flex:1;border:none;border-radius:14px;padding:10px;background:#38bdf8;color:white;font-weight:900;">登入</button>
+      </div>
+
+      <div id="loginMsg" style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
+        玩家第一次登入後必須選擇星球，之後永久鎖定（不可再換）。
+      </div>
+    </div>
+  </div>
+
+  <!-- Planet Select Screen -->
+  <div id="planetSelect" class="hidden">
+    <div class="bootCard">
+      <div style="font-size:18px;font-weight:900;">選擇你的星球</div>
+      <div style="margin-top:8px;font-size:12px;opacity:.75;">
+        玩家只能擁有一個星球領地（永久綁定）
+      </div>
+
+      <select id="planetPicker" style="width:100%;padding:12px;margin-top:12px;border-radius:14px;border:2px solid #bfe6ff;">
+        <option value="earth">🌍 地球 Earth（平衡）</option>
+        <option value="mars">🔴 火星 Mars（鐵礦多）</option>
+        <option value="ocean">🌊 海洋星 Ocean（糧食多）</option>
+        <option value="jungle">🌳 叢林星 Jungle（木材多）</option>
+        <option value="blackhole">🕳️ 黑洞孤島（只有你可用）</option>
+      </select>
+
+      <button id="btnConfirmPlanet" style="width:100%;margin-top:12px;border:none;border-radius:14px;padding:12px;background:#fbbf24;color:black;font-weight:900;">
+        確認星球
+      </button>
+
+      <div style="margin-top:10px;font-size:12px;opacity:.7;">
+        黑洞孤島只會開放給開發者（你）。
+      </div>
     </div>
   </div>
 
   <!-- UI Root -->
   <div id="uiRoot">
 
-    <!-- Login Screen -->
-    <div id="loginScreen" class="loginScreen hidden">
-      <div class="loginCard">
-        <div class="loginTitle">🌌 AENO 帝國</div>
-        <div class="loginSub">註冊 / 登入（新存檔系統）</div>
-
-        <div class="loginRow">
-          <input id="loginUser" placeholder="用戶名 Username" maxlength="18"/>
+    <!-- HUD -->
+    <div id="hudTop">
+      <div class="hudBox" id="hudLeft">
+        <div class="hudRow">
+          <span class="pill">🌍 <span id="planetName">?</span></span>
+          <span class="pill">⏱️ <span id="gameYear">0</span> 年</span>
+          <span class="pill">👥 <span id="popCount">0</span></span>
         </div>
-        <div class="loginRow">
-          <input id="loginPass" placeholder="密碼 Password" type="password" maxlength="30"/>
+        <div class="hudRow" style="margin-top:4px;">
+          <span class="pill">🪙 金幣: <span id="coins">0</span></span>
+          <span class="pill">🟡 AENO: <span id="aeno">0.0000</span></span>
         </div>
+      </div>
 
-        <div class="loginBtns">
-          <button id="btnRegister">註冊</button>
-          <button id="btnLogin">登入</button>
+      <div class="hudBox" id="hudRight">
+        <div class="hudRow">
+          <span class="pill">🪵 木: <span id="wood">0</span></span>
+          <span class="pill">🪨 石: <span id="stone">0</span></span>
+          <span class="pill">⛏️ 鐵: <span id="iron">0</span></span>
+          <span class="pill">🌾 糧: <span id="food">0</span></span>
         </div>
-
-        <div class="loginHint">
-          ⚠️ 記住密碼，暫時無找回功能。<br/>
-          玩家註冊後只可選一次星球。
+        <div class="hudRow" style="margin-top:4px;">
+          <span class="pill">🏠 房屋: <span id="houseCount">0</span></span>
+          <span class="pill">🤖 機器人: <span id="robotCount">0</span></span>
         </div>
       </div>
     </div>
 
-    <!-- Planet Select -->
-    <div id="planetSelectScreen" class="planetSelectScreen hidden">
-      <div class="planetCard">
-        <div class="planetTitle">🌍 選擇你的星球（只可一次）</div>
-        <div class="planetHint">你選定後，將永久鎖定。</div>
-
-        <div id="planetGrid" class="planetGrid"></div>
-
-        <div class="planetFooter">
-          <button id="btnConfirmPlanet">確定星球</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Assistant -->
+    <!-- AI Assistant -->
     <div id="assistant">
       <div class="assistantAdFlag">AD</div>
-      <div class="assistantBody" id="assistantBody">
-        <div class="assistantHead">🐾</div>
-        <div class="assistantTorso"></div>
-        <div class="assistantFeet"></div>
-      </div>
-      <div class="assistantName" id="assistantName">AenoFox</div>
-      <button id="assistantTalkBtn">💬 對話</button>
+      <div class="assistantFace" id="assistantEmoji">🐺</div>
+      <div class="assistantName" id="assistantName">Lupus</div>
+      <button id="assistantTalkBtn">對話</button>
     </div>
 
     <!-- Chat Box -->
     <div id="chatBox" class="hidden">
       <div class="chatHeader">
-        <span>🦊 AI 助手</span>
-        <button id="chatClose">✖</button>
+        <span>🧠 AI助手</span>
+        <button id="chatClose">X</button>
       </div>
       <div id="chatLog"></div>
       <div class="chatInputRow">
-        <input id="chatInput" placeholder="輸入指令：巡邏 / 收集 / 建造 / 升級 / 停止自動..." />
+        <input id="chatInput" placeholder="輸入指令：巡邏 / 收集 / 建造 / 升級 ..." />
         <button id="chatSend">送出</button>
       </div>
     </div>
 
-    <!-- Main Panel -->
+    <!-- Panel -->
     <div id="mainPanel">
       <div id="panelHeader">
-        <div class="panelTitle">📌 控制中心</div>
+        <span class="panelTitle">📌 控制中心</span>
         <div class="panelBtns">
           <button id="panelMinBtn">縮小</button>
           <button id="panelHideBtn">收起</button>
@@ -105,182 +131,176 @@
       </div>
 
       <div id="panelTabs">
-        <button class="tabBtn active" data-tab="tabStatus">狀態</button>
+        <button class="tabBtn active" data-tab="tabStats">資源</button>
         <button class="tabBtn" data-tab="tabBuild">建築</button>
         <button class="tabBtn" data-tab="tabUpgrade">升級</button>
-        <button class="tabBtn" data-tab="tabRobot">機器人</button>
+        <button class="tabBtn" data-tab="tabRobots">機器人</button>
         <button class="tabBtn" data-tab="tabMarket">交易所</button>
-        <button class="tabBtn" data-tab="tabTech">科技樹</button>
-        <button class="tabBtn" data-tab="tabPronounce">語言挖礦</button>
-        <button class="tabBtn" data-tab="tabAds">廣告</button>
+        <button class="tabBtn" data-tab="tabAds">廣告歌</button>
+        <button class="tabBtn" data-tab="tabAuto">AI自動</button>
         <button class="tabBtn" data-tab="tabLog">紀錄</button>
       </div>
 
       <div id="panelBody">
 
-        <!-- Status -->
-        <div class="tabPage active" id="tabStatus">
+        <div class="tabPage active" id="tabStats">
           <div class="grid2">
-            <div class="statCard"><div class="k">星球</div><div class="v" id="uiPlanet">?</div></div>
-            <div class="statCard"><div class="k">年份</div><div class="v" id="uiYear">0</div></div>
-
-            <div class="statCard"><div class="k">人口</div><div class="v" id="uiPop">0</div></div>
-            <div class="statCard"><div class="k">工人</div><div class="v" id="uiWorkers">0</div></div>
-
+            <div class="statCard"><div class="k">木材</div><div class="v" id="uiWood">0</div></div>
+            <div class="statCard"><div class="k">石頭</div><div class="v" id="uiStone">0</div></div>
+            <div class="statCard"><div class="k">鐵礦</div><div class="v" id="uiIron">0</div></div>
+            <div class="statCard"><div class="k">糧食</div><div class="v" id="uiFood">0</div></div>
             <div class="statCard"><div class="k">金幣</div><div class="v" id="uiCoins">0</div></div>
             <div class="statCard"><div class="k">AENO</div><div class="v" id="uiAeno">0.0000</div></div>
-
-            <div class="statCard"><div class="k">木</div><div class="v" id="uiWood">0</div></div>
-            <div class="statCard"><div class="k">石</div><div class="v" id="uiStone">0</div></div>
-
-            <div class="statCard"><div class="k">鐵</div><div class="v" id="uiIron">0</div></div>
-            <div class="statCard"><div class="k">糧</div><div class="v" id="uiFood">0</div></div>
           </div>
 
-          <div class="mt10 hint">
-            🗺️ 點擊「你領土內」空地可直接彈出建築選單。<br/>
-            🤖 AI 助手會幫你前期自動建造（最多離線 24 小時）。<br/>
-            ⏱️ 流速：現實 1 日 = 遊戲 10 年。<br/>
-          </div>
-
-          <div class="mt10 btnRow">
-            <button id="btnToggleAuto">🤖 自動建造：<span id="autoTxt">ON</span></button>
-            <button id="btnSaveNow">💾 保存</button>
+          <div class="hint mt10">
+            📌 點擊你領土內的空地即可彈出「建築選單」<br/>
+            📌 非領土會顯示黑影遮罩<br/>
+            📌 離線收益最多只計 24 小時（外掛停止）
           </div>
         </div>
 
-        <!-- Build -->
         <div class="tabPage" id="tabBuild">
-          <div class="hint">點領土空地建築，或者按下面選擇後再點地圖放置。</div>
+          <div class="hint">
+            🏗️ 手動建築：點領土空地 → 選擇建築 → 確認建造
+          </div>
 
-          <div class="buildList mt10" id="buildList"></div>
+          <div class="buildList mt10">
+            <button class="buildBtn" data-build="house">🏠 房屋</button>
+            <button class="buildBtn" data-build="lumber">🪓 伐木場</button>
+            <button class="buildBtn" data-build="quarry">🪨 採石場</button>
+            <button class="buildBtn" data-build="mine">⛏️ 礦場</button>
+            <button class="buildBtn" data-build="farm">🌾 農田</button>
+            <button class="buildBtn" data-build="market">🏦 市集</button>
+            <button class="buildBtn" data-build="wall">🛡️ 城牆</button>
+            <button class="buildBtn" data-build="lab">🧬 研究所</button>
+          </div>
 
-          <div class="mt10 hint">
-            🏠 開局已送 2 間房屋 + 4 工人。<br/>
-            🌲 伐木場必須靠近森林，礦場必須靠近礦脈。<br/>
+          <div class="btnRow mt10">
+            <button id="btnBuildMode">啟動建築模式</button>
+            <button id="btnCancelBuildMode">取消模式</button>
           </div>
         </div>
 
-        <!-- Upgrade -->
         <div class="tabPage" id="tabUpgrade">
           <div class="hint">
-            點地圖上的建築即可升級。<br/>
-            升級無上限（成本會成倍增加）。
+            ⬆️ 升級模式：點建築即可升級（可升到 10 級以上）<br/>
+            ⚠️ 升級成本會逐級增加
           </div>
-          <div class="mt10 btnRow">
-            <button id="btnUpgradeMode">⬆️ 進入升級模式</button>
-            <button id="btnExitUpgrade">退出</button>
+
+          <div class="btnRow mt10">
+            <button id="btnUpgradeMode">啟動升級模式</button>
+            <button id="btnCancelUpgradeMode">取消模式</button>
           </div>
-          <div class="mt10" id="upgradeInfo"></div>
         </div>
 
-        <!-- Robot -->
-        <div class="tabPage" id="tabRobot">
+        <div class="tabPage" id="tabRobots">
           <div class="hint">
-            🤖 機器人可隨機去 20 星球採集資源（玩家本體不可去）。<br/>
-            你星球固定，機器人會帶回木/石/鐵/糧/碎片。
+            🤖 機器人可隨機去 20 個星球探索資源（玩家仍只擁有一個星球領土）
           </div>
 
-          <div class="mt10 btnRow">
-            <button id="btnRobotExplore">🚀 派出探索</button>
-            <button id="btnRobotRecall">📦 立即回收</button>
+          <div class="btnRow mt10">
+            <button id="btnRobotSend">🚀 派機器人探索</button>
+            <button id="btnRobotRecall">🛰️ 召回機器人</button>
           </div>
 
-          <div class="mt10 hint" id="robotStatus">尚未派出。</div>
+          <div class="hint mt10">
+            探索有機會帶回：木 / 石 / 鐵 / 糧 / 野獸碎片 / 稀有碎片
+          </div>
         </div>
 
-        <!-- Market -->
         <div class="tabPage" id="tabMarket">
           <div class="hint">
-            🏦 交易所：用金幣買賣資源（簡化版）。<br/>
-            未來可接真實股市、玩家市場、AENO 交易。
+            🏦 交易所：可以用金幣交換資源（簡化版，未來可加股票圖表）
           </div>
 
           <div class="marketRow">
-            <select id="marketRes">
-              <option value="wood">木</option>
-              <option value="stone">石</option>
-              <option value="iron">鐵</option>
-              <option value="food">糧</option>
+            <select id="marketItem">
+              <option value="wood">🪵 木材</option>
+              <option value="stone">🪨 石頭</option>
+              <option value="iron">⛏️ 鐵礦</option>
+              <option value="food">🌾 糧食</option>
             </select>
-            <input id="marketQty" type="number" value="10" min="1"/>
+            <input id="marketAmount" type="number" value="50" min="1"/>
           </div>
 
-          <div class="mt10 btnRow">
+          <div class="btnRow mt10">
             <button id="btnBuy">買入</button>
             <button id="btnSell">賣出</button>
           </div>
 
-          <div class="mt10 hint" id="marketInfo">市場價格會隨時間波動。</div>
+          <div class="hint mt10" id="marketRateHint">
+            價格會浮動（簡化）：
+            木=2 金幣 / 石=3 / 鐵=5 / 糧=2
+          </div>
         </div>
 
-        <!-- Tech -->
-        <div class="tabPage" id="tabTech">
-          <div class="hint">
-            🧬 科技樹（簡化版，可擴展）<br/>
-            科技會提升產出與效率。
-          </div>
-          <div class="techList mt10" id="techList"></div>
-        </div>
-
-        <!-- Pronounce -->
-        <div class="tabPage" id="tabPronounce">
-          <div class="hint">
-            🎙️ Proof of Pronunciation（語言挖礦）<br/>
-            先用文字模擬評分（之後可接 STT/TTS）。<br/>
-            達到 40% 才合格，越高分掉 AENO 機率越高。
-          </div>
-
-          <div class="mt10 statCard">
-            <div class="k">今日練習目標</div>
-            <div class="v" id="pronounceTarget">?</div>
-          </div>
-
-          <div class="mt10">
-            <input id="pronounceInput" placeholder="輸入你跟讀的拼音/文字（模擬）" />
-          </div>
-
-          <div class="mt10 btnRow">
-            <button id="btnPronounceTest">🎧 評分</button>
-            <button id="btnPronounceNext">➡️ 下一個</button>
-          </div>
-
-          <div class="mt10 hint" id="pronounceResult">等待測試...</div>
-        </div>
-
-        <!-- Ads -->
         <div class="tabPage" id="tabAds">
           <div class="hint">
-            🎵 廣告歌曲播放（Ad Slot）<br/>
-            AI助手頭頂旗幟 / 機器人貼紙位 / 面板播放位。<br/>
-            現在暫用內置歌曲（無版權）。
+            🎵 廣告歌播放系統（可循環）<br/>
+            你聽歌 + 學外語 = AENO 挖礦成本
           </div>
 
-          <div class="mt10 btnRow">
-            <button id="btnPlayAd">▶️ 播放</button>
-            <button id="btnToggleLoop">🔁 Loop：<span id="loopTxt">ON</span></button>
+          <div class="btnRow mt10">
+            <button id="btnPlayAd">▶ 播放</button>
+            <button id="btnLoopAd">🔁 Loop: ON</button>
           </div>
 
-          <div class="mt10 hint" id="adStatus">未播放。</div>
-
-          <audio id="adAudio" preload="auto"></audio>
+          <div class="hint mt10">
+            播放期間：每分鐘會提升 AENO 掉落機率（隱藏算法）
+          </div>
         </div>
 
-        <!-- Log -->
+        <div class="tabPage" id="tabAuto">
+          <div class="hint">
+            🤖 AI 自動建造外掛（玩家可停止）<br/>
+            ⚠️ AI 不會再亂用資源（會保留最低資源庫存）
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnAutoToggle">自動建造: ON</button>
+            <button id="btnAutoStopNow">立即停止</button>
+          </div>
+
+          <div class="hint mt10">
+            AI 優先順序（可多選，不再只限一個）：
+          </div>
+
+          <div class="buildList mt10">
+            <button class="techBtn prioBtn" data-prio="house">🏠 房屋</button>
+            <button class="techBtn prioBtn" data-prio="lumber">🪓 伐木場</button>
+            <button class="techBtn prioBtn" data-prio="quarry">🪨 採石場</button>
+            <button class="techBtn prioBtn" data-prio="mine">⛏️ 礦場</button>
+            <button class="techBtn prioBtn" data-prio="farm">🌾 農田</button>
+            <button class="techBtn prioBtn" data-prio="market">🏦 市集</button>
+            <button class="techBtn prioBtn" data-prio="wall">🛡️ 城牆</button>
+            <button class="techBtn prioBtn" data-prio="lab">🧬 研究所</button>
+          </div>
+
+          <div class="hint mt10">
+            📌 玩家離線最多只計 24 小時外掛收益，之後停止。
+          </div>
+        </div>
+
         <div class="tabPage" id="tabLog">
-          <div class="hint">系統紀錄（重要事件、建築、AENO 掉落、獸潮等）</div>
+          <div class="btnRow">
+            <button id="btnSaveGame">保存</button>
+            <button id="btnResetGame">重置</button>
+          </div>
+
           <div id="sysLog"></div>
         </div>
 
       </div>
     </div>
 
-    <button id="panelRestoreBtn" class="hidden">📌 打開面板</button>
+    <!-- restore button -->
+    <button id="panelRestoreBtn" class="hidden">📌 面板</button>
 
   </div>
 
-  <script src="characters.js"></script>
-  <script src="game.js"></script>
-
+  <script src="characters.js?v=20260215"></script>
+  <script src="ads.json?v=20260215"></script>
+  <script src="game.js?v=20260215"></script>
 </body>
 </html>
