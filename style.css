@@ -86,7 +86,7 @@ button, input, select{
 
 .hidden{ display:none !important; }
 
-/* HUD Top (small and not blocking) */
+/* HUD TOP */
 #hudTop{
   position:absolute;
   left:8px;
@@ -129,11 +129,11 @@ button, input, select{
   white-space:nowrap;
 }
 
-/* Panel Toggle Button (fixed, not bottom nav blocked) */
+/* Panel Toggle Button */
 #togglePanelBtn{
   position:absolute;
   right:12px;
-  bottom:90px; /* avoid mobile navbar */
+  bottom:90px;
   z-index:90;
   border:none;
   border-radius:18px;
@@ -145,13 +145,13 @@ button, input, select{
   pointer-events:auto;
 }
 
-/* Main Panel (<= 1/4 screen rule) */
+/* Main Panel */
 #panel{
   position:absolute;
   right:10px;
   top:78px;
   width:320px;
-  height:420px; /* small enough */
+  height:420px;
   background:var(--card);
   border:2px solid var(--stroke);
   border-radius:22px;
@@ -260,11 +260,11 @@ button, input, select{
   font-size:12px;
 }
 
-/* Assistant Character (not at bottom) */
+/* Assistant Character */
 #assistant{
   position:absolute;
   left:12px;
-  bottom:120px; /* avoid navbar */
+  bottom:120px;
   width:120px;
   background:transparent;
   border:none;
@@ -329,7 +329,6 @@ button, input, select{
   box-shadow:0 8px 16px rgba(0,0,0,.12);
 }
 
-/* Assistant Talk Button */
 #assistantTalkBtn{
   margin-top:8px;
   border:none;
@@ -385,15 +384,6 @@ button, input, select{
   padding:10px;
   overflow:auto;
   font-size:12px;
-}
-
-.chatLine{
-  margin-bottom:6px;
-  line-height:1.35;
-}
-
-.chatLine .who{
-  font-weight:900;
 }
 
 .chatInputRow{
