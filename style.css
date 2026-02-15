@@ -1,14 +1,12 @@
 :root{
   --bg:#eaf6ff;
-  --card:#ffffffcc;
+  --card:#ffffffdd;
   --stroke:#bfe6ff;
   --shadow:0 14px 30px rgba(0,0,0,.15);
   --round:18px;
   --txt:#0f172a;
   --accent:#38bdf8;
   --accent2:#fbbf24;
-  --danger:#ef4444;
-  --ok:#22c55e;
 }
 
 html,body{
@@ -31,8 +29,6 @@ html,body{
   touch-action:none;
 }
 
-.hidden{ display:none !important; }
-
 #bootScreen{
   position:absolute;
   inset:0;
@@ -54,16 +50,16 @@ html,body{
 }
 
 .logo{
-  font-size:40px;
+  font-size:36px;
   font-weight:900;
-  letter-spacing:4px;
+  letter-spacing:3px;
   color:#0284c7;
 }
 
 .bootText{
   margin-top:10px;
-  font-size:16px;
-  font-weight:900;
+  font-size:15px;
+  font-weight:800;
 }
 
 .bootHint{
@@ -71,8 +67,6 @@ html,body{
   opacity:.75;
   font-size:12px;
 }
-
-.muted{ opacity:.75; }
 
 #uiRoot{
   position:absolute;
@@ -82,161 +76,58 @@ html,body{
 
 button, input, select{
   pointer-events:auto;
-  font-size:13px;
+  font-size:12px;
 }
 
-input, select{
-  width:100%;
-  border-radius:14px;
-  border:2px solid var(--stroke);
-  padding:10px 10px;
-  outline:none;
-  background:#fff;
-}
+.hidden{ display:none !important; }
 
-/* LOGIN */
-.loginScreen{
+/* HUD */
+#hudTop{
   position:absolute;
-  inset:0;
-  z-index:200;
+  left:10px;
+  top:10px;
+  right:10px;
   display:flex;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,.35);
+  justify-content:space-between;
+  gap:10px;
+  z-index:20;
+  pointer-events:none;
+}
+
+.hudBox{
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:18px;
+  padding:8px 10px;
+  box-shadow:var(--shadow);
   pointer-events:auto;
 }
 
-.loginCard{
-  width:320px;
-  background:var(--card);
-  border:2px solid var(--stroke);
-  border-radius:26px;
-  padding:18px;
-  box-shadow:var(--shadow);
-  text-align:center;
-}
-
-.loginTitle{
-  font-size:22px;
-  font-weight:1000;
-  color:#0284c7;
-}
-
-.loginSub{
-  margin-top:6px;
-  font-size:13px;
-  opacity:.8;
-  font-weight:900;
-}
-
-.loginRow{ margin-top:10px; }
-
-.loginBtns{
-  margin-top:12px;
+.hudRow{
   display:flex;
-  gap:8px;
+  flex-wrap:wrap;
+  gap:6px;
 }
 
-.loginBtns button{
-  flex:1;
-  border:none;
-  border-radius:16px;
-  padding:12px;
+.pill{
+  background:#ffffffaa;
+  border:1px solid #dbeafe;
+  border-radius:999px;
+  padding:4px 8px;
   font-weight:900;
-  cursor:pointer;
-  background:var(--accent);
-  color:white;
-}
-
-.loginBtns button:nth-child(2){
-  background:var(--ok);
-}
-
-.loginHint{
-  margin-top:12px;
-  font-size:12px;
-  opacity:.85;
-  line-height:1.35;
-}
-
-/* Planet Select */
-.planetSelectScreen{
-  position:absolute;
-  inset:0;
-  z-index:210;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,.35);
-  pointer-events:auto;
-}
-
-.planetCard{
-  width:360px;
-  background:var(--card);
-  border:2px solid var(--stroke);
-  border-radius:26px;
-  padding:18px;
-  box-shadow:var(--shadow);
-}
-
-.planetTitle{
-  font-weight:1000;
-  font-size:16px;
-}
-
-.planetHint{
-  margin-top:6px;
-  opacity:.8;
-  font-size:12px;
-  font-weight:900;
-}
-
-.planetGrid{
-  margin-top:12px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.planetBtn{
-  border:none;
-  border-radius:18px;
-  padding:12px;
-  background:#e2e8f0;
-  font-weight:1000;
-  cursor:pointer;
-  text-align:left;
-}
-
-.planetBtn.active{
-  background:var(--accent);
-  color:white;
-}
-
-.planetFooter{
-  margin-top:12px;
-}
-
-#btnConfirmPlanet{
-  width:100%;
-  border:none;
-  border-radius:18px;
-  padding:12px;
-  background:var(--ok);
-  color:white;
-  font-weight:1000;
-  cursor:pointer;
+  font-size:11px;
 }
 
 /* Assistant */
 #assistant{
   position:absolute;
   left:12px;
-  bottom:170px;
+  bottom:160px;
   width:110px;
+  background:transparent;
+  border:none;
   border-radius:22px;
-  padding:10px;
+  padding:8px;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -246,58 +137,21 @@ input, select{
   pointer-events:auto;
 }
 
-.assistantAdFlag{
-  position:absolute;
-  right:-8px;
-  top:-8px;
-  background:var(--accent2);
-  border-radius:12px;
-  padding:4px 7px;
-  font-weight:1000;
-  font-size:12px;
-  border:2px solid #fff;
-  box-shadow:0 8px 16px rgba(0,0,0,.12);
-}
-
-.assistantBody{
-  width:90px;
-  height:90px;
-  position:relative;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-.assistantHead{
-  position:absolute;
-  top:0;
-  font-size:42px;
-}
-
-.assistantTorso{
-  position:absolute;
-  top:38px;
-  width:56px;
-  height:32px;
-  border-radius:18px;
-  background:#cbd5e1;
-  border:2px solid #94a3b8;
-}
-
-.assistantFeet{
-  position:absolute;
-  bottom:0;
-  width:58px;
-  height:18px;
-  border-radius:14px;
-  background:#94a3b8;
+.assistantFace{
+  font-size:54px;
+  filter: drop-shadow(0 10px 10px rgba(0,0,0,.15));
 }
 
 .assistantName{
   font-size:12px;
-  font-weight:1000;
+  font-weight:900;
   text-align:center;
   line-height:1.1;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:16px;
+  padding:4px 8px;
+  box-shadow:var(--shadow);
 }
 
 #assistantTalkBtn{
@@ -306,17 +160,31 @@ input, select{
   padding:8px 12px;
   background:var(--accent);
   color:white;
-  font-weight:1000;
+  font-weight:900;
   cursor:pointer;
+  box-shadow:var(--shadow);
 }
 
-/* Chat */
+.assistantAdFlag{
+  position:absolute;
+  right:-8px;
+  top:-6px;
+  background:var(--accent2);
+  border-radius:12px;
+  padding:4px 7px;
+  font-weight:900;
+  font-size:11px;
+  border:2px solid #fff;
+  box-shadow:0 8px 16px rgba(0,0,0,.12);
+}
+
+/* Chat Box */
 #chatBox{
   position:absolute;
   left:10px;
   bottom:10px;
-  width:320px;
-  height:240px;
+  width:310px;
+  height:210px;
   background:var(--card);
   border:2px solid var(--stroke);
   border-radius:22px;
@@ -332,18 +200,19 @@ input, select{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 12px;
+  padding:8px 10px;
   background:#dbeafe;
-  font-weight:1000;
+  font-weight:900;
+  font-size:12px;
 }
 
 #chatClose{
   border:none;
-  background:var(--danger);
+  background:#ef4444;
   color:white;
   border-radius:12px;
   padding:6px 10px;
-  font-weight:1000;
+  font-weight:900;
   cursor:pointer;
 }
 
@@ -351,13 +220,13 @@ input, select{
   flex:1;
   padding:10px;
   overflow:auto;
-  font-size:12px;
+  font-size:11px;
 }
 
 .chatInputRow{
   display:flex;
   gap:6px;
-  padding:10px;
+  padding:8px;
   border-top:2px solid var(--stroke);
   background:#ffffffaa;
 }
@@ -368,25 +237,27 @@ input, select{
   border:2px solid var(--stroke);
   padding:8px 10px;
   outline:none;
+  font-size:12px;
 }
 
 #chatSend{
   border:none;
   border-radius:14px;
   padding:8px 12px;
-  background:var(--ok);
+  background:#22c55e;
   color:white;
-  font-weight:1000;
+  font-weight:900;
   cursor:pointer;
 }
 
 /* Main Panel (max 1/4 screen) */
 #mainPanel{
   position:absolute;
-  right:8px;
-  top:8px;
-  width:320px;
-  height:420px; /* <= 1/4 screen-ish */
+  right:10px;
+  top:90px;
+  width:300px;
+  height:420px;
+  max-height:45vh;
   background:var(--card);
   border:2px solid var(--stroke);
   border-radius:22px;
@@ -403,14 +274,11 @@ input, select{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 12px;
+  padding:8px 10px;
   background:#dbeafe;
-  font-weight:1000;
+  font-weight:900;
   cursor:grab;
-}
-
-.panelTitle{
-  font-size:13px;
+  font-size:12px;
 }
 
 .panelBtns{
@@ -422,41 +290,42 @@ input, select{
   border:none;
   border-radius:12px;
   padding:6px 10px;
-  font-weight:1000;
+  font-weight:900;
   cursor:pointer;
+  font-size:11px;
 }
 
-#panelMinBtn{ background:var(--accent); color:white; }
+#panelMinBtn{ background:#38bdf8; color:white; }
 #panelHideBtn{ background:#64748b; color:white; }
 
 #panelTabs{
   display:flex;
   gap:6px;
-  padding:8px;
+  padding:6px;
   overflow:auto;
   border-bottom:2px solid var(--stroke);
 }
 
 .tabBtn{
   border:none;
-  padding:8px 10px;
+  padding:6px 8px;
   border-radius:14px;
   background:#e2e8f0;
-  font-weight:1000;
+  font-weight:900;
   cursor:pointer;
   white-space:nowrap;
-  font-size:12px;
+  font-size:11px;
 }
 
 .tabBtn.active{
-  background:var(--accent);
+  background:#38bdf8;
   color:white;
 }
 
 #panelBody{
   flex:1;
   overflow:auto;
-  padding:10px;
+  padding:8px;
 }
 
 .tabPage{ display:none; }
@@ -477,14 +346,14 @@ input, select{
 
 .statCard .k{
   font-size:11px;
-  font-weight:1000;
+  font-weight:900;
   opacity:.8;
 }
 
 .statCard .v{
   margin-top:3px;
   font-size:14px;
-  font-weight:1000;
+  font-weight:900;
   color:#0284c7;
 }
 
@@ -499,16 +368,16 @@ input, select{
   flex:1;
   border:none;
   border-radius:16px;
-  padding:10px 10px;
-  font-weight:1000;
+  padding:9px 10px;
+  font-weight:900;
   cursor:pointer;
-  background:var(--accent);
+  background:#38bdf8;
   color:white;
   font-size:12px;
 }
 
 .btnRow button:nth-child(2){
-  background:var(--ok);
+  background:#22c55e;
 }
 
 .buildList{
@@ -520,10 +389,24 @@ input, select{
 .buildBtn, .techBtn{
   border:none;
   border-radius:16px;
-  padding:12px 10px;
-  font-weight:1000;
-  background:var(--accent2);
+  padding:10px 8px;
+  font-weight:900;
+  background:#fbbf24;
   cursor:pointer;
+  font-size:12px;
+}
+
+.marketRow{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.marketRow select, .marketRow input{
+  flex:1;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  padding:10px;
   font-size:12px;
 }
 
@@ -532,7 +415,7 @@ input, select{
   border:2px dashed #93c5fd;
   border-radius:16px;
   padding:10px;
-  font-size:12px;
+  font-size:11px;
   line-height:1.4;
 }
 
@@ -542,7 +425,7 @@ input, select{
   border:2px solid var(--stroke);
   border-radius:16px;
   padding:10px;
-  height:280px;
+  height:200px;
   overflow:auto;
   font-size:11px;
 }
@@ -550,24 +433,25 @@ input, select{
 #panelRestoreBtn{
   position:absolute;
   right:12px;
-  top:12px;
+  top:90px;
   z-index:55;
   border:none;
   border-radius:18px;
-  padding:12px 14px;
-  font-weight:1000;
-  background:var(--accent);
+  padding:10px 12px;
+  font-weight:900;
+  background:#38bdf8;
   color:white;
   box-shadow:var(--shadow);
   pointer-events:auto;
+  font-size:12px;
 }
 
 @media(max-width:420px){
   #mainPanel{
-    width:300px;
+    width:280px;
     height:400px;
   }
   #chatBox{
-    width:300px;
+    width:280px;
   }
 }
