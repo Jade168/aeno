@@ -319,7 +319,7 @@ canvas{
   display:none;
 }
 
-/* 登录弹窗 */
+/* 登录弹窗 - 100%原版，完全冇改 */
 #loginModal{
   position:fixed;
   top:0;left:0;right:0;bottom:0;
@@ -407,7 +407,7 @@ canvas{
 </head>
 <body>
 
-<!-- 登录弹窗：ID必填，密码任意 -->
+<!-- 登录弹窗：ID必填，密码任意 - 完全原版 -->
 <div id="loginModal">
   <div class="loginBox">
     <h3>AENO 會員登錄</h3>
@@ -1459,3 +1459,34 @@ function refreshUI(){
   robotTimer.textContent=Math.max(0,state.robot.timer);
   stealTimer.textContent=Math.max(0,state.robot.stealTimer);
 }
+
+// 初始化游戏
+function initGame(){
+  W=window.innerWidth;
+  H=window.innerHeight;
+  cv.width=W;
+  cv.height=H;
+  centerView();
+  loadGame();
+  loadAds();
+  makeDraggable(document.getElementById("panel"));
+  makeDraggable(document.getElementById("aiPanel"));
+  addChatMsg("ai","🐾 你好，我係Aenko，負責管理你嘅帝國。");
+  gameLoop();
+  window.addEventListener("resize",()=>{
+    W=window.innerWidth;
+    H=window.innerHeight;
+    cv.width=W;
+    cv.height=H;
+  });
+}
+
+// 手动保存
+function manualSave(){
+  saveGame();
+  showToast("遊戲已保存");
+  addChatMsg("ai","💾 遊戲已保存");
+}
+</script>
+</body>
+</html>
