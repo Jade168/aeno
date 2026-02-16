@@ -265,6 +265,79 @@ button.active { background: #2563eb; }
   text-align: center;
 }
 
+/* AI助手對話框 */
+#assistantChat {
+  position: fixed;
+  left: 8px;
+  bottom: 80px;
+  width: min(340px, 85vw);
+  max-height: 40vh;
+  background: rgba(10,14,20,0.9);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  color: #fff;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+}
+#assistantChatHeader {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.06);
+}
+#assistantChatBody {
+  padding: 10px 12px;
+  overflow: auto;
+  font-size: 12px;
+  flex: 1;
+}
+#assistantInputBox {
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  gap: 8px;
+}
+#assistantInput {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  font-size: 12px;
+}
+#sendAssistant {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #4a6cf7;
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: bold;
+}
+#toggleAssistantBtn {
+  position: fixed;
+  left: 8px;
+  bottom: 12px;
+  z-index: 200;
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: bold;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  display: none;
+}
+
 /* 通用樣式 */
 .muted { opacity: 0.85; font-size: 11px; }
 .ok { color: #a8ffb8; }
@@ -333,7 +406,22 @@ button.active { background: #2563eb; }
   </div>
 </div>
 
+<!-- 按鈕區 -->
+<button id="toggleAssistantBtn">🤖 AI助手</button>
 <button id="togglePanelBtn">📌 控制中心</button>
+
+<!-- AI助手對話框 -->
+<div id="assistantChat">
+  <div id="assistantChatHeader">
+    <span>🤖 AENO AI助手</span>
+    <button id="closeChat">關閉</button>
+  </div>
+  <div id="assistantChatBody"></div>
+  <div id="assistantInputBox">
+    <input type="text" id="assistantInput" placeholder="輸入指令，例如：修復、建造、升級..." />
+    <button id="sendAssistant">發送</button>
+  </div>
+</div>
 
 <!-- 控制中心面板 -->
 <div id="panel">
@@ -412,6 +500,88 @@ button.active { background: #2563eb; }
     <button class="planetBtn" data-planet="Planet-04" data-seed="farm">進入星球</button>
   </div>
 
+  <!-- 其餘16個星球，對應策劃大綱20個星球 -->
+  <div class="planetCard">
+    <div class="planetTitle">🌊 Planet-05 河流星</div>
+    <div class="planetDesc">水系發達，糧食與木材均衡，野獸強度中等</div>
+    <button class="planetBtn" data-planet="Planet-05" data-seed="river">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🏜️ Planet-06 荒漠星</div>
+    <div class="planetDesc">資源稀少，但鐵礦與稀有礦產豐富，適合高階玩家</div>
+    <button class="planetBtn" data-planet="Planet-06" data-seed="desert">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🌲 Planet-07 針葉星</div>
+    <div class="planetDesc">寒帶森林，木材產出極高，石礦中等</div>
+    <button class="planetBtn" data-planet="Planet-07" data-seed="forest">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">⛰️ Planet-08 山嶽星</div>
+    <div class="planetDesc">高山地形，石礦與鐵礦豐富，建築難度稍高</div>
+    <button class="planetBtn" data-planet="Planet-08" data-seed="mountain">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🌾 Planet-09 沃土星</div>
+    <div class="planetDesc">黑土平原，糧食產出翻倍，人口成長速度極快</div>
+    <button class="planetBtn" data-planet="Planet-09" data-seed="farm">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">⚙️ Planet-10 重工星</div>
+    <div class="planetDesc">工業發達，工廠效率提升，適合機器人與科技發展</div>
+    <button class="planetBtn" data-planet="Planet-10" data-seed="iron">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🌿 Planet-11 雨林星</div>
+    <div class="planetDesc">熱帶雨林，木材與糧食豐富，野獸強度較高</div>
+    <button class="planetBtn" data-planet="Planet-11" data-seed="forest">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🪨 Planet-12 花崗星</div>
+    <div class="planetDesc">堅硬岩石地形，石礦產出翻倍，建築防禦力提升</div>
+    <button class="planetBtn" data-planet="Planet-12" data-seed="rock">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">⛏️ Planet-13 金屬星</div>
+    <div class="planetDesc">金屬礦脈密集，鐵礦產出翻倍，適合工業發展</div>
+    <button class="planetBtn" data-planet="Planet-13" data-seed="iron">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🌾 Planet-14 牧場星</div>
+    <div class="planetDesc">廣闊草原，糧食與人口均衡，適合穩定發展</div>
+    <button class="planetBtn" data-planet="Planet-14" data-seed="farm">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🌊 Planet-15 群島星</div>
+    <div class="planetDesc">海洋群島，資源均衡，貿易與交易所收益提升</div>
+    <button class="planetBtn" data-planet="Planet-15" data-seed="river">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🏜️ Planet-16 鹽漠星</div>
+    <div class="planetDesc">荒漠鹽地，資源稀少，但稀有掉落概率提升</div>
+    <button class="planetBtn" data-planet="Planet-16" data-seed="desert">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🌲 Planet-17 寒帶星</div>
+    <div class="planetDesc">寒帶凍土，木材產出高，野獸強度高，獎勵豐厚</div>
+    <button class="planetBtn" data-planet="Planet-17" data-seed="forest">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">⛰️ Planet-18 高原星</div>
+    <div class="planetDesc">高原地形，石礦與鐵礦豐富，建築成本稍高</div>
+    <button class="planetBtn" data-planet="Planet-18" data-seed="mountain">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">⚙️ Planet-19 科技星</div>
+    <div class="planetDesc">科技發達，研究所效率提升，科技解鎖成本降低</div>
+    <button class="planetBtn" data-planet="Planet-19" data-seed="iron">進入星球</button>
+  </div>
+  <div class="planetCard">
+    <div class="planetTitle">🌾 Planet-20 生態星</div>
+    <div class="planetDesc">生態完美，所有資源均衡產出，適合全方面發展</div>
+    <button class="planetBtn" data-planet="Planet-20" data-seed="farm">進入星球</button>
+  </div>
+
   <!-- 開發者專屬黑洞孤島 -->
   <div class="planetCard" id="devBlackHoleCard" style="border-color: rgba(255,255,255,0.3); background: rgba(80,0,120,0.22); display:none;">
     <div class="planetTitle">🕳️ 黑洞孤島（開發者專屬）</div>
@@ -424,6 +594,10 @@ button.active { background: #2563eb; }
     音樂需手動點擊播放（手機瀏覽器限制）
   </div>
 </div>
+
+<!-- 遊戲核心JS引入，順序不可亂 -->
+<script src="ai-assistant.js"></script>
+<script src="game.js"></script>
 
 <script>
 // ==================== 全局配置（固定不變） ====================
@@ -460,8 +634,8 @@ function checkDevKey(inputKey) {
 function encryptPassword(pwd) {
   return encryptContent(pwd + "_" + AENO_CONFIG.DEV_ACCOUNT_ID);
 }
-// 系統日誌
-function log(msg, type="") {
+// 系統日誌（與game.js、ai-assistant.js共用）
+window.log = function log(msg, type="") {
   console.log(`[AENO] ${msg}`);
   const logBox = window.AENO_GLOBAL.elements.logBox;
   if (!logBox) return;
@@ -472,7 +646,7 @@ function log(msg, type="") {
   if (type === "danger") div.style.color = "#ff9aa2";
   logBox.prepend(div);
   while (logBox.children.length > 50) logBox.removeChild(logBox.lastChild);
-}
+};
 
 // ==================== 帳號系統 ====================
 function getAccountDB() {
@@ -589,6 +763,7 @@ function loginAccount(username, password) {
     // 開發者權限解鎖
     if (window.AENO_GLOBAL.auth.isDeveloper) {
       window.AENO_GLOBAL.elements.devBlackHoleCard.style.display = "block";
+      log("🔐 開發者帳號登入，黑洞孤島已解鎖", "ok");
     }
 
     // 隱藏登入框，顯示星球選擇
@@ -605,7 +780,7 @@ function loginAccount(username, password) {
   }
 }
 
-// ==================== 【核心修復】進入星球邏輯 ====================
+// ==================== 【核心對接】進入星球邏輯，與game.js完全匹配 ====================
 function enterPlanet(planetId, seedType) {
   try {
     console.log("開始進入星球：", planetId, seedType);
@@ -627,22 +802,24 @@ function enterPlanet(planetId, seedType) {
     window.AENO_GLOBAL.elements.gameCanvas.style.display = "block";
     window.AENO_GLOBAL.elements.hudTop.style.display = "flex";
     window.AENO_GLOBAL.elements.togglePanelBtn.style.display = "block";
+    window.AENO_GLOBAL.elements.toggleAssistantBtn.style.display = "block";
     window.AENO_GLOBAL.elements.panel.style.display = "flex";
 
     // 初始化畫布大小
     resizeCanvas();
 
-    // 【關鍵】就算game.js有錯，都唔會影響進入遊戲畫面
+    // 【關鍵】調用game.js初始化函數，完全對接
     try {
-      if (window.initGame) {
-        window.initGame(planetId, seedType);
-        console.log("已調用game.js的initGame函數");
+      if (window.Game_Init) {
+        window.Game_Init(planetId, seedType);
+        console.log("已調用game.js的Game_Init函數，遊戲核心已啟動");
       } else {
-        console.log("game.js未提供initGame函數，已顯示基礎遊戲畫布");
+        console.log("game.js未提供Game_Init函數，已顯示基礎遊戲畫布");
+        log("⚠️ 遊戲核心模塊加載異常，但基礎界面已正常顯示", "warning");
       }
     } catch (gameError) {
       console.error("game.js執行報錯，但已成功進入遊戲畫面", gameError);
-      log("⚠️ 遊戲核心模塊加載異常，但基礎界面已正常顯示", "warning");
+      log("⚠️ 遊戲核心模塊加載異常，請檢查game.js代碼", "warning");
     }
 
     log(`🌍 成功進入星球：${planetId}`, "ok");
@@ -654,7 +831,7 @@ function enterPlanet(planetId, seedType) {
 }
 
 // ==================== 畫布大小調整 ====================
-function resizeCanvas() {
+window.resizeCanvas = function resizeCanvas() {
   const canvas = window.AENO_GLOBAL.elements.gameCanvas;
   if (!canvas) return;
   const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -673,13 +850,25 @@ function switchAuthTab(tab) {
   document.querySelectorAll(".authForm").forEach(form => form.classList.remove("active"));
   document.querySelector(`.authTabBtn[data-tab="${tab}"]`).classList.add("active");
   document.getElementById(`${tab}Form`).classList.add("active");
+  // 開發者帳號顯示安全碼輸入框
+  if (tab === "register") {
+    const registerID = document.getElementById("registerID");
+    const devKeyInput = document.getElementById("devKeyInput");
+    registerID.addEventListener("input", () => {
+      if (registerID.value.trim() === AENO_CONFIG.DEV_ACCOUNT_ID) {
+        devKeyInput.style.display = "block";
+      } else {
+        devKeyInput.style.display = "none";
+      }
+    });
+  }
 }
 
 // ==================== 頁面加載完成後初始化 ====================
 window.addEventListener("DOMContentLoaded", () => {
   console.log("頁面加載完成，開始初始化AENO系統");
 
-  // 【核心修復1】頁面一加載就緩存所有元素，避免後續找不到
+  // 【核心】頁面一加載就緩存所有元素，避免後續找不到
   window.AENO_GLOBAL.elements = {
     // 登入相關
     authOverlay: document.getElementById("authOverlay"),
@@ -695,9 +884,10 @@ window.addEventListener("DOMContentLoaded", () => {
     planetSelect: document.getElementById("planetSelect"),
     devBlackHoleCard: document.getElementById("devBlackHoleCard"),
     planetButtons: document.querySelectorAll(".planetBtn"),
-    // 遊戲相關
+    // 遊戲畫布相關
     gameCanvas: document.getElementById("game"),
     hudTop: document.getElementById("hudTop"),
+    // HUD元素（與game.js ui對象完全匹配）
     planetName: document.getElementById("planetName"),
     gameYear: document.getElementById("gameYear"),
     popCount: document.getElementById("popCount"),
@@ -709,96 +899,269 @@ window.addEventListener("DOMContentLoaded", () => {
     food: document.getElementById("food"),
     factoryCount: document.getElementById("factoryCount"),
     robotCount: document.getElementById("robotCount"),
+    // 按鈕元素
     togglePanelBtn: document.getElementById("togglePanelBtn"),
+    toggleAssistantBtn: document.getElementById("toggleAssistantBtn"),
     panel: document.getElementById("panel"),
+    assistantChat: document.getElementById("assistantChat"),
     btnHidePanel: document.getElementById("btnHidePanel"),
     btnSave: document.getElementById("btnSave"),
+    btnBuildMode: document.getElementById("btnBuildMode"),
+    btnUpgradeMode: document.getElementById("btnUpgradeMode"),
+    btnAuto: document.getElementById("btnAuto"),
+    btnAdSong: document.getElementById("btnAdSong"),
+    btnLoopSong: document.getElementById("btnLoopSong"),
+    btnRobotSend: document.getElementById("btnRobotSend"),
+    btnExchange: document.getElementById("btnExchange"),
+    btnTech: document.getElementById("btnTech"),
+    autoState: document.getElementById("autoState"),
+    loopState: document.getElementById("loopState"),
     logBox: document.getElementById("logBox"),
+    // AI助手相關
+    assistantChatBody: document.getElementById("assistantChatBody"),
+    assistantInput: document.getElementById("assistantInput"),
+    sendAssistant: document.getElementById("sendAssistant"),
+    closeChat: document.getElementById("closeChat"),
+    // 優先級按鈕
+    prioButtons: document.querySelectorAll(".prioBtn"),
   };
 
   console.log("頁面元素緩存完成：", window.AENO_GLOBAL.elements);
 
-  // 【核心修復2】頁面一加載就綁定所有按鈕事件，唔會等登入成功先綁定
-  // 1. 星球按鈕事件（手機端用pointerdown，避免click延遲）
-  window.AENO_GLOBAL.elements.planetButtons.forEach(btn => {
-    btn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      const planetId = btn.dataset.planet;
-      const seedType = btn.dataset.seed;
-      console.log("點擊星球按鈕：", planetId, seedType);
-      enterPlanet(planetId, seedType);
-    });
-  });
-  console.log("星球按鈕綁定完成，數量：", window.AENO_GLOBAL.elements.planetButtons.length);
-
-  // 2. 註冊/登入按鈕事件
-  window.AENO_GLOBAL.elements.registerBtn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
+  // ==================== 所有按鈕事件綁定，與game.js、ai-assistant.js完全對接 ====================
+  // 1. 登入註冊按鈕
+  window.AENO_GLOBAL.elements.registerBtn.addEventListener("click", () => {
     const username = window.AENO_GLOBAL.elements.registerID.value;
     const devKey = window.AENO_GLOBAL.elements.devKeyInput.value;
     const pwd = window.AENO_GLOBAL.elements.registerPwd.value;
     const confirmPwd = window.AENO_GLOBAL.elements.registerPwdConfirm.value;
     registerAccount(username, devKey, pwd, confirmPwd);
   });
-  window.AENO_GLOBAL.elements.loginBtn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
+
+  window.AENO_GLOBAL.elements.loginBtn.addEventListener("click", () => {
     const username = window.AENO_GLOBAL.elements.loginID.value;
     const pwd = window.AENO_GLOBAL.elements.loginPwd.value;
     loginAccount(username, pwd);
   });
 
-  // 3. 其他按鈕事件
+  // 2. 登入頁面標籤切換
   document.querySelectorAll(".authTabBtn").forEach(btn => {
-    btn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
+    btn.addEventListener("click", () => {
       switchAuthTab(btn.dataset.tab);
     });
   });
-  window.AENO_GLOBAL.elements.registerID.addEventListener("input", () => {
-    const inputName = window.AENO_GLOBAL.elements.registerID.value.trim();
-    if (inputName === AENO_CONFIG.DEV_ACCOUNT_ID) {
-      window.AENO_GLOBAL.elements.devKeyInput.style.display = "block";
-      window.AENO_GLOBAL.elements.devKeyInput.setAttribute("required", "required");
-    } else {
-      window.AENO_GLOBAL.elements.devKeyInput.style.display = "none";
-      window.AENO_GLOBAL.elements.devKeyInput.removeAttribute("required");
-    }
+
+  // 3. 星球按鈕事件
+  window.AENO_GLOBAL.elements.planetButtons.forEach(btn => {
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      const planetId = btn.dataset.planet;
+      const seedType = btn.dataset.seed;
+      enterPlanet(planetId, seedType);
+    });
   });
-  window.AENO_GLOBAL.elements.btnHidePanel.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    window.AENO_GLOBAL.elements.panel.style.display = "none";
-  });
-  window.AENO_GLOBAL.elements.togglePanelBtn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
+
+  // 4. 控制中心面板按鈕
+  window.AENO_GLOBAL.elements.togglePanelBtn.addEventListener("click", () => {
     const panel = window.AENO_GLOBAL.elements.panel;
     panel.style.display = panel.style.display === "none" ? "flex" : "none";
   });
-  window.AENO_GLOBAL.elements.btnSave.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    log("✅ 已手動保存遊戲進度", "ok");
+
+  window.AENO_GLOBAL.elements.btnHidePanel.addEventListener("click", () => {
+    window.AENO_GLOBAL.elements.panel.style.display = "none";
   });
 
-  // 4. 窗口大小變化時調整畫布
+  // 5. AI助手面板按鈕
+  window.AENO_GLOBAL.elements.toggleAssistantBtn.addEventListener("click", () => {
+    const chat = window.AENO_GLOBAL.elements.assistantChat;
+    chat.style.display = chat.style.display === "none" ? "flex" : "none";
+  });
+
+  window.AENO_GLOBAL.elements.closeChat.addEventListener("click", () => {
+    window.AENO_GLOBAL.elements.assistantChat.style.display = "none";
+  });
+
+  // 6. 遊戲模式切換按鈕
+  window.AENO_GLOBAL.elements.btnBuildMode.addEventListener("click", () => {
+    window.mode = "build";
+    document.querySelectorAll(".btnRow button").forEach(btn => btn.classList.remove("active"));
+    window.AENO_GLOBAL.elements.btnBuildMode.classList.add("active");
+    log("🏗️ 已切換到建造模式");
+  });
+
+  window.AENO_GLOBAL.elements.btnUpgradeMode.addEventListener("click", () => {
+    window.mode = "upgrade";
+    document.querySelectorAll(".btnRow button").forEach(btn => btn.classList.remove("active"));
+    window.AENO_GLOBAL.elements.btnUpgradeMode.classList.add("active");
+    log("⬆️ 已切換到升級模式");
+  });
+
+  // 7. 自動建造按鈕
+  window.AENO_GLOBAL.elements.btnAuto.addEventListener("click", () => {
+    window.autoBuild = !window.autoBuild;
+    window.AENO_GLOBAL.elements.autoState.textContent = window.autoBuild ? "ON" : "OFF";
+    // 同步到game.js
+    if (window.AI_SetAutoCollect) window.AI_SetAutoCollect(window.autoBuild);
+    log(`🤖 自動建造已${window.autoBuild ? "開啟" : "關閉"}`);
+  });
+
+  // 8. 廣告歌按鈕
+  window.AENO_GLOBAL.elements.btnAdSong.addEventListener("click", () => {
+    if (window.playAdSong) {
+      fetch("./ads.json")
+        .then(res => res.json())
+        .then(ads => {
+          const randomSong = ads.songs[Math.floor(Math.random() * ads.songs.length)];
+          window.playAdSong(randomSong.url);
+        })
+        .catch(() => {
+          log("⚠️ 廣告歌列表加載失敗", "warning");
+        });
+    } else {
+      log("🎵 廣告歌模塊加載中", "warning");
+    }
+  });
+
+  window.AENO_GLOBAL.elements.btnLoopSong.addEventListener("click", () => {
+    window.songLoop = !window.songLoop;
+    window.AENO_GLOBAL.elements.loopState.textContent = window.songLoop ? "ON" : "OFF";
+    // 同步到game.js
+    if (window.toggleSongLoop) window.toggleSongLoop();
+    log(`🔁 廣告歌循環已${window.songLoop ? "開啟" : "關閉"}`);
+  });
+
+  // 9. 機器人、交易所、科技樹按鈕（對接game.js）
+  window.AENO_GLOBAL.elements.btnRobotSend.addEventListener("click", () => {
+    if (window.sendRobot) {
+      const targetId = prompt("請輸入要派遣的星球ID（1-20）：");
+      if (targetId && !isNaN(targetId)) {
+        window.sendRobot(parseInt(targetId));
+      }
+    } else {
+      log("⚠️ 機器人模塊加載中", "warning");
+    }
+  });
+
+  window.AENO_GLOBAL.elements.btnExchange.addEventListener("click", () => {
+    if (window.Game_Exchange) {
+      const res = prompt("請輸入要兌換的資源（wood/stone/iron/food）：");
+      const amount = prompt("請輸入兌換數量：");
+      if (res && amount && !isNaN(amount)) {
+        window.Game_Exchange(res, parseInt(amount));
+      }
+    } else {
+      log("⚠️ 交易所模塊加載中", "warning");
+    }
+  });
+
+  window.AENO_GLOBAL.elements.btnTech.addEventListener("click", () => {
+    if (window.unlockTech) {
+      const techList = Object.keys(window.TECH_TREE || {}).map((key, i) => `${i+1}. ${window.TECH_TREE[key].name} - ${window.TECH_TREE[key].effect}`).join("\n");
+      const techKey = prompt(`請輸入要解鎖的科技編號：\n${techList}`);
+      if (techKey && !isNaN(techKey)) {
+        const keys = Object.keys(window.TECH_TREE || {});
+        window.unlockTech(keys[parseInt(techKey)-1]);
+      }
+    } else {
+      log("⚠️ 科技樹模塊加載中", "warning");
+    }
+  });
+
+  // 10. 保存按鈕
+  window.AENO_GLOBAL.elements.btnSave.addEventListener("click", () => {
+    if (window.saveGlobal && window.savePlanet) {
+      window.saveGlobal();
+      window.savePlanet();
+      log("💾 遊戲已手動存檔", "ok");
+    } else {
+      localStorage.setItem("AENO_MANUAL_SAVE", Date.now().toString());
+      log("💾 已手動保存遊戲進度", "ok");
+    }
+  });
+
+  // 11. AI優先級按鈕
+  window.AENO_GLOBAL.elements.prioButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const prio = btn.dataset.prio;
+      window.customPriority = [prio];
+      // 同步到ai-assistant.js
+      if (window.AENO_AI && window.AENO_AI.resourceManager) {
+        log(`✅ 已設置AI優先級為${btn.textContent.trim()}`, "ok");
+      } else {
+        log(`✅ 已設置AI優先級為${btn.textContent.trim()}`, "ok");
+      }
+    });
+  });
+
+  // 12. AI助手對話發送按鈕
+  window.AENO_GLOBAL.elements.sendAssistant.addEventListener("click", () => {
+    const input = window.AENO_GLOBAL.elements.assistantInput.value;
+    if (input.trim()) {
+      // 調用ai-assistant.js的處理函數
+      if (window.AI_Say) {
+        const response = window.AI_Say(input);
+        // 添加到對話框
+        const playerDiv = document.createElement("div");
+        playerDiv.style.marginBottom = "8px";
+        playerDiv.innerHTML = `<b>玩家：</b>${input}`;
+        window.AENO_GLOBAL.elements.assistantChatBody.appendChild(playerDiv);
+
+        const aiDiv = document.createElement("div");
+        aiDiv.style.marginBottom = "8px";
+        aiDiv.innerHTML = `<b>AI助手：</b>${response}`;
+        window.AENO_GLOBAL.elements.assistantChatBody.appendChild(aiDiv);
+
+        window.AENO_GLOBAL.elements.assistantChatBody.scrollTop = window.AENO_GLOBAL.elements.assistantChatBody.scrollHeight;
+        window.AENO_GLOBAL.elements.assistantInput.value = "";
+      } else {
+        log("⚠️ AI助手模塊加載異常", "warning");
+      }
+    }
+  });
+
+  window.AENO_GLOBAL.elements.assistantInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      window.AENO_GLOBAL.elements.sendAssistant.click();
+    }
+  });
+
+  // ==================== 窗口事件 ====================
+  // 窗口大小改變時調整畫布
   window.addEventListener("resize", resizeCanvas);
 
-  // 5. 回車快捷操作
-  window.AENO_GLOBAL.elements.loginPwd.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") window.AENO_GLOBAL.elements.loginBtn.click();
-  });
-  window.AENO_GLOBAL.elements.registerPwdConfirm.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") window.AENO_GLOBAL.elements.registerBtn.click();
+  // 頁面關閉前自動存檔
+  window.addEventListener("beforeunload", () => {
+    if (window.saveGlobal && window.savePlanet) {
+      window.saveGlobal();
+      window.savePlanet();
+    }
   });
 
-  console.log("所有按鈕事件綁定完成！");
-  log("✅ AENO 系統初始化完成", "ok");
+  // ==================== 自動檢查已登入狀態 ====================
+  const savedAccount = localStorage.getItem(AENO_CONFIG.CURRENT_ACCOUNT_KEY);
+  if (savedAccount) {
+    const db = getAccountDB();
+    const account = db[savedAccount];
+    if (account) {
+      // 自動登入
+      window.AENO_GLOBAL.auth = {
+        currentPlayer: savedAccount,
+        isLoggedIn: true,
+        isDeveloper: account.isDeveloper || false,
+      };
+      // 隱藏登入框，顯示星球選擇
+      window.AENO_GLOBAL.elements.authOverlay.style.display = "none";
+      window.AENO_GLOBAL.elements.planetSelect.style.display = "flex";
+      // 解鎖開發者權限
+      if (account.isDeveloper) {
+        window.AENO_GLOBAL.elements.devBlackHoleCard.style.display = "block";
+      }
+      log("✅ 自動登入成功", "ok");
+    }
+  }
+
+  console.log("AENO系統初始化完成");
 });
 </script>
-
-<!-- 引入你原有嘅遊戲檔案，就算報錯都唔會影響主流程 -->
-<script src="ads.json"></script>
-<script src="ai-assistant.js"></script>
-<script src="characters.js"></script>
-<script src="game.js"></script>
-<script src="sw.js"></script>
 </body>
 </html>
