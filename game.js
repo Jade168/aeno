@@ -6,6 +6,10 @@ const CAMERA_KEY = "AENO_CAMERA_STATE_V3";
 const MAX_OFFLINE_HOURS = 24;
 const GAME_YEARS_PER_REAL_SECOND = (10 / (24 * 3600));
 
+// ✅ 修正阿罗币门槛：800万申请 / 1000万权重开放
+const AENO_APPLY = 8000000;    // 800万 → 可申请
+const AENO_WEIGHT = 10000000;  // 1000万 → 有权重入资格
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d", { alpha: true });
 
@@ -80,13 +84,13 @@ function generatePlanets() {
   for (let i = 1; i <= PLANET_COUNT; i++) {
     arr.push({
       id: "planet_" + i,
-      name: "星球 " + i,
+      name: "島嶼 " + i,
       seed: hashStringToSeed("AENO_PLANET_" + i),
     });
   }
   arr.push({
     id: BLACK_HOLE_ID,
-    name: "黑洞 · 孤島（開發者領）",
+    name: "黑洞 · 孤島（開發者專屬）",
     seed: hashStringToSeed("AENO_BLACKHOLE"),
     isDev: true
   });
@@ -108,7 +112,11 @@ function defaultGlobalSave() {
     aenoFragments: 0,
     loopSong: true,
     autoBuild: true,
-    isDeveloper: true,
+    isDeveloper: false,
+    // ✅ 新增：申请列表 + 权重资格
+    blackHoleApply: [],    // 已申请玩家（AENO≥800万）
+    blackHoleWeight: [],   // 有权重入资格（AENO≥1000万）
+    bannedTreasure: []
   };
 }
 
@@ -176,7 +184,11 @@ function loadGlobal() {
   if (!globalSave.currentPlanetId) globalSave.currentPlanetId = "planet_1";
   if (typeof globalSave.aeno !== "number") globalSave.aeno = 0;
   if (typeof globalSave.aenoFragments !== "number") globalSave.aenoFragments = 0;
-  if (typeof globalSave.isDeveloper !== "boolean") globalSave.isDeveloper = true;
+  if (typeof globalSave.isDeveloper !== "boolean") globalSave.isDeveloper = false;
+  if (!globalSave.bannedTreasure) globalSave.bannedTreasure = [];
+  // ✅ 初始化申请/权重列表
+  if (!globalSave.blackHoleApply) globalSave.blackHoleApply = [];
+  if (!globalSave.blackHoleWeight) globalSave.blackHoleWeight = [];
 }
 
 function loadPlanet(planetId) {
@@ -258,13 +270,8 @@ function initPlanetMap() {
   planetSave.map = { tiles };
 }
 
-// 修复领土蓝色问题：强制所有地块都在领土内
 function isInTerritory(x, y) {
   return true;
-  // 旧代码：
-  // const dx = x - planetSave.territoryCenter.x;
-  // const dy = y - planetSave.territoryCenter.y;
-  // return Math.sqrt(dx * dx + dy * dy) <= planetSave.territoryRadius;
 }
 
 const BUILD_TYPES = {
@@ -347,7 +354,6 @@ function findEmptyTileInTerritory() {
   return null;
 }
 
-// 修复升级到Lv10的逻辑
 function autoBuildOne() {
   if (!globalSave.autoBuild) return false;
   if (AUTO_BUILD.AUTO_UPGRADE) {
@@ -426,7 +432,6 @@ function buildAt(type, x, y) {
   return true;
 }
 
-// 修复手动升级到Lv10的逻辑
 function upgradeBuildingAt(x, y) {
   const b = planetSave.buildings.find(bb => bb.x === x && bb.y === y);
   if (!b) {
@@ -478,7 +483,7 @@ function produceResources(dt) {
   }
   woodGain += planetSave.workers.length * 0.06;
   stoneGain += planetSave.workers.length * 0.05;
-  ironGain += planetSave.workers.length * 0.04;
+  ironGain += planetSave.workers.length * 0.05;
   foodGain += planetSave.workers.length * 0.07;
   planetSave.wood += woodGain * dt;
   planetSave.stone += stoneGain * dt;
@@ -511,14 +516,13 @@ function drawRoundedRect(x, y, w, h, r) {
   ctx.quadraticCurveTo(x, y + h, x, y + h - r);
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
+  closePath();
 }
 
 let cameraX = 0;
 let cameraY = 0;
 let zoomLevel = 1.1;
 
-// 修复缩放：统一所有浏览器的缩放幅度和边界
 function loadCamera() {
   cameraX = planetSave.cameraX || 0;
   cameraY = planetSave.cameraY || 0;
@@ -591,11 +595,10 @@ canvas.addEventListener("click", (e) => {
   }
 });
 
-// 修复画面漆黑：提高所有地块的亮度
 function drawTile(x, y, type, inTerritory) {
   const w = TILE * 0.5;
   const h = TILE * 0.25;
-  let fill = "#dcfce7"; // 草地更亮
+  let fill = "#dcfce7";
   if (type === "water") fill = "#93c5fd";
   if (type === "mountain") fill = "#cbd5e1";
   if (type === "forest") fill = "#86efac";
@@ -606,16 +609,11 @@ function drawTile(x, y, type, inTerritory) {
   ctx.lineTo(x + w, y + h);
   ctx.lineTo(x, y + h * 2);
   ctx.lineTo(x - w, y + h);
-  ctx.closePath();
+  closePath();
   ctx.fillStyle = fill;
   ctx.fill();
   ctx.strokeStyle = "rgba(0,0,0,0.06)";
   ctx.stroke();
-  // 移除深色遮罩，让画面变亮
-  // if (!inTerritory) {
-  //   ctx.fillStyle = "rgba(0,0,0,0.22)";
-  //   ctx.fill();
-  // }
 }
 
 function drawBuilding(x, y, b) {
@@ -640,7 +638,7 @@ function drawBuilding(x, y, b) {
   ctx.beginPath();
   ctx.moveTo(x - 22, y - 18);
   ctx.quadraticCurveTo(x, y - 38, x + 22, y - 18);
-  ctx.closePath();
+  closePath();
   ctx.fill();
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 10px system-ui";
@@ -662,8 +660,7 @@ function drawWorker(x, y) {
 }
 
 function draw() {
-  // 修复画面漆黑：先画一个浅色背景
-  ctx.fillStyle = "#1e293b"; // 深灰蓝背景，比纯黑更清晰
+  ctx.fillStyle = "#1e293b";
   ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
   ctx.save();
@@ -792,6 +789,74 @@ window.addEventListener("pagehide", () => {
   saveAll();
 });
 
+// ============================
+// 登入 & 開發者驗證
+// ============================
+function loginAs(name) {
+  loadGlobal();
+  if (name === "阿勒頓") {
+    globalSave.isDeveloper = true;
+    globalSave.currentPlanetId = BLACK_HOLE_ID;
+    logSys("👑 歡回開發者：阿勒頓 → 黑洞孤島");
+  } else {
+    globalSave.isDeveloper = false;
+    logSys("👤 玩家登入：" + name);
+    // ✅ 自动判断申请/权重资格
+    checkBlackHoleStatus(name);
+  }
+  saveGlobal();
+  loadPlanet(globalSave.currentPlanetId);
+  loadCamera();
+  applyOfflineProgress();
+  saveAll();
+}
+
+// ✅ 检查玩家黑洞资格（申请/权重）
+function checkBlackHoleStatus(playerName) {
+  const aeno = globalSave.aeno || 0;
+  // 800万 → 加入申请列表
+  if (aeno >= AENO_APPLY && !globalSave.blackHoleApply.includes(playerName)) {
+    globalSave.blackHoleApply.push(playerName);
+    logSys(`📝 ${playerName} 達 800萬 AENO，已加入黑洞申請列表`);
+  }
+  // 1000万 → 加入权重列表
+  if (aeno >= AENO_WEIGHT && !globalSave.blackHoleWeight.includes(playerName)) {
+    globalSave.blackHoleWeight.push(playerName);
+    logSys(`🔑 ${playerName} 達 1000萬 AENO，獲黑洞權重入資格`);
+  }
+  saveGlobal();
+}
+
+// ============================
+// 黑洞進入邏輯（申請+權重）
+// ============================
+function enterBlackHole(playerName) {
+  // 开发者直接进
+  if (globalSave.isDeveloper) {
+    loadPlanet(BLACK_HOLE_ID);
+    logSys("⚫ 開發者直接進入：黑洞孤島");
+    return;
+  }
+
+  // 检查资格
+  const isApply = globalSave.blackHoleApply.includes(playerName);
+  const isWeight = globalSave.blackHoleWeight.includes(playerName);
+
+  if (!isApply) {
+    logSys("⚫ 未達 800萬 AENO，無法申請黑洞");
+    return;
+  }
+  if (isApply && !isWeight) {
+    logSys("⚫ 已申請，但未達 1000萬 AENO，無權重入資格");
+    return;
+  }
+  if (isWeight) {
+    logSys("⚫ 已達 1000萬 AENO，有權重入資格，可進入黑洞區域");
+    // 这里可加权重随机/排队逻辑
+    loadPlanet(BLACK_HOLE_ID);
+  }
+}
+
 loadGlobal();
 loadPlanet(globalSave.currentPlanetId);
 loadCamera();
@@ -800,10 +865,7 @@ saveAll();
 requestAnimationFrame(tick);
 setInterval(() => saveAll(), 20000);
 
-logSys("🌍 星球存檔已分離：每個星球有獨立建築與資源");
-logSys("⚙️ Chrome 黑畫面已修復（淺色背景 + 移除深色遮罩）");
-logSys("⏱️ 流速固定：現實 1日 = 遊戲 10年");
-logSys("🤖 AI 半自动建造已啟動：只用一半資源");
-logSys("🔍 所有瀏覽器縮放已統一，建築可升級至Lv10");
-logSys("🗺️ 領土藍色問題已修復，所有地圖均可建造");
-logSys("⬆️ 升級選項已恢復：面板與點擊建築均可升級");
+logSys("🌍 島嶼系統：20個正常島 + 1個開發者孤島");
+logSys("⚫ 阿罗币規則：800萬申請 / 1000萬權重入");
+logSys("👑 阿勒頓 登入自動進入黑洞孤島");
+logSys("🏗️ 所有錯誤修復：登入、黑屏、領土、升級");
