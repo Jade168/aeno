@@ -7,6 +7,9 @@
   --txt:#0f172a;
   --accent:#38bdf8;
   --accent2:#fbbf24;
+  --danger:#ef4444;
+  --success:#22c55e;
+  --warning:#f59e0b;
 }
 
 html,body{
@@ -453,5 +456,399 @@ button, input, select{
   }
   #chatBox{
     width:280px;
+  }
+}
+
+/* ==================== 以下為新增樣式，對應index.html所有新元素，完全不影響原有內容 ==================== */
+/* 遊戲畫布兼容（對應index.html的#game id） */
+#game{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100vw;
+  height:100vh;
+  background:linear-gradient(#eaf6ff,#f0f9ff);
+  touch-action:none;
+}
+
+/* 登入註冊界面 */
+#authOverlay{
+  position:absolute;
+  inset:0;
+  background:rgba(234, 246, 255, 0.98);
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+.authBox{
+  width:min(360px, 90vw);
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:var(--round);
+  padding:28px;
+  box-shadow:var(--shadow);
+}
+
+.authBox h2{
+  text-align:center;
+  margin-bottom:24px;
+  font-size:20px;
+  color:#0284c7;
+  font-weight:900;
+}
+
+.authTab{
+  display:flex;
+  gap:2px;
+  margin-bottom:20px;
+  border-radius:14px;
+  overflow:hidden;
+  background:#f0f9ff;
+}
+
+.authTabBtn{
+  flex:1;
+  padding:10px;
+  border:none;
+  background:transparent;
+  color:var(--txt);
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  border-radius:0;
+  transition:all 0.2s;
+}
+
+.authTabBtn.active{
+  background:var(--accent);
+  color:white;
+  font-weight:900;
+}
+
+.authForm{
+  display:none;
+  flex-direction:column;
+  gap:14px;
+}
+
+.authForm.active{
+  display:flex;
+}
+
+.authForm input{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px 14px;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  background:#ffffffaa;
+  color:var(--txt);
+  font-size:14px;
+  font-weight:500;
+  outline:none;
+  transition:border 0.2s;
+}
+
+.authForm input:focus{
+  border-color:var(--accent);
+}
+
+.authForm button{
+  width:100%;
+  padding:12px;
+  border-radius:14px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  font-size:15px;
+  font-weight:900;
+  margin-top:8px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+
+.authForm button:active{
+  transform:scale(0.98);
+  background:#0ea5e9;
+}
+
+.devNote{
+  text-align:center;
+  margin-top:20px;
+  font-size:11px;
+  opacity:0.75;
+}
+
+.authTip{
+  font-size:11px;
+  opacity:0.8;
+  text-align:center;
+}
+
+/* 星球選擇界面 */
+#planetSelect{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(#dbeafe,#f0f9ff);
+  z-index:999;
+  display:none;
+  flex-direction:column;
+  justify-content:flex-start;
+  align-items:center;
+  padding:60px 20px 20px;
+  overflow-y:auto;
+}
+
+#planetSelect > div:first-child{
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:15px;
+  color:#0284c7;
+}
+
+.planetCard{
+  width:min(380px, 92vw);
+  padding:14px;
+  border-radius:var(--round);
+  border:2px solid var(--stroke);
+  background:var(--card);
+  margin-bottom:12px;
+  transition:all 0.2s;
+  box-shadow:var(--shadow);
+}
+
+.planetCard:active{
+  transform:scale(0.98);
+}
+
+.planetTitle{
+  font-size:15px;
+  font-weight:900;
+  margin-bottom:6px;
+  color:var(--txt);
+}
+
+.planetDesc{
+  font-size:12px;
+  opacity:0.9;
+  margin-bottom:10px;
+}
+
+.planetBtn{
+  width:100%;
+  padding:10px;
+  border-radius:14px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+
+.planetBtn:active{
+  transform:scale(0.98);
+  background:#0ea5e9;
+}
+
+/* 開發者專屬黑洞孤島卡片 */
+#devBlackHoleCard{
+  border-color:#a855f7;
+  background:rgba(168, 85, 247, 0.1);
+}
+
+#devBlackHoleCard .planetBtn{
+  background:#a855f7;
+}
+
+/* 控制中心面板兼容（對應index.html的#panel） */
+#panel{
+  position:fixed;
+  right:10px;
+  bottom:80px;
+  width:min(340px, 85vw);
+  max-height:30vh;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:var(--round);
+  color:var(--txt);
+  z-index:100;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+  touch-action:none;
+}
+
+#panelHeader{
+  padding:10px 12px;
+  font-size:13px;
+  font-weight:900;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#dbeafe;
+  cursor:grab;
+}
+
+#panelBody{
+  padding:10px 12px;
+  overflow:auto;
+  font-size:12px;
+}
+
+/* AI助手對話框（對應index.html的#assistantChat） */
+#assistantChat{
+  position:fixed;
+  left:10px;
+  bottom:80px;
+  width:min(340px, 85vw);
+  max-height:40vh;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:var(--round);
+  color:var(--txt);
+  z-index:100;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+}
+
+#assistantChatHeader{
+  padding:10px 12px;
+  font-size:13px;
+  font-weight:900;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#dbeafe;
+}
+
+#assistantChatBody{
+  padding:10px 12px;
+  overflow:auto;
+  font-size:12px;
+  flex:1;
+}
+
+#assistantInputBox{
+  padding:8px 12px;
+  border-top:2px solid var(--stroke);
+  background:#ffffffaa;
+  display:flex;
+  gap:8px;
+}
+
+#assistantInput{
+  flex:1;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  padding:8px 10px;
+  outline:none;
+  font-size:12px;
+  background:#ffffff;
+}
+
+#sendAssistant, #closeChat{
+  border:none;
+  border-radius:14px;
+  padding:8px 12px;
+  background:var(--success);
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  font-size:12px;
+}
+
+#closeChat{
+  background:var(--danger);
+}
+
+/* 固定按鈕 */
+#togglePanelBtn, #toggleAssistantBtn{
+  position:fixed;
+  z-index:200;
+  border-radius:999px;
+  padding:12px 16px;
+  font-size:12px;
+  font-weight:900;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  box-shadow:var(--shadow);
+  color:var(--txt);
+}
+
+#togglePanelBtn{
+  right:10px;
+  bottom:12px;
+}
+
+#toggleAssistantBtn{
+  left:10px;
+  bottom:12px;
+}
+
+/* 按鈕激活狀態 */
+button.active{
+  background:var(--accent);
+  color:white;
+}
+
+/* 通用狀態文字樣式 */
+.ok{ color:var(--success); }
+.warning{ color:var(--warning); }
+.danger{ color:var(--danger); }
+.muted{ opacity:0.85; font-size:11px; }
+
+/* 日誌容器 */
+#logBox{
+  margin-top:6px;
+  max-height:10vh;
+  overflow:auto;
+  font-size:11px;
+  opacity:0.92;
+}
+
+/* 優先級按鈕 */
+.prioBtn{
+  border:none;
+  border-radius:14px;
+  padding:6px 8px;
+  background:#e2e8f0;
+  font-weight:900;
+  cursor:pointer;
+  font-size:11px;
+  transition:all 0.2s;
+}
+
+.prioBtn:active{
+  transform:scale(0.96);
+  background:var(--accent);
+  color:white;
+}
+
+/* 手機端額外適配 */
+@media(max-width:420px){
+  #panel{
+    width:280px;
+    max-height:35vh;
+  }
+  #assistantChat{
+    width:280px;
+    max-height:35vh;
+  }
+  .hudBox{
+    max-width:48vw;
+    padding:6px 8px;
+  }
+  .pill{
+    font-size:10px;
+    padding:3px 6px;
   }
 }
