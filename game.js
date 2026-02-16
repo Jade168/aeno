@@ -1,5 +1,5 @@
-// AENO V3.4 - 最终修复版：登录必输密码 + 不空白 + 不卡死 + 阿罗币正常
-const AENO_VERSION = "V3.4-FINAL";
+// AENO V3.5 - 终极修复：登录强制密码校验 + 按钮自动绑定 + 游戏正常启动
+const AENO_VERSION = "V3.5-FIXED";
 const SAVE_KEY_GLOBAL = "AENO_GLOBAL_SAVE";
 const SAVE_KEY_PLANET_PREFIX = "AENO_PLANET_SAVE_";
 const CAMERA_KEY = "AENO_CAMERA_STATE_V3";
@@ -10,10 +10,20 @@ const GAME_YEARS_PER_REAL_SECOND = (10 / (24 * 3600));
 const AENO_APPLY = 8000000;
 const AENO_WEIGHT = 10000000;
 
+// 全局变量
+let globalSave = null;
+let planetSave = null;
+let isGameStarted = false;
+let lastTick = performance.now();
+let mode = "build";
+let adAudio = null;
+
+// 画布初始化
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d", { alpha: true });
+const ctx = canvas ? canvas.getContext("2d", { alpha: true }) : null;
 
 function resizeCanvas() {
+  if (!canvas || !ctx) return;
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.floor(window.innerWidth * dpr);
   canvas.height = Math.floor(window.innerHeight * dpr);
@@ -23,8 +33,8 @@ function resizeCanvas() {
   ctx.imageSmoothingEnabled = true;
 }
 window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
 
+// UI元素获取
 const ui = {
   planetName: document.getElementById("planetName"),
   gameYear: document.getElementById("gameYear"),
@@ -52,12 +62,15 @@ const ui = {
   btnTech: document.getElementById("btnTech"),
 };
 
+// 系统日志
 function logSys(msg) {
+  console.log(msg);
   if (!ui.sysLog) return;
   const t = new Date().toLocaleTimeString();
   ui.sysLog.innerHTML = `<div>[${t}] ${msg}</div>` + ui.sysLog.innerHTML;
 }
 
+// 随机数工具
 function mulberry32(seed) {
   return function () {
     seed |= 0;
@@ -76,9 +89,9 @@ function hashStringToSeed(str) {
   return h >>> 0;
 }
 
+// 星球生成
 const PLANET_COUNT = 20;
 const BLACK_HOLE_ID = "black_hole_island";
-
 function generatePlanets() {
   const arr = [];
   for (let i = 1; i <= PLANET_COUNT; i++) {
@@ -98,10 +111,12 @@ function generatePlanets() {
 }
 const planets = generatePlanets();
 
+// 地图配置
 const MAP_W = 80;
 const MAP_H = 80;
 const TILE = 42;
 
+// 默认存档
 function defaultGlobalSave() {
   return {
     version: AENO_VERSION,
@@ -118,7 +133,6 @@ function defaultGlobalSave() {
     bannedTreasure: []
   };
 }
-
 function defaultPlanetSave(planetId) {
   return {
     planetId,
@@ -151,25 +165,22 @@ function defaultPlanetSave(planetId) {
   };
 }
 
-let globalSave = null;
-let planetSave = null;
-
+// 存档读写
 function saveGlobal() {
+  if (!globalSave) return;
   globalSave.lastSeen = Date.now();
   localStorage.setItem(SAVE_KEY_GLOBAL, JSON.stringify(globalSave));
 }
-
 function savePlanet() {
+  if (!planetSave) return;
   planetSave.lastSeen = Date.now();
   localStorage.setItem(SAVE_KEY_PLANET_PREFIX + planetSave.planetId, JSON.stringify(planetSave));
 }
-
 function saveAll() {
   saveGlobal();
   savePlanet();
   logSys("✅ 已保存（全球 + 星球存檔）");
 }
-
 function loadGlobal() {
   const raw = localStorage.getItem(SAVE_KEY_GLOBAL);
   if (!raw) {
@@ -188,7 +199,6 @@ function loadGlobal() {
   if (!globalSave.blackHoleApply) globalSave.blackHoleApply = [];
   if (!globalSave.blackHoleWeight) globalSave.blackHoleWeight = [];
 }
-
 function loadPlanet(planetId) {
   const raw = localStorage.getItem(SAVE_KEY_PLANET_PREFIX + planetId);
   if (!raw) {
@@ -210,6 +220,7 @@ function loadPlanet(planetId) {
   if (!planetSave.map) initPlanetMap();
 }
 
+// 星球初始化
 function initPlanetUnits() {
   planetSave.workers = [];
   for (let i = 0; i < 4; i++) {
@@ -229,7 +240,6 @@ function initPlanetUnits() {
     });
   }
 }
-
 function initPlanetMap() {
   const planet = planets.find(p => p.id === planetSave.planetId);
   const rng = mulberry32(planet ? planet.seed : 12345);
@@ -268,10 +278,12 @@ function initPlanetMap() {
   planetSave.map = { tiles };
 }
 
+// 领土判断
 function isInTerritory(x, y) {
   return true;
 }
 
+// 建筑配置
 const BUILD_TYPES = {
   house: { name: "房屋", cost: { wood: 30, stone: 10, coins: 80 }, baseIncome: 3 },
   lumber: { name: "伐木場", cost: { wood: 10, stone: 5, coins: 60 }, baseIncome: 0 },
@@ -283,7 +295,9 @@ const BUILD_TYPES = {
   market: { name: "市場", cost: { wood: 50, stone: 30, coins: 200 }, baseIncome: 5 }
 };
 
+// 资源判断
 function canPay(cost) {
+  if (!planetSave) return false;
   if (cost.coins && planetSave.coins < cost.coins) return false;
   if (cost.wood && planetSave.wood < cost.wood) return false;
   if (cost.stone && planetSave.stone < cost.stone) return false;
@@ -291,7 +305,6 @@ function canPay(cost) {
   if (cost.food && planetSave.food < cost.food) return false;
   return true;
 }
-
 function payCost(cost) {
   if (cost.coins) planetSave.coins -= cost.coins;
   if (cost.wood) planetSave.wood -= cost.wood;
@@ -300,6 +313,7 @@ function payCost(cost) {
   if (cost.food) planetSave.food -= cost.food;
 }
 
+// 自动建造配置
 const AUTO_BUILD = {
   RESERVE_RATIO: 0.5,
   PRIORITY: ["house", "lumber", "quarry", "mine", "farm", "factory", "market"],
@@ -307,8 +321,8 @@ const AUTO_BUILD = {
   AUTO_UPGRADE: true,
   BUILD_SPACING: 1
 };
-
 function canAutoPay(cost) {
+  if (!planetSave) return false;
   const maxCoins = Math.floor(planetSave.coins * AUTO_BUILD.RESERVE_RATIO);
   const maxWood = Math.floor(planetSave.wood * AUTO_BUILD.RESERVE_RATIO);
   const maxStone = Math.floor(planetSave.stone * AUTO_BUILD.RESERVE_RATIO);
@@ -321,8 +335,8 @@ function canAutoPay(cost) {
   if (cost.food && cost.food > maxFood) return false;
   return true;
 }
-
 function findEmptyTileInTerritory() {
+  if (!planetSave) return null;
   const cx = planetSave.territoryCenter.x;
   const cy = planetSave.territoryCenter.y;
   const r = planetSave.territoryRadius;
@@ -351,9 +365,8 @@ function findEmptyTileInTerritory() {
   }
   return null;
 }
-
 function autoBuildOne() {
-  if (!globalSave.autoBuild) return false;
+  if (!globalSave?.autoBuild || !planetSave) return false;
   if (AUTO_BUILD.AUTO_UPGRADE) {
     const upgradable = planetSave.buildings
       .filter(b => b.level < 10)
@@ -394,15 +407,15 @@ function autoBuildOne() {
   }
   return false;
 }
-
 function runAutoBuild() {
-  if (!globalSave.autoBuild) return;
+  if (!globalSave?.autoBuild || !planetSave) return;
   let built = 0;
   while (built < AUTO_BUILD.MAX_TRIES_PER_TICK && autoBuildOne()) {
     built++;
   }
 }
 
+// 手动建造/升级
 function buildAt(type, x, y) {
   if (!isInTerritory(x, y)) {
     logSys("❌ 非領土範圍，不能建築");
@@ -429,7 +442,6 @@ function buildAt(type, x, y) {
   logSys(`🏗️ 建成 ${def.name} Lv1`);
   return true;
 }
-
 function upgradeBuildingAt(x, y) {
   const b = planetSave.buildings.find(bb => bb.x === x && bb.y === y);
   if (!b) {
@@ -458,7 +470,9 @@ function upgradeBuildingAt(x, y) {
   return true;
 }
 
+// 资源计算
 function calcIncomePerSecond() {
+  if (!planetSave) return 0;
   let income = 0;
   for (const b of planetSave.buildings) {
     const def = BUILD_TYPES[b.type];
@@ -469,8 +483,8 @@ function calcIncomePerSecond() {
   income += planetSave.pop * 0.08;
   return income;
 }
-
 function produceResources(dt) {
+  if (!planetSave) return;
   let woodGain = 0, stoneGain = 0, ironGain = 0, foodGain = 0;
   for (const b of planetSave.buildings) {
     const lv = b.level || 1;
@@ -488,8 +502,8 @@ function produceResources(dt) {
   planetSave.iron += ironGain * dt;
   planetSave.food += foodGain * dt;
 }
-
 function applyOfflineProgress() {
+  if (!planetSave) return;
   const now = Date.now();
   const last = planetSave.lastSeen || now;
   let diff = (now - last) / 1000;
@@ -503,7 +517,9 @@ function applyOfflineProgress() {
   logSys(`🕒 離線補算 ${Math.floor(used / 3600)} 小時（上限24h）`);
 }
 
+// 绘图工具
 function drawRoundedRect(x, y, w, h, r) {
+  if (!ctx) return;
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + w - r, y);
@@ -517,55 +533,56 @@ function drawRoundedRect(x, y, w, h, r) {
   ctx.closePath();
 }
 
+// 相机控制
 let cameraX = 0;
 let cameraY = 0;
 let zoomLevel = 1.1;
+let dragging = false;
+let dragStart = { x: 0, y: 0 };
+let camStart = { x: 0, y: 0 };
 
 function loadCamera() {
+  if (!planetSave) return;
   cameraX = planetSave.cameraX || 0;
   cameraY = planetSave.cameraY || 0;
   zoomLevel = planetSave.zoom || 1.1;
 }
-
 function saveCamera() {
+  if (!planetSave) return;
   planetSave.cameraX = cameraX;
   planetSave.cameraY = cameraY;
   planetSave.zoom = zoomLevel;
 }
 
-let dragging = false;
-let dragStart = { x: 0, y: 0 };
-let camStart = { x: 0, y: 0 };
+// 画布事件绑定
+if (canvas) {
+  canvas.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    dragStart.x = e.clientX;
+    dragStart.y = e.clientY;
+    camStart.x = cameraX;
+    camStart.y = cameraY;
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    cameraX = camStart.x + (e.clientX - dragStart.x);
+    cameraY = camStart.y + (e.clientY - dragStart.y);
+  });
+  canvas.addEventListener("pointerup", () => dragging = false);
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const delta = Math.sign(e.deltaY);
+    zoomLevel += -delta * 0.15;
+    zoomLevel = Math.max(0.3, Math.min(3.0, zoomLevel));
+  }, { passive: false });
+}
 
-canvas.addEventListener("pointerdown", (e) => {
-  dragging = true;
-  dragStart.x = e.clientX;
-  dragStart.y = e.clientY;
-  camStart.x = cameraX;
-  camStart.y = cameraY;
-});
-
-canvas.addEventListener("pointermove", (e) => {
-  if (!dragging) return;
-  cameraX = camStart.x + (e.clientX - dragStart.x);
-  cameraY = camStart.y + (e.clientY - dragStart.y);
-});
-
-canvas.addEventListener("pointerup", () => dragging = false);
-
-canvas.addEventListener("wheel", (e) => {
-  e.preventDefault();
-  const delta = Math.sign(e.deltaY);
-  zoomLevel += -delta * 0.15;
-  zoomLevel = Math.max(0.3, Math.min(3.0, zoomLevel));
-}, { passive: false });
-
+// 坐标转换
 function tileToScreen(x, y) {
   const sx = (x - y) * (TILE * 0.5);
   const sy = (x + y) * (TILE * 0.25);
   return { x: sx, y: sy };
 }
-
 function screenToTile(px, py) {
   const cx = (px - window.innerWidth / 2 - cameraX) / zoomLevel;
   const cy = (py - 180 - cameraY) / zoomLevel;
@@ -577,9 +594,9 @@ function screenToTile(px, py) {
   return { x, y };
 }
 
-let mode = "build";
-
+// 绘图函数
 function drawTile(x, y, type, inTerritory) {
+  if (!ctx) return;
   const w = TILE * 0.5;
   const h = TILE * 0.25;
   let fill = "#dcfce7";
@@ -599,8 +616,8 @@ function drawTile(x, y, type, inTerritory) {
   ctx.strokeStyle = "rgba(0,0,0,0.06)";
   ctx.stroke();
 }
-
 function drawBuilding(x, y, b) {
+  if (!ctx) return;
   const lv = b.level || 1;
   ctx.fillStyle = "rgba(0,0,0,0.18)";
   ctx.beginPath();
@@ -628,23 +645,22 @@ function drawBuilding(x, y, b) {
   ctx.font = "bold 10px system-ui";
   ctx.fillText("Lv" + lv, x - 12, y - 2);
 }
-
 function drawAnimal(x, y) {
+  if (!ctx) return;
   ctx.fillStyle = "#fb7185";
   ctx.beginPath();
   ctx.arc(x, y - 12, 6, 0, Math.PI * 2);
   ctx.fill();
 }
-
 function drawWorker(x, y) {
+  if (!ctx) return;
   ctx.fillStyle = "#0ea5e9";
   ctx.beginPath();
   ctx.arc(x, y - 10, 5, 0, Math.PI * 2);
   ctx.fill();
 }
-
 function draw() {
-  if (!planetSave || !globalSave) return;
+  if (!ctx || !planetSave || !globalSave || !isGameStarted) return;
   ctx.fillStyle = "#1e293b";
   ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
@@ -675,7 +691,9 @@ function draw() {
   updateHUD();
 }
 
+// HUD更新
 function updateHUD() {
+  if (!planetSave || !globalSave) return;
   const planet = planets.find(p => p.id === planetSave.planetId);
   if (ui.planetName) ui.planetName.textContent = planet ? planet.name : "?";
   if (ui.gameYear) ui.gameYear.textContent = Math.floor(planetSave.gameYear);
@@ -692,10 +710,9 @@ function updateHUD() {
   if (ui.loopState) ui.loopState.textContent = globalSave.loopSong ? "ON" : "OFF";
 }
 
-let lastTick = performance.now();
-
+// 游戏主循环
 function tick(now) {
-  if (!planetSave || !globalSave) return;
+  if (!isGameStarted || !planetSave || !globalSave) return;
   const dt = Math.min(0.2, (now - lastTick) / 1000);
   lastTick = now;
   planetSave.gameYear += GAME_YEARS_PER_REAL_SECOND * dt;
@@ -721,8 +738,7 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 
-let adAudio = null;
-
+// UI事件绑定（登录成功后执行）
 function rebindUIEvents() {
   if (ui.btnSave) ui.btnSave.onclick = () => saveAll();
   if (ui.btnAuto) ui.btnAuto.onclick = () => {
@@ -763,104 +779,133 @@ function rebindUIEvents() {
       logSys("❌ 音樂系統錯誤");
     }
   };
-
-  canvas.onclick = function(e) {
-    const tile = screenToTile(e.clientX, e.clientY);
-    if (!tile) return;
-    if (mode === "build") {
-      buildAt("house", tile.x, tile.y);
-      saveAll();
-    } else {
-      upgradeBuildingAt(tile.x, tile.y);
-      saveAll();
-    }
-  };
+  if (canvas) {
+    canvas.onclick = function(e) {
+      const tile = screenToTile(e.clientX, e.clientY);
+      if (!tile) return;
+      if (mode === "build") {
+        buildAt("house", tile.x, tile.y);
+        saveAll();
+      } else {
+        upgradeBuildingAt(tile.x, tile.y);
+        saveAll();
+      }
+    };
+  }
+  logSys("✅ 所有按鈕已綁定，可正常操作");
 }
 
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    saveCamera();
-    saveAll();
-  } else {
-    if (globalSave && planetSave) loadCamera();
+// 黑洞资格检查
+function checkBlackHoleStatus(playerName) {
+  const aeno = globalSave.aeno || 0;
+  if (aeno >= AENO_APPLY && !globalSave.blackHoleApply.includes(playerName)) {
+    globalSave.blackHoleApply.push(playerName);
+    logSys(`📝 ${playerName} 達 800萬 AENO，已加入黑洞申請列表`);
   }
-});
+  if (aeno >= AENO_WEIGHT && !globalSave.blackHoleWeight.includes(playerName)) {
+    globalSave.blackHoleWeight.push(playerName);
+    logSys(`🔑 ${playerName} 達 1000萬 AENO，獲黑洞權重入資格`);
+  }
+  saveGlobal();
+}
 
-window.addEventListener("pagehide", () => {
-  saveCamera();
-  saveAll();
-});
-
-// ============================
-// 登录：必须用户名 + 密码
-// ============================
+// 核心登录函数（强制用户名+密码）
 function login(username, password) {
+  // 严格校验：用户名和密码都不能为空
   if (!username || username.trim() === "") {
-    logSys("❌ 请输入用户名");
+    alert("❌ 請輸入用戶名");
+    logSys("❌ 登入失敗：未輸入用戶名");
     return false;
   }
   if (!password || password.trim() === "") {
-    logSys("❌ 请输入密码");
+    alert("❌ 請輸入密碼");
+    logSys("❌ 登入失敗：未輸入密碼");
     return false;
   }
 
+  // 加载存档
   loadGlobal();
 
+  // 开发者账号处理
   if (username === "阿勒頓") {
     globalSave.isDeveloper = true;
     globalSave.currentPlanetId = BLACK_HOLE_ID;
-    logSys("👑 開發者登入：阿勒頗 → 黑洞孤島");
+    logSys("👑 歡回開發者：阿勒頓 → 黑洞孤島");
   } else {
     globalSave.isDeveloper = false;
     logSys("👤 玩家登入：" + username);
     checkBlackHoleStatus(username);
   }
 
+  // 保存数据
   saveGlobal();
   loadPlanet(globalSave.currentPlanetId);
   loadCamera();
   applyOfflineProgress();
   saveAll();
+
+  // 绑定所有游戏按钮
   rebindUIEvents();
 
+  // 启动游戏
+  isGameStarted = true;
+  resizeCanvas();
   lastTick = performance.now();
   requestAnimationFrame(tick);
 
-  logSys("✅ 登录成功，游戏正常启动");
+  // 隐藏登录框，显示游戏
+  const loginBox = document.getElementById("loginBox");
+  const gameBox = document.getElementById("gameBox");
+  if (loginBox) loginBox.style.display = "none";
+  if (gameBox) gameBox.style.display = "block";
+
+  logSys("✅ 登入成功！遊戲已正常啟動");
+  alert("✅ 登入成功！開始遊戲啦");
   return true;
 }
 
-function checkBlackHoleStatus(playerName) {
-  const aeno = globalSave.aeno || 0;
-  if (aeno >= AENO_APPLY && !globalSave.blackHoleApply.includes(playerName)) {
-    globalSave.blackHoleApply.push(playerName);
-    logSys(`📝 ${playerName} 達 800萬 AENO，已加入申請`);
-  }
-  if (aeno >= AENO_WEIGHT && !globalSave.blackHoleWeight.includes(playerName)) {
-    globalSave.blackHoleWeight.push(playerName);
-    logSys(`🔑 ${playerName} 達 1000萬 AENO，獲權重資格`);
-  }
-  saveGlobal();
-}
+// 页面加载完成后，自动绑定登录按钮
+window.addEventListener("DOMContentLoaded", () => {
+  // 自动获取登录页面的元素
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const loginBtn = document.getElementById("loginBtn");
 
-function enterBlackHole(playerName) {
-  if (globalSave.isDeveloper) {
-    loadPlanet(BLACK_HOLE_ID);
-    logSys("⚫ 開發者直接進入黑洞");
-    return;
+  // 绑定登录按钮点击事件
+  if (loginBtn) {
+    loginBtn.onclick = () => {
+      const username = usernameInput ? usernameInput.value : "";
+      const password = passwordInput ? passwordInput.value : "";
+      login(username, password);
+    };
   }
-  const hasApply = globalSave.blackHoleApply.includes(playerName);
-  const hasWeight = globalSave.blackHoleWeight.includes(playerName);
-  if (!hasApply) {
-    logSys("⚫ 未達800萬，不能申請");
-    return;
-  }
-  if (!hasWeight) {
-    logSys("⚫ 已申請，但未達1000萬，無權重");
-    return;
-  }
-  logSys("⚫ 符合資格，可進入黑洞");
-  loadPlanet(BLACK_HOLE_ID);
-}
 
-logSys("🔒 请输入用户名和密码登录游戏");
+  // 绑定回车登录
+  if (passwordInput) {
+    passwordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const username = usernameInput ? usernameInput.value : "";
+        const password = passwordInput.value;
+        login(username, password);
+      }
+    });
+  }
+
+  logSys("🔒 遊戲已加載，請輸入用戶名和密碼登入");
+});
+
+// 页面隐藏/关闭时自动保存
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && isGameStarted) {
+    saveCamera();
+    saveAll();
+  } else if (isGameStarted) {
+    loadCamera();
+  }
+});
+window.addEventListener("pagehide", () => {
+  if (isGameStarted) {
+    saveCamera();
+    saveAll();
+  }
+});
