@@ -1,809 +1,1283 @@
-// AENO V3.3 - 画面亮度修复 + 升级选项完整恢复版
-const AENO_VERSION = "V3.3-BRIGHT-UPGRADE";
-const SAVE_KEY_GLOBAL = "AENO_GLOBAL_SAVE";
-const SAVE_KEY_PLANET_PREFIX = "AENO_PLANET_SAVE_";
-const CAMERA_KEY = "AENO_CAMERA_STATE_V3";
-const MAX_OFFLINE_HOURS = 24;
-const GAME_YEARS_PER_REAL_SECOND = (10 / (24 * 3600));
+(() => {
+  "use strict";
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d", { alpha: true });
+  // =========================
+  // 基本設定
+  // =========================
+  const VERSION = "3.0.0";
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
 
-function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(window.innerWidth * dpr);
-  canvas.height = Math.floor(window.innerHeight * dpr);
-  canvas.style.width = window.innerWidth + "px";
-  canvas.style.height = window.innerHeight + "px";
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-}
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+  const bootScreen = document.getElementById("bootScreen");
 
-const ui = {
-  planetName: document.getElementById("planetName"),
-  gameYear: document.getElementById("gameYear"),
-  popCount: document.getElementById("popCount"),
-  coins: document.getElementById("coins"),
-  aeno: document.getElementById("aeno"),
-  wood: document.getElementById("wood"),
-  stone: document.getElementById("stone"),
-  iron: document.getElementById("iron"),
-  food: document.getElementById("food"),
-  factoryCount: document.getElementById("factoryCount"),
-  robotCount: document.getElementById("robotCount"),
-  sysLog: document.getElementById("sysLog"),
+  const statGold = document.getElementById("statGold");
+  const statAeno = document.getElementById("statAeno");
+  const statWood = document.getElementById("statWood");
+  const statStone = document.getElementById("statStone");
+  const statIron = document.getElementById("statIron");
+  const statFood = document.getElementById("statFood");
+  const statPop = document.getElementById("statPop");
+  const statTerritory = document.getElementById("statTerritory");
+  const statCivil = document.getElementById("statCivil");
+  const statBeast = document.getElementById("statBeast");
 
-  btnSave: document.getElementById("btnSave"),
-  btnBuildMode: document.getElementById("btnBuildMode"),
-  btnUpgradeMode: document.getElementById("btnUpgradeMode"),
-  btnAuto: document.getElementById("btnAuto"),
-  autoState: document.getElementById("autoState"),
-  btnAdSong: document.getElementById("btnAdSong"),
-  btnLoopSong: document.getElementById("btnLoopSong"),
-  loopState: document.getElementById("loopState"),
-  btnRobotSend: document.getElementById("btnRobotSend"),
-  btnExchange: document.getElementById("btnExchange"),
-  btnTech: document.getElementById("btnTech"),
-};
+  const sysLog = document.getElementById("sysLog");
 
-function logSys(msg) {
-  if (!ui.sysLog) return;
-  const t = new Date().toLocaleTimeString();
-  ui.sysLog.innerHTML = `<div>[${t}] ${msg}</div>` + ui.sysLog.innerHTML;
-}
+  const assistantTalkBtn = document.getElementById("assistantTalkBtn");
+  const chatBox = document.getElementById("chatBox");
+  const chatClose = document.getElementById("chatClose");
+  const chatSend = document.getElementById("chatSend");
+  const chatInput = document.getElementById("chatInput");
+  const chatLog = document.getElementById("chatLog");
 
-function mulberry32(seed) {
-  return function () {
-    seed |= 0;
-    seed = seed + 0x6D2B79F5 | 0;
-    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-    t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-function hashStringToSeed(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+  const btnSaveNow = document.getElementById("btnSaveNow");
+  const btnReset = document.getElementById("btnReset");
+
+  const btnExpand = document.getElementById("btnExpand");
+  const btnZoomReset = document.getElementById("btnZoomReset");
+  const btnAutoOn = document.getElementById("btnAutoOn");
+  const btnAutoOff = document.getElementById("btnAutoOff");
+
+  const btnPlayAd = document.getElementById("btnPlayAd");
+  const btnStopAd = document.getElementById("btnStopAd");
+  const adAudio = document.getElementById("adAudio");
+
+  const marketItem = document.getElementById("marketItem");
+  const marketQty = document.getElementById("marketQty");
+  const btnBuy = document.getElementById("btnBuy");
+  const btnSell = document.getElementById("btnSell");
+  const marketPriceHint = document.getElementById("marketPriceHint");
+
+  const panel = document.getElementById("mainPanel");
+  const panelHeader = document.getElementById("panelHeader");
+  const panelMinBtn = document.getElementById("panelMinBtn");
+  const panelHideBtn = document.getElementById("panelHideBtn");
+  const panelRestoreBtn = document.getElementById("panelRestoreBtn");
+
+  // =========================
+  // Canvas Resize
+  // =========================
+  function resize() {
+    canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
+    canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
   }
-  return h >>> 0;
-}
+  window.addEventListener("resize", resize);
+  resize();
 
-const PLANET_COUNT = 20;
-const BLACK_HOLE_ID = "black_hole_island";
-
-function generatePlanets() {
-  const arr = [];
-  for (let i = 1; i <= PLANET_COUNT; i++) {
-    arr.push({
-      id: "planet_" + i,
-      name: "星球 " + i,
-      seed: hashStringToSeed("AENO_PLANET_" + i),
-    });
+  // =========================
+  // 隨機工具（保密用）
+  // =========================
+  function xmur3(str) {
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function () {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return (h ^= h >>> 16) >>> 0;
+    };
   }
-  arr.push({
-    id: BLACK_HOLE_ID,
-    name: "黑洞 · 孤島（開發者領）",
-    seed: hashStringToSeed("AENO_BLACKHOLE"),
-    isDev: true
-  });
-  return arr;
-}
-const planets = generatePlanets();
 
-const MAP_W = 80;
-const MAP_H = 80;
-const TILE = 42;
+  function mulberry32(a) {
+    return function () {
+      let t = (a += 0x6D2B79F5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
 
-function defaultGlobalSave() {
-  return {
-    version: AENO_VERSION,
-    createdAt: Date.now(),
-    lastSeen: Date.now(),
-    currentPlanetId: "planet_1",
-    aeno: 0,
-    aenoFragments: 0,
-    loopSong: true,
-    autoBuild: true,
-    isDeveloper: true,
-  };
-}
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
 
-function defaultPlanetSave(planetId) {
-  return {
-    planetId,
-    gameYear: 0,
-    coins: 2000,
-    wood: 800,
-    stone: 800,
-    iron: 800,
-    food: 800,
-    pop: 4,
-    territoryRadius: 5,
-    territoryCenter: { x: 40, y: 40 },
-    buildings: [
-      { id: "b_house_1", type: "house", x: 40, y: 40, level: 1 },
-      { id: "b_house_2", type: "house", x: 41, y: 40, level: 1 }
-    ],
-    workers: [],
-    animals: [],
-    robots: [],
-    map: null,
-    beast: {
-      level: 1,
-      lastAttackYear: 0,
-      lootUnclaimed: 0
+  // =========================
+  // 地圖設定
+  // =========================
+  const MAP_W = 50;
+  const MAP_H = 50;
+
+  const TILE = 64;
+  const ISO_ANGLE = Math.PI / 6;
+  const COS = Math.cos(ISO_ANGLE);
+  const SIN = Math.sin(ISO_ANGLE);
+
+  let cameraX = 0;
+  let cameraY = 0;
+  let zoom = 1.0;
+
+  const ZOOM_MIN = 0.35;
+  const ZOOM_MAX = 2.2;
+
+  // =========================
+  // 遊戲資料
+  // =========================
+  const STORAGE_KEY = "AENO_V3_SAVE";
+
+  let game = null;
+
+  const DEFAULT_SAVE = () => ({
+    version: VERSION,
+    seed: "AENO-" + Math.floor(Math.random() * 99999999),
+    lastTick: Date.now(),
+
+    autoMode: true,
+
+    resources: {
+      gold: 800,
+      aeno: 0,
+      wood: 50,
+      stone: 20,
+      iron: 0,
+      food: 60
     },
-    lastSeen: Date.now(),
-    cameraX: 0,
-    cameraY: 0,
-    zoom: 1.1,
+
+    stats: {
+      population: 4,
+      territory: 9,
+      civil: 15,
+      wall: 0
+    },
+
+    buildings: {
+      house: 2,
+      farm: 1,
+      lumber: 1,
+      quarry: 0,
+      mine: 0,
+      factory: 0,
+      wall: 0,
+      robot: 0
+    },
+
+    tech: {
+      tools: 0,
+      agri: 0,
+      mining: 0,
+      robotics: 0,
+      economy: 0
+    },
+
+    ad: {
+      listeningSeconds: 0,
+      todayScore: 0
+    },
+
+    world: {
+      explored: [],
+      beastsKilled: 0,
+      lootPending: 0
+    },
+
+    market: {
+      wood: 5,
+      stone: 7,
+      iron: 15,
+      food: 4,
+      lastUpdate: Date.now()
+    },
+
+    buildQueue: []
+  });
+
+  function log(msg) {
+    const time = new Date().toLocaleTimeString();
+    sysLog.innerHTML = `<div>🕒 ${time} - ${msg}</div>` + sysLog.innerHTML;
+  }
+
+  // =========================
+  // 保存/讀取
+  // =========================
+  function saveGame() {
+    game.lastTick = Date.now();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
+    log("已保存遊戲");
+  }
+
+  function loadGame() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_SAVE();
+
+    try {
+      const data = JSON.parse(raw);
+      if (!data.resources || !data.stats) return DEFAULT_SAVE();
+      return data;
+    } catch {
+      return DEFAULT_SAVE();
+    }
+  }
+
+  // =========================
+  // 離線補算
+  // =========================
+  function offlineProgress() {
+    const now = Date.now();
+    const dt = Math.max(0, now - game.lastTick);
+    const seconds = Math.floor(dt / 1000);
+
+    if (seconds <= 2) return;
+
+    const maxSeconds = 3600 * 8;
+    const safeSec = Math.min(seconds, maxSeconds);
+
+    for (let i = 0; i < safeSec; i++) {
+      tickLogic(1, true);
+    }
+
+    log(`離線補算完成：${safeSec} 秒`);
+  }
+
+  // =========================
+  // 地圖 tile
+  // =========================
+  const TILE_TYPES = {
+    grass: 0,
+    forest: 1,
+    mountain: 2,
+    river: 3
   };
-}
 
-let globalSave = null;
-let planetSave = null;
+  let map = [];
 
-function saveGlobal() {
-  globalSave.lastSeen = Date.now();
-  localStorage.setItem(SAVE_KEY_GLOBAL, JSON.stringify(globalSave));
-}
+  function generateMap() {
+    const seedFn = xmur3(game.seed);
+    const rand = mulberry32(seedFn());
 
-function savePlanet() {
-  planetSave.lastSeen = Date.now();
-  localStorage.setItem(SAVE_KEY_PLANET_PREFIX + planetSave.planetId, JSON.stringify(planetSave));
-}
+    map = [];
+    for (let y = 0; y < MAP_H; y++) {
+      const row = [];
+      for (let x = 0; x < MAP_W; x++) {
+        let t = TILE_TYPES.grass;
 
-function saveAll() {
-  saveGlobal();
-  savePlanet();
-  logSys("✅ 已保存（全球 + 星球存檔）");
-}
+        const r = rand();
+        if (r < 0.18) t = TILE_TYPES.forest;
+        else if (r < 0.26) t = TILE_TYPES.mountain;
+        else if (r < 0.30) t = TILE_TYPES.river;
 
-function loadGlobal() {
-  const raw = localStorage.getItem(SAVE_KEY_GLOBAL);
-  if (!raw) {
-    globalSave = defaultGlobalSave();
-    saveGlobal();
-    return;
-  }
-  globalSave = JSON.parse(raw);
-  if (typeof globalSave.autoBuild !== "boolean") globalSave.autoBuild = true;
-  if (typeof globalSave.loopSong !== "boolean") globalSave.loopSong = true;
-  if (!globalSave.currentPlanetId) globalSave.currentPlanetId = "planet_1";
-  if (typeof globalSave.aeno !== "number") globalSave.aeno = 0;
-  if (typeof globalSave.aenoFragments !== "number") globalSave.aenoFragments = 0;
-  if (typeof globalSave.isDeveloper !== "boolean") globalSave.isDeveloper = true;
-}
-
-function loadPlanet(planetId) {
-  const raw = localStorage.getItem(SAVE_KEY_PLANET_PREFIX + planetId);
-  if (!raw) {
-    planetSave = defaultPlanetSave(planetId);
-    initPlanetUnits();
-    initPlanetMap();
-    savePlanet();
-    return;
-  }
-  planetSave = JSON.parse(raw);
-  if (!planetSave.workers) planetSave.workers = [];
-  if (!planetSave.animals) planetSave.animals = [];
-  if (!planetSave.buildings) planetSave.buildings = [];
-  if (!planetSave.beast) planetSave.beast = defaultPlanetSave(planetId).beast;
-  if (!planetSave.territoryCenter) planetSave.territoryCenter = { x: 40, y: 40 };
-  if (!planetSave.territoryRadius) planetSave.territoryRadius = 5;
-  if (!planetSave.map) planetSave.map = null;
-  if (planetSave.workers.length === 0) initPlanetUnits();
-  if (!planetSave.map) initPlanetMap();
-}
-
-function initPlanetUnits() {
-  planetSave.workers = [];
-  for (let i = 0; i < 4; i++) {
-    planetSave.workers.push({
-      id: "w" + i,
-      x: planetSave.territoryCenter.x + (i % 2),
-      y: planetSave.territoryCenter.y + Math.floor(i / 2),
-    });
-  }
-  planetSave.animals = [];
-  for (let i = 0; i < 10; i++) {
-    planetSave.animals.push({
-      id: "a" + i,
-      x: Math.floor(Math.random() * MAP_W),
-      y: Math.floor(Math.random() * MAP_H),
-      t: 0
-    });
-  }
-}
-
-function initPlanetMap() {
-  const planet = planets.find(p => p.id === planetSave.planetId);
-  const rng = mulberry32(planet ? planet.seed : 12345);
-  const tiles = [];
-  for (let y = 0; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      const n = rng();
-      let type = "grass";
-      if (planetSave.planetId === BLACK_HOLE_ID) {
-        if (n < 0.02) type = "water";
-        else if (n < 0.20) type = "mountain";
-        else if (n < 0.35) type = "forest";
-        else if (n < 0.50) type = "stone";
-        else if (n < 0.62) type = "iron";
-        else type = "grass";
-      } else {
-        if (n < 0.07) type = "water";
-        else if (n < 0.14) type = "mountain";
-        else if (n < 0.30) type = "forest";
-        else if (n < 0.38) type = "stone";
-        else if (n < 0.46) type = "iron";
+        row.push(t);
       }
-      tiles.push({ x, y, type });
+      map.push(row);
     }
-  }
-  const cx = planetSave.territoryCenter.x;
-  const cy = planetSave.territoryCenter.y;
-  function setTile(x, y, type) {
-    if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return;
-    tiles[y * MAP_W + x].type = type;
-  }
-  setTile(cx + 2, cy, "forest");
-  setTile(cx - 2, cy, "forest");
-  setTile(cx, cy + 2, "stone");
-  setTile(cx, cy - 2, "iron");
-  planetSave.map = { tiles };
-}
 
-// 修复领土蓝色问题：强制所有地块都在领土内
-function isInTerritory(x, y) {
-  return true;
-  // 旧代码：
-  // const dx = x - planetSave.territoryCenter.x;
-  // const dy = y - planetSave.territoryCenter.y;
-  // return Math.sqrt(dx * dx + dy * dy) <= planetSave.territoryRadius;
-}
-
-const BUILD_TYPES = {
-  house: { name: "房屋", cost: { wood: 30, stone: 10, coins: 80 }, baseIncome: 3 },
-  lumber: { name: "伐木場", cost: { wood: 10, stone: 5, coins: 60 }, baseIncome: 0 },
-  quarry: { name: "採石場", cost: { wood: 15, stone: 10, coins: 90 }, baseIncome: 0 },
-  mine: { name: "礦場", cost: { wood: 20, stone: 15, coins: 110 }, baseIncome: 0 },
-  farm: { name: "農田", cost: { wood: 20, stone: 5, coins: 70 }, baseIncome: 1 },
-  factory: { name: "工廠", cost: { wood: 80, stone: 60, iron: 40, coins: 350 }, baseIncome: 8 },
-  wall: { name: "城牆", cost: { stone: 80, coins: 200 }, baseIncome: 0 },
-  market: { name: "市場", cost: { wood: 50, stone: 30, coins: 200 }, baseIncome: 5 }
-};
-
-function canPay(cost) {
-  if (cost.coins && planetSave.coins < cost.coins) return false;
-  if (cost.wood && planetSave.wood < cost.wood) return false;
-  if (cost.stone && planetSave.stone < cost.stone) return false;
-  if (cost.iron && planetSave.iron < cost.iron) return false;
-  if (cost.food && planetSave.food < cost.food) return false;
-  return true;
-}
-
-function payCost(cost) {
-  if (cost.coins) planetSave.coins -= cost.coins;
-  if (cost.wood) planetSave.wood -= cost.wood;
-  if (cost.stone) planetSave.stone -= cost.stone;
-  if (cost.iron) planetSave.iron -= cost.iron;
-  if (cost.food) planetSave.food -= cost.food;
-}
-
-const AUTO_BUILD = {
-  RESERVE_RATIO: 0.5,
-  PRIORITY: ["house", "lumber", "quarry", "mine", "farm", "factory", "market"],
-  MAX_TRIES_PER_TICK: 3,
-  AUTO_UPGRADE: true,
-  BUILD_SPACING: 1
-};
-
-function canAutoPay(cost) {
-  const maxCoins = Math.floor(planetSave.coins * AUTO_BUILD.RESERVE_RATIO);
-  const maxWood = Math.floor(planetSave.wood * AUTO_BUILD.RESERVE_RATIO);
-  const maxStone = Math.floor(planetSave.stone * AUTO_BUILD.RESERVE_RATIO);
-  const maxIron = Math.floor(planetSave.iron * AUTO_BUILD.RESERVE_RATIO);
-  const maxFood = Math.floor(planetSave.food * AUTO_BUILD.RESERVE_RATIO);
-  if (cost.coins && cost.coins > maxCoins) return false;
-  if (cost.wood && cost.wood > maxWood) return false;
-  if (cost.stone && cost.stone > maxStone) return false;
-  if (cost.iron && cost.iron > maxIron) return false;
-  if (cost.food && cost.food > maxFood) return false;
-  return true;
-}
-
-function findEmptyTileInTerritory() {
-  const cx = planetSave.territoryCenter.x;
-  const cy = planetSave.territoryCenter.y;
-  const r = planetSave.territoryRadius;
-  for (let d = 1; d <= r; d++) {
-    for (let dx = -d; dx <= d; dx++) {
-      for (let dy = -d; dy <= d; dy++) {
-        if (Math.abs(dx) !== d && Math.abs(dy) !== d) continue;
-        const x = cx + dx;
-        const y = cy + dy;
-        if (!isInTerritory(x, y)) continue;
-        if (planetSave.buildings.some(b => b.x === x && b.y === y)) continue;
-        let tooClose = false;
-        for (let ox = -1; ox <= 1; ox++) {
-          for (let oy = -1; oy <= 1; oy++) {
-            if (ox === 0 && oy === 0) continue;
-            if (planetSave.buildings.some(b => b.x === x+ox && b.y === y+oy)) {
-              tooClose = true;
-              break;
-            }
-          }
-          if (tooClose) break;
-        }
-        if (!tooClose) return { x, y };
+    // 保證起點附近一定有森林
+    for (let y = 20; y < 28; y++) {
+      for (let x = 20; x < 28; x++) {
+        if (Math.random() < 0.45) map[y][x] = TILE_TYPES.forest;
       }
     }
-  }
-  return null;
-}
 
-// 修复升级到Lv10的逻辑
-function autoBuildOne() {
-  if (!globalSave.autoBuild) return false;
-  if (AUTO_BUILD.AUTO_UPGRADE) {
-    const upgradable = planetSave.buildings
-      .filter(b => b.level < 10)
-      .sort((a, b) => a.level - b.level);
-    for (const b of upgradable) {
-      const def = BUILD_TYPES[b.type];
-      const lv = b.level;
-      const cost = {
-        coins: Math.floor((def.cost.coins || 0) * (0.8 + lv * 0.5)),
-        wood: Math.floor((def.cost.wood || 0) * (0.7 + lv * 0.35)),
-        stone: Math.floor((def.cost.stone || 0) * (0.7 + lv * 0.35)),
-        iron: Math.floor((def.cost.iron || 0) * (0.7 + lv * 0.35)),
-      };
-      if (canAutoPay(cost)) {
-        payCost(cost);
-        b.level++;
-        logSys(`🤖 AI 升級 ${def.name} → Lv${b.level}`);
-        return true;
+    // 保證中心有草地可建
+    for (let y = 22; y < 26; y++) {
+      for (let x = 22; x < 26; x++) {
+        map[y][x] = TILE_TYPES.grass;
       }
     }
+
+    log("世界生成完成（森林/山脈/河流已存在）");
   }
-  for (const type of AUTO_BUILD.PRIORITY) {
-    const def = BUILD_TYPES[type];
-    if (!def) continue;
-    if (!canAutoPay(def.cost)) continue;
-    const tile = findEmptyTileInTerritory();
-    if (!tile) continue;
-    payCost(def.cost);
-    planetSave.buildings.push({
-      id: "auto_" + type + "_" + Date.now(),
-      type,
-      x: tile.x,
-      y: tile.y,
-      level: 1
+
+  // =========================
+  // 建築位置（中心城市）
+  // =========================
+  const townCenter = { x: 24, y: 24 };
+
+  const placedBuildings = [];
+
+  function rebuildPlacedBuildings() {
+    placedBuildings.length = 0;
+
+    const add = (type, count) => {
+      for (let i = 0; i < count; i++) {
+        placedBuildings.push({
+          type,
+          x: townCenter.x + ((i % 3) - 1),
+          y: townCenter.y + (Math.floor(i / 3) - 1)
+        });
+      }
+    };
+
+    add("house", game.buildings.house);
+    add("farm", game.buildings.farm);
+    add("lumber", game.buildings.lumber);
+    add("quarry", game.buildings.quarry);
+    add("mine", game.buildings.mine);
+    add("factory", game.buildings.factory);
+    add("wall", game.buildings.wall);
+    add("robot", game.buildings.robot);
+  }
+
+  // =========================
+  // ISO座標
+  // =========================
+  function gridToScreen(gx, gy) {
+    const x = (gx - gy) * (TILE * COS);
+    const y = (gx + gy) * (TILE * SIN);
+    return {
+      x: x * zoom + cameraX,
+      y: y * zoom + cameraY
+    };
+  }
+
+  // =========================
+  // 繪圖：tile
+  // =========================
+  function drawTile(gx, gy, type) {
+    const p = gridToScreen(gx, gy);
+    const cx = p.x;
+    const cy = p.y;
+
+    const w = TILE * COS * zoom;
+    const h = TILE * SIN * zoom;
+
+    let fill = "#dcfce7";
+    let stroke = "#bbf7d0";
+
+    if (type === TILE_TYPES.forest) {
+      fill = "#bbf7d0";
+      stroke = "#86efac";
+    }
+    if (type === TILE_TYPES.mountain) {
+      fill = "#e2e8f0";
+      stroke = "#cbd5e1";
+    }
+    if (type === TILE_TYPES.river) {
+      fill = "#bfdbfe";
+      stroke = "#93c5fd";
+    }
+
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2 * zoom;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + w, cy + h);
+    ctx.lineTo(cx, cy + 2 * h);
+    ctx.lineTo(cx - w, cy + h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // tile decorations
+    if (type === TILE_TYPES.forest) {
+      drawTree(cx, cy + h);
+    } else if (type === TILE_TYPES.mountain) {
+      drawMountain(cx, cy + h);
+    } else if (type === TILE_TYPES.river) {
+      drawWater(cx, cy + h);
+    }
+  }
+
+  function drawTree(x, y) {
+    const size = 10 * zoom;
+    ctx.fillStyle = "#92400e";
+    ctx.fillRect(x - size / 2, y + 10 * zoom, size, 18 * zoom);
+
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.arc(x, y, 18 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
+    ctx.beginPath();
+    ctx.arc(x - 6 * zoom, y - 8 * zoom, 8 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawMountain(x, y) {
+    ctx.fillStyle = "#94a3b8";
+    ctx.beginPath();
+    ctx.moveTo(x, y - 18 * zoom);
+    ctx.lineTo(x - 22 * zoom, y + 18 * zoom);
+    ctx.lineTo(x + 22 * zoom, y + 18 * zoom);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawWater(x, y) {
+    ctx.fillStyle = "rgba(59,130,246,0.6)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + 6 * zoom, 18 * zoom, 10 * zoom, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // =========================
+  // 建築繪圖（卡通版）
+  // =========================
+  function drawBuilding(b) {
+    const p = gridToScreen(b.x, b.y);
+    const x = p.x;
+    const y = p.y + 10 * zoom;
+
+    if (b.type === "house") drawHouse(x, y);
+    if (b.type === "farm") drawFarm(x, y);
+    if (b.type === "lumber") drawLumber(x, y);
+    if (b.type === "quarry") drawQuarry(x, y);
+    if (b.type === "mine") drawMine(x, y);
+    if (b.type === "factory") drawFactory(x, y);
+    if (b.type === "wall") drawWall(x, y);
+    if (b.type === "robot") drawRobotCenter(x, y);
+  }
+
+  function shadow(x, y, w, h) {
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(x, y, w * zoom, h * zoom, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawHouse(x, y) {
+    shadow(x, y + 42 * zoom, 42, 16);
+
+    const bodyGrad = ctx.createLinearGradient(x, y, x, y + 60 * zoom);
+    bodyGrad.addColorStop(0, "#fef3c7");
+    bodyGrad.addColorStop(1, "#fde68a");
+
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.roundRect(x - 38 * zoom, y, 76 * zoom, 50 * zoom, 10 * zoom);
+    ctx.fill();
+
+    const roofGrad = ctx.createLinearGradient(x, y - 40 * zoom, x, y);
+    roofGrad.addColorStop(0, "#fbbf24");
+    roofGrad.addColorStop(1, "#f59e0b");
+
+    ctx.fillStyle = roofGrad;
+    ctx.beginPath();
+    ctx.moveTo(x - 46 * zoom, y);
+    ctx.quadraticCurveTo(x, y - 46 * zoom, x + 46 * zoom, y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#92400e";
+    ctx.beginPath();
+    ctx.roundRect(x - 10 * zoom, y + 24 * zoom, 20 * zoom, 26 * zoom, 6 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#bfdbfe";
+    ctx.beginPath();
+    ctx.arc(x - 18 * zoom, y + 18 * zoom, 8 * zoom, 0, Math.PI * 2);
+    ctx.arc(x + 18 * zoom, y + 18 * zoom, 8 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawFarm(x, y) {
+    shadow(x, y + 42 * zoom, 45, 16);
+
+    ctx.fillStyle = "#fef9c3";
+    ctx.beginPath();
+    ctx.roundRect(x - 44 * zoom, y + 18 * zoom, 88 * zoom, 38 * zoom, 12 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#a16207";
+    for (let i = -3; i <= 3; i++) {
+      ctx.fillRect(x + i * 12 * zoom, y + 22 * zoom, 4 * zoom, 32 * zoom);
+    }
+
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.arc(x - 28 * zoom, y + 12 * zoom, 12 * zoom, 0, Math.PI * 2);
+    ctx.arc(x + 28 * zoom, y + 12 * zoom, 12 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawLumber(x, y) {
+    shadow(x, y + 42 * zoom, 45, 16);
+
+    ctx.fillStyle = "#fde68a";
+    ctx.beginPath();
+    ctx.roundRect(x - 40 * zoom, y + 10 * zoom, 80 * zoom, 46 * zoom, 14 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#92400e";
+    ctx.fillRect(x - 30 * zoom, y + 30 * zoom, 60 * zoom, 10 * zoom);
+
+    ctx.fillStyle = "#22c55e";
+    ctx.beginPath();
+    ctx.arc(x + 28 * zoom, y + 10 * zoom, 14 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = `${14 * zoom}px system-ui`;
+    ctx.fillText("🪓", x - 10 * zoom, y + 34 * zoom);
+  }
+
+  function drawQuarry(x, y) {
+    shadow(x, y + 42 * zoom, 45, 16);
+
+    ctx.fillStyle = "#e2e8f0";
+    ctx.beginPath();
+    ctx.roundRect(x - 42 * zoom, y + 10 * zoom, 84 * zoom, 46 * zoom, 14 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.beginPath();
+    ctx.arc(x - 18 * zoom, y + 30 * zoom, 12 * zoom, 0, Math.PI * 2);
+    ctx.arc(x + 18 * zoom, y + 28 * zoom, 10 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawMine(x, y) {
+    shadow(x, y + 42 * zoom, 45, 16);
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.beginPath();
+    ctx.roundRect(x - 42 * zoom, y + 12 * zoom, 84 * zoom, 44 * zoom, 14 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#475569";
+    ctx.beginPath();
+    ctx.arc(x, y + 34 * zoom, 16 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fbbf24";
+    ctx.beginPath();
+    ctx.arc(x + 18 * zoom, y + 20 * zoom, 6 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawFactory(x, y) {
+    shadow(x, y + 42 * zoom, 45, 16);
+
+    ctx.fillStyle = "#dbeafe";
+    ctx.beginPath();
+    ctx.roundRect(x - 44 * zoom, y + 10 * zoom, 88 * zoom, 46 * zoom, 14 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#60a5fa";
+    ctx.fillRect(x - 34 * zoom, y + 18 * zoom, 18 * zoom, 38 * zoom);
+    ctx.fillRect(x - 10 * zoom, y + 26 * zoom, 18 * zoom, 30 * zoom);
+    ctx.fillRect(x + 14 * zoom, y + 20 * zoom, 18 * zoom, 36 * zoom);
+
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = `${14 * zoom}px system-ui`;
+    ctx.fillText("AD", x + 22 * zoom, y + 20 * zoom);
+  }
+
+  function drawWall(x, y) {
+    shadow(x, y + 42 * zoom, 50, 16);
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.beginPath();
+    ctx.roundRect(x - 50 * zoom, y + 20 * zoom, 100 * zoom, 30 * zoom, 12 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#94a3b8";
+    for (let i = -4; i <= 4; i++) {
+      ctx.fillRect(x + i * 12 * zoom, y + 20 * zoom, 4 * zoom, 30 * zoom);
+    }
+  }
+
+  function drawRobotCenter(x, y) {
+    shadow(x, y + 42 * zoom, 45, 16);
+
+    ctx.fillStyle = "#fef3c7";
+    ctx.beginPath();
+    ctx.roundRect(x - 42 * zoom, y + 10 * zoom, 84 * zoom, 46 * zoom, 14 * zoom);
+    ctx.fill();
+
+    ctx.fillStyle = "#0ea5e9";
+    ctx.beginPath();
+    ctx.arc(x, y + 30 * zoom, 18 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(x - 8 * zoom, y + 26 * zoom, 4 * zoom, 0, Math.PI * 2);
+    ctx.arc(x + 8 * zoom, y + 26 * zoom, 4 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = `${14 * zoom}px system-ui`;
+    ctx.fillText("🤖", x - 10 * zoom, y + 50 * zoom);
+  }
+
+  // =========================
+  // UI Tabs
+  // =========================
+  const tabBtns = document.querySelectorAll(".tabBtn");
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      document.querySelectorAll(".tabPage").forEach((p) => p.classList.remove("active"));
+      document.getElementById(btn.dataset.tab).classList.add("active");
     });
-    logSys(`🤖 AI 建成 ${def.name} Lv1`);
+  });
+
+  // =========================
+  // Panel Drag
+  // =========================
+  let dragPanel = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  panelHeader.addEventListener("pointerdown", (e) => {
+    dragPanel = true;
+    dragOffsetX = e.clientX - panel.offsetLeft;
+    dragOffsetY = e.clientY - panel.offsetTop;
+    panelHeader.setPointerCapture(e.pointerId);
+  });
+
+  panelHeader.addEventListener("pointermove", (e) => {
+    if (!dragPanel) return;
+    const nx = e.clientX - dragOffsetX;
+    const ny = e.clientY - dragOffsetY;
+
+    panel.style.left = clamp(nx, 5, window.innerWidth - panel.offsetWidth - 5) + "px";
+    panel.style.top = clamp(ny, 5, window.innerHeight - panel.offsetHeight - 5) + "px";
+    panel.style.right = "auto";
+  });
+
+  panelHeader.addEventListener("pointerup", () => {
+    dragPanel = false;
+  });
+
+  panelMinBtn.addEventListener("click", () => {
+    panel.style.height = "120px";
+  });
+
+  panelHideBtn.addEventListener("click", () => {
+    panel.classList.add("hidden");
+    panelRestoreBtn.classList.remove("hidden");
+  });
+
+  panelRestoreBtn.addEventListener("click", () => {
+    panel.classList.remove("hidden");
+    panelRestoreBtn.classList.add("hidden");
+    panel.style.height = "560px";
+  });
+
+  // =========================
+  // Chat UI
+  // =========================
+  function addChat(who, msg) {
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${who}：</b>${msg}`;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  assistantTalkBtn.addEventListener("click", () => {
+    chatBox.classList.toggle("hidden");
+    if (!chatBox.classList.contains("hidden")) {
+      addChat("助手", "我已經準備好幫你自動收資源、起建築、升級。你可以輸入指令。");
+    }
+  });
+
+  chatClose.addEventListener("click", () => {
+    chatBox.classList.add("hidden");
+  });
+
+  chatSend.addEventListener("click", () => {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    chatInput.value = "";
+    addChat("玩家", text);
+    handleCommand(text);
+  });
+
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      chatSend.click();
+    }
+  });
+
+  function handleCommand(text) {
+    const t = text.toLowerCase();
+
+    if (t.includes("停止") || t.includes("off")) {
+      game.autoMode = false;
+      addChat("助手", "收到！已停止自動建築/升級，但資源仍會自動收集。");
+      return;
+    }
+
+    if (t.includes("自動") || t.includes("on")) {
+      game.autoMode = true;
+      addChat("助手", "已啟動自動模式，我會幫你安排建築與升級。");
+      return;
+    }
+
+    if (t.includes("收集")) {
+      addChat("助手", "我已經自動收集資源中（每秒）。");
+      return;
+    }
+
+    if (t.includes("建造") || t.includes("建築")) {
+      game.buildQueue.push({ type: "house", t: Date.now() });
+      addChat("助手", "我已加入建築隊列：房屋");
+      return;
+    }
+
+    if (t.includes("升級")) {
+      addChat("助手", "升級系統已開啟（自動模式會自己升級）。");
+      return;
+    }
+
+    if (t.includes("巡邏")) {
+      addChat("助手", "巡邏中…若文明度滿100%會開始獸潮防守。");
+      return;
+    }
+
+    addChat("助手", "我聽唔明，但你可以試：建造 / 升級 / 收集 / 巡邏 / 停止自動");
+  }
+
+  // =========================
+  // 建築按鈕
+  // =========================
+  document.querySelectorAll(".buildBtn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const type = btn.dataset.build;
+      game.buildQueue.push({ type, t: Date.now() });
+      log(`已排程建築：${type}`);
+    });
+  });
+
+  // =========================
+  // Tech Buttons
+  // =========================
+  document.querySelectorAll(".techBtn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tech = btn.dataset.tech;
+      const cost = 200 + game.tech[tech] * 250;
+
+      if (game.resources.gold < cost) {
+        log("金幣不足，無法研究科技");
+        return;
+      }
+
+      game.resources.gold -= cost;
+      game.tech[tech] += 1;
+      log(`科技升級成功：${tech} Lv.${game.tech[tech]}`);
+    });
+  });
+
+  // =========================
+  // Market
+  // =========================
+  function updateMarketPrices() {
+    const now = Date.now();
+    if (now - game.market.lastUpdate < 60000) return;
+
+    const seedFn = xmur3(game.seed + now);
+    const rand = mulberry32(seedFn());
+
+    ["wood", "stone", "iron", "food"].forEach((k) => {
+      const base = game.market[k];
+      const delta = (rand() - 0.5) * 2;
+      game.market[k] = Math.max(1, Math.round(base + delta));
+    });
+
+    game.market.lastUpdate = now;
+  }
+
+  function refreshMarketHint() {
+    marketPriceHint.textContent =
+      `木:${game.market.wood} 金 | 石:${game.market.stone} 金 | 鐵:${game.market.iron} 金 | 食:${game.market.food} 金`;
+  }
+
+  btnBuy.addEventListener("click", () => {
+    const item = marketItem.value;
+    const qty = Math.max(1, Math.floor(Number(marketQty.value || 1)));
+    const price = game.market[item] * qty;
+
+    if (game.resources.gold < price) {
+      log("金幣不足，買入失敗");
+      return;
+    }
+
+    game.resources.gold -= price;
+    game.resources[item] += qty;
+    log(`買入成功：${item} x${qty}`);
+  });
+
+  btnSell.addEventListener("click", () => {
+    const item = marketItem.value;
+    const qty = Math.max(1, Math.floor(Number(marketQty.value || 1)));
+    if (game.resources[item] < qty) {
+      log("資源不足，賣出失敗");
+      return;
+    }
+
+    const price = game.market[item] * qty;
+    game.resources[item] -= qty;
+    game.resources.gold += price;
+    log(`賣出成功：${item} x${qty}`);
+  });
+
+  // =========================
+  // Ad music (測試音樂)
+  // =========================
+  let adPlaying = false;
+  let adTimer = null;
+
+  function startAd() {
+    if (adPlaying) return;
+    adPlaying = true;
+
+    // 測試音源（可換成廣告商URL）
+    adAudio.src = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_7f7b2fbe11.mp3?filename=future-bass-beat-117858.mp3";
+    adAudio.volume = 0.55;
+
+    adAudio.play().catch(() => {
+      log("瀏覽器禁止自動播放，請再按一次播放");
+    });
+
+    log("開始播放廣告歌曲（AENO算法開始計算）");
+
+    if (adTimer) clearInterval(adTimer);
+    adTimer = setInterval(() => {
+      game.ad.listeningSeconds += 1;
+    }, 1000);
+  }
+
+  function stopAd() {
+    adPlaying = false;
+    adAudio.pause();
+    if (adTimer) clearInterval(adTimer);
+    adTimer = null;
+    log("已停止廣告歌曲");
+  }
+
+  btnPlayAd.addEventListener("click", startAd);
+  btnStopAd.addEventListener("click", stopAd);
+
+  // =========================
+  // Zoom & Expand
+  // =========================
+  btnZoomReset.addEventListener("click", () => {
+    zoom = 1.0;
+    cameraX = canvas.width / 2;
+    cameraY = 120;
+  });
+
+  btnExpand.addEventListener("click", () => {
+    const cost = Math.floor(250 + game.stats.territory * 18);
+
+    if (game.resources.gold < cost) {
+      log("金幣不足，無法擴土");
+      return;
+    }
+
+    game.resources.gold -= cost;
+    game.stats.territory += 2;
+    game.stats.civil += 1;
+
+    log(`領土擴大成功 (+2)，花費 ${cost} 金`);
+  });
+
+  btnAutoOn.addEventListener("click", () => {
+    game.autoMode = true;
+    log("自動模式 ON");
+  });
+
+  btnAutoOff.addEventListener("click", () => {
+    game.autoMode = false;
+    log("自動模式 OFF（資源仍自動收集）");
+  });
+
+  // =========================
+  // Touch Zoom (Pinch)
+  // =========================
+  let touchMode = false;
+  let lastDist = 0;
+
+  canvas.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      touchMode = true;
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (e) => {
+    if (!touchMode) return;
+    if (e.touches.length !== 2) return;
+
+    e.preventDefault();
+
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+
+    const diff = dist - lastDist;
+    lastDist = dist;
+
+    zoom += diff * 0.002;
+    zoom = clamp(zoom, ZOOM_MIN, ZOOM_MAX);
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", () => {
+    touchMode = false;
+  });
+
+  // =========================
+  // 滑動地圖（拖動）
+  // =========================
+  let draggingMap = false;
+  let lastPX = 0;
+  let lastPY = 0;
+
+  canvas.addEventListener("pointerdown", (e) => {
+    draggingMap = true;
+    lastPX = e.clientX;
+    lastPY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener("pointermove", (e) => {
+    if (!draggingMap) return;
+    const dx = e.clientX - lastPX;
+    const dy = e.clientY - lastPY;
+    lastPX = e.clientX;
+    lastPY = e.clientY;
+
+    cameraX += dx * devicePixelRatio;
+    cameraY += dy * devicePixelRatio;
+  });
+
+  canvas.addEventListener("pointerup", () => {
+    draggingMap = false;
+  });
+
+  // =========================
+  // AENO 算法（已隱藏映射）
+  // =========================
+  function secretAenoCore() {
+    // 不寫死規則
+    const now = Date.now();
+    const mix = game.seed + "|" + game.ad.listeningSeconds + "|" + game.stats.population + "|" + game.stats.civil + "|" + now;
+
+    const seedFn = xmur3(mix);
+    const rand = mulberry32(seedFn());
+
+    // 成本因素（文明/人口/建築維護）
+    const maintenance = (game.stats.population * 0.00003) + (Object.values(game.buildings).reduce((a,b)=>a+b,0) * 0.00002);
+
+    // 學習因素（科技等級影響）
+    const learning = (game.tech.tools + game.tech.agri + game.tech.mining + game.tech.robotics + game.tech.economy) * 0.00004;
+
+    // 廣告聽歌因素（每秒加權，但含salt）
+    const adFactor = Math.min(1.0, game.ad.listeningSeconds / 120) * (0.00018 + learning);
+
+    // 野獸碎片因素
+    const beastFactor = (game.world.beastsKilled * 0.000002);
+
+    // 隨機salt（不可讀）
+    const salt = (rand() * 0.00005);
+
+    // 結果（極細增量）
+    let aenoDelta = adFactor + beastFactor + salt - maintenance;
+
+    if (aenoDelta < 0) aenoDelta = 0;
+
+    return aenoDelta;
+  }
+
+  // =========================
+  // tick：每秒資源/自動建築/獸潮
+  // =========================
+  function tickLogic(dtSec = 1, silent = false) {
+    updateMarketPrices();
+
+    // 食物產出
+    const farmBoost = 1 + game.tech.agri * 0.08;
+    game.resources.food += game.buildings.farm * 0.12 * farmBoost * dtSec;
+
+    // 木材產出（伐木場 + 森林存在加成）
+    const forestBoost = 1.0;
+    const lumberBoost = 1 + game.tech.tools * 0.06;
+    game.resources.wood += game.buildings.lumber * 0.14 * forestBoost * lumberBoost * dtSec;
+
+    // 石頭
+    const quarryBoost = 1 + game.tech.mining * 0.07;
+    game.resources.stone += game.buildings.quarry * 0.10 * quarryBoost * dtSec;
+
+    // 鐵礦
+    game.resources.iron += game.buildings.mine * 0.06 * quarryBoost * dtSec;
+
+    // 金幣（人口工作 + 工廠）
+    const ecoBoost = 1 + game.tech.economy * 0.08;
+    game.resources.gold += (game.stats.population * 0.04 + game.buildings.factory * 0.18) * ecoBoost * dtSec;
+
+    // AENO 增量（隱藏算法）
+    const aenoDelta = secretAenoCore() * dtSec;
+    game.resources.aeno += aenoDelta;
+
+    // 文明度上升
+    const civilUp = (game.buildings.house * 0.0008 + game.buildings.factory * 0.0012) * dtSec;
+    game.stats.civil = clamp(game.stats.civil + civilUp, 0, 100);
+
+    // 人口增長（有食物才增）
+    if (game.resources.food > game.stats.population * 4) {
+      if (Math.random() < 0.002 * dtSec) {
+        game.stats.population += 1;
+        if (!silent) log("人口增加 +1");
+      }
+    }
+
+    // 自動建築（助手核心）
+    if (game.autoMode) {
+      autoAssistantBuild(dtSec, silent);
+    }
+
+    // 獸潮（文明100% 才開始）
+    if (game.stats.civil >= 100) {
+      if (Math.random() < 0.0025 * dtSec) {
+        const loot = Math.floor(30 + Math.random() * 80);
+        game.world.beastsKilled += 1;
+        game.world.lootPending += loot;
+
+        if (!silent) log(`⚔️ 獸潮來襲！擊退成功，掉落碎片 +${loot}`);
+      }
+    }
+
+    // 自動收取戰利品
+    if (game.world.lootPending > 0) {
+      const take = Math.min(game.world.lootPending, 4);
+      game.world.lootPending -= take;
+      game.resources.gold += take * 0.6;
+    }
+
+    // 修正資源下限
+    Object.keys(game.resources).forEach((k) => {
+      if (game.resources[k] < 0) game.resources[k] = 0;
+    });
+  }
+
+  function autoAssistantBuild(dtSec, silent) {
+    // 先確保有農田
+    if (game.buildings.farm < 1) {
+      tryBuild("farm", silent);
+      return;
+    }
+
+    // 確保有伐木場（避免木材不足）
+    if (game.buildings.lumber < 1) {
+      tryBuild("lumber", silent);
+      return;
+    }
+
+    // 人口越多需要房屋
+    if (game.buildings.house < Math.ceil(game.stats.population / 2)) {
+      tryBuild("house", silent);
+      return;
+    }
+
+    // 逐步開礦
+    if (game.buildings.quarry < 1 && game.stats.territory >= 9) {
+      tryBuild("quarry", silent);
+      return;
+    }
+
+    if (game.buildings.mine < 1 && game.buildings.quarry >= 1) {
+      tryBuild("mine", silent);
+      return;
+    }
+
+    // 工廠
+    if (game.buildings.factory < 1 && game.buildings.mine >= 1) {
+      tryBuild("factory", silent);
+      return;
+    }
+
+    // 城牆（文明度越高越需要）
+    if (game.buildings.wall < 1 && game.stats.civil > 60) {
+      tryBuild("wall", silent);
+      return;
+    }
+
+    // 機器人中心（後期）
+    if (game.buildings.robot < 1 && game.tech.robotics >= 1) {
+      tryBuild("robot", silent);
+      return;
+    }
+
+    // 自動擴土（用金幣）
+    if (game.resources.gold > 1000 && Math.random() < 0.002 * dtSec) {
+      game.resources.gold -= 250;
+      game.stats.territory += 1;
+      if (!silent) log("🏞️ 助手自動擴大領土 +1");
+    }
+
+    // 處理玩家排程建築
+    if (game.buildQueue.length > 0) {
+      const job = game.buildQueue.shift();
+      tryBuild(job.type, silent);
+    }
+  }
+
+  function tryBuild(type, silent) {
+    const cost = getBuildCost(type);
+
+    if (
+      game.resources.gold < cost.gold ||
+      game.resources.wood < cost.wood ||
+      game.resources.stone < cost.stone ||
+      game.resources.iron < cost.iron ||
+      game.resources.food < cost.food
+    ) {
+      if (!silent) log(`資源不足：無法建造 ${type}`);
+      return false;
+    }
+
+    game.resources.gold -= cost.gold;
+    game.resources.wood -= cost.wood;
+    game.resources.stone -= cost.stone;
+    game.resources.iron -= cost.iron;
+    game.resources.food -= cost.food;
+
+    game.buildings[type] += 1;
+    game.stats.civil += 0.8;
+
+    rebuildPlacedBuildings();
+
+    if (!silent) log(`🏗️ 建造成功：${type} +1`);
     return true;
   }
-  return false;
-}
 
-function runAutoBuild() {
-  if (!globalSave.autoBuild) return;
-  let built = 0;
-  while (built < AUTO_BUILD.MAX_TRIES_PER_TICK && autoBuildOne()) {
-    built++;
-  }
-}
+  function getBuildCost(type) {
+    const base = {
+      house: { gold: 120, wood: 35, stone: 10, iron: 0, food: 10 },
+      farm: { gold: 100, wood: 20, stone: 0, iron: 0, food: 0 },
+      lumber: { gold: 120, wood: 10, stone: 10, iron: 0, food: 0 },
+      quarry: { gold: 180, wood: 10, stone: 20, iron: 0, food: 0 },
+      mine: { gold: 240, wood: 20, stone: 30, iron: 0, food: 0 },
+      factory: { gold: 350, wood: 40, stone: 50, iron: 10, food: 0 },
+      wall: { gold: 300, wood: 10, stone: 80, iron: 10, food: 0 },
+      robot: { gold: 600, wood: 50, stone: 80, iron: 40, food: 0 }
+    };
 
-function buildAt(type, x, y) {
-  if (!isInTerritory(x, y)) {
-    logSys("❌ 非領土範圍，不能建築");
-    return false;
+    const lv = game.buildings[type] || 0;
+    const scale = 1 + lv * 0.18;
+
+    return {
+      gold: Math.floor(base[type].gold * scale),
+      wood: Math.floor(base[type].wood * scale),
+      stone: Math.floor(base[type].stone * scale),
+      iron: Math.floor(base[type].iron * scale),
+      food: Math.floor(base[type].food * scale)
+    };
   }
-  const def = BUILD_TYPES[type];
-  if (!def) return false;
-  if (!canPay(def.cost)) {
-    logSys("❌ 資源不足");
-    return false;
+
+  // =========================
+  // UI 更新
+  // =========================
+  function updateUI() {
+    statGold.textContent = Math.floor(game.resources.gold);
+    statAeno.textContent = game.resources.aeno.toFixed(6);
+    statWood.textContent = Math.floor(game.resources.wood);
+    statStone.textContent = Math.floor(game.resources.stone);
+    statIron.textContent = Math.floor(game.resources.iron);
+    statFood.textContent = Math.floor(game.resources.food);
+
+    statPop.textContent = game.stats.population;
+    statTerritory.textContent = game.stats.territory;
+    statCivil.textContent = Math.floor(game.stats.civil) + "%";
+
+    if (game.stats.civil >= 100) {
+      statBeast.textContent = `⚔️ 進行中（擊殺:${game.world.beastsKilled}）`;
+    } else {
+      statBeast.textContent = `未啟動（需100%文明）`;
+    }
+
+    refreshMarketHint();
   }
-  if (planetSave.buildings.some(b => b.x === x && b.y === y)) {
-    logSys("❌ 此格已有建築");
-    return false;
+
+  // =========================
+  // 繪圖主循環
+  // =========================
+  function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 背景
+    ctx.fillStyle = "#eaf6ff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // tile
+    for (let y = 0; y < MAP_H; y++) {
+      for (let x = 0; x < MAP_W; x++) {
+        drawTile(x, y, map[y][x]);
+      }
+    }
+
+    // buildings
+    placedBuildings.forEach(drawBuilding);
+
+    // 顯示文明中心提示
+    const p = gridToScreen(townCenter.x, townCenter.y);
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.font = `${16 * zoom}px system-ui`;
+    ctx.fillText("🏛️ 中央城鎮", p.x - 40 * zoom, p.y - 20 * zoom);
+
+    requestAnimationFrame(draw);
   }
-  payCost(def.cost);
-  planetSave.buildings.push({
-    id: "b_" + type + "_" + Date.now(),
-    type,
-    x,
-    y,
-    level: 1
+
+  // =========================
+  // 主循環 Tick
+  // =========================
+  function gameLoop() {
+    tickLogic(1, false);
+    updateUI();
+  }
+
+  // =========================
+  // 保存按鈕
+  // =========================
+  btnSaveNow.addEventListener("click", () => saveGame());
+
+  btnReset.addEventListener("click", () => {
+    if (!confirm("確定清除存檔？")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
   });
-  logSys(`🏗️ 建成 ${def.name} Lv1`);
-  return true;
-}
 
-// 修复手动升级到Lv10的逻辑
-function upgradeBuildingAt(x, y) {
-  const b = planetSave.buildings.find(bb => bb.x === x && bb.y === y);
-  if (!b) {
-    logSys("❌ 沒有建築可以升級");
-    return false;
-  }
-  if (b.level >= 10) {
-    logSys("ℹ️ 已達最高 Lv10");
-    return false;
-  }
-  const def = BUILD_TYPES[b.type];
-  const lv = b.level;
-  const cost = {
-    coins: Math.floor((def.cost.coins || 0) * (0.8 + lv * 0.5)),
-    wood: Math.floor((def.cost.wood || 0) * (0.7 + lv * 0.35)),
-    stone: Math.floor((def.cost.stone || 0) * (0.7 + lv * 0.35)),
-    iron: Math.floor((def.cost.iron || 0) * (0.7 + lv * 0.35)),
-  };
-  if (!canPay(cost)) {
-    logSys("❌ 升級資源不足");
-    return false;
-  }
-  payCost(cost);
-  b.level++;
-  logSys(`⬆️ ${def.name} 升級到 Lv${b.level}`);
-  return true;
-}
+  // =========================
+  // 自動保存
+  // =========================
+  setInterval(saveGame, 30000);
 
-function calcIncomePerSecond() {
-  let income = 0;
-  for (const b of planetSave.buildings) {
-    const def = BUILD_TYPES[b.type];
-    if (!def) continue;
-    const lv = b.level || 1;
-    income += (def.baseIncome || 0) * (1 + (lv - 1) * 0.6);
-  }
-  income += planetSave.pop * 0.08;
-  return income;
-}
+  // =========================
+  // 初始化
+  // =========================
+  function init() {
+    game = loadGame();
 
-function produceResources(dt) {
-  let woodGain = 0, stoneGain = 0, ironGain = 0, foodGain = 0;
-  for (const b of planetSave.buildings) {
-    const lv = b.level || 1;
-    if (b.type === "lumber") woodGain += 1.3 * lv;
-    if (b.type === "quarry") stoneGain += 1.0 * lv;
-    if (b.type === "mine") ironGain += 0.8 * lv;
-    if (b.type === "farm") foodGain += 1.6 * lv;
-  }
-  woodGain += planetSave.workers.length * 0.06;
-  stoneGain += planetSave.workers.length * 0.05;
-  ironGain += planetSave.workers.length * 0.04;
-  foodGain += planetSave.workers.length * 0.07;
-  planetSave.wood += woodGain * dt;
-  planetSave.stone += stoneGain * dt;
-  planetSave.iron += ironGain * dt;
-  planetSave.food += foodGain * dt;
-}
+    cameraX = canvas.width / 2;
+    cameraY = 140;
 
-function applyOfflineProgress() {
-  const now = Date.now();
-  const last = planetSave.lastSeen || now;
-  let diff = (now - last) / 1000;
-  if (diff < 0) diff = 0;
-  const max = MAX_OFFLINE_HOURS * 3600;
-  const used = Math.min(diff, max);
-  if (used < 5) return;
-  planetSave.gameYear += GAME_YEARS_PER_REAL_SECOND * used;
-  planetSave.coins += calcIncomePerSecond() * used;
-  produceResources(used);
-  logSys(`🕒 離線補算 ${Math.floor(used / 3600)} 小時（上限24h）`);
-}
+    generateMap();
+    rebuildPlacedBuildings();
 
-function drawRoundedRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
+    offlineProgress();
 
-let cameraX = 0;
-let cameraY = 0;
-let zoomLevel = 1.1;
+    updateUI();
 
-// 修复缩放：统一所有浏览器的缩放幅度和边界
-function loadCamera() {
-  cameraX = planetSave.cameraX || 0;
-  cameraY = planetSave.cameraY || 0;
-  zoomLevel = planetSave.zoom || 1.1;
-}
+    setInterval(gameLoop, 1000);
 
-function saveCamera() {
-  planetSave.cameraX = cameraX;
-  planetSave.cameraY = cameraY;
-  planetSave.zoom = zoomLevel;
-}
+    requestAnimationFrame(draw);
 
-let dragging = false;
-let dragStart = { x: 0, y: 0 };
-let camStart = { x: 0, y: 0 };
+    // boot hide
+    setTimeout(() => {
+      bootScreen.style.display = "none";
+      log("遊戲載入完成");
+      addChat("助手", "已啟動！我會自動收資源與建築。你可以播放廣告歌曲來獲得 AENO。");
+    }, 600);
 
-canvas.addEventListener("pointerdown", (e) => {
-  dragging = true;
-  dragStart.x = e.clientX;
-  dragStart.y = e.clientY;
-  camStart.x = cameraX;
-  camStart.y = cameraY;
-});
-
-canvas.addEventListener("pointermove", (e) => {
-  if (!dragging) return;
-  cameraX = camStart.x + (e.clientX - dragStart.x);
-  cameraY = camStart.y + (e.clientY - dragStart.y);
-});
-
-canvas.addEventListener("pointerup", () => dragging = false);
-
-canvas.addEventListener("wheel", (e) => {
-  e.preventDefault();
-  const delta = Math.sign(e.deltaY);
-  zoomLevel += -delta * 0.15;
-  zoomLevel = Math.max(0.3, Math.min(3.0, zoomLevel));
-}, { passive: false });
-
-function tileToScreen(x, y) {
-  const sx = (x - y) * (TILE * 0.5);
-  const sy = (x + y) * (TILE * 0.25);
-  return { x: sx, y: sy };
-}
-
-function screenToTile(px, py) {
-  const cx = (px - window.innerWidth / 2 - cameraX) / zoomLevel;
-  const cy = (py - 180 - cameraY) / zoomLevel;
-  const tx = (cx / (TILE * 0.5) + cy / (TILE * 0.25)) / 2;
-  const ty = (cy / (TILE * 0.25) - cx / (TILE * 0.5)) / 2;
-  const x = Math.floor(tx);
-  const y = Math.floor(ty);
-  if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return null;
-  return { x, y };
-}
-
-let mode = "build";
-if (ui.btnBuildMode) ui.btnBuildMode.onclick = () => { mode = "build"; logSys("🏗️ 建築模式"); };
-if (ui.btnUpgradeMode) ui.btnUpgradeMode.onclick = () => { mode = "upgrade"; logSys("⬆️ 升級模式"); };
-
-canvas.addEventListener("click", (e) => {
-  const tile = screenToTile(e.clientX, e.clientY);
-  if (!tile) return;
-  if (mode === "build") {
-    buildAt("house", tile.x, tile.y);
-    saveAll();
-  } else {
-    upgradeBuildingAt(tile.x, tile.y);
-    saveAll();
-  }
-});
-
-// 修复画面漆黑：提高所有地块的亮度
-function drawTile(x, y, type, inTerritory) {
-  const w = TILE * 0.5;
-  const h = TILE * 0.25;
-  let fill = "#dcfce7"; // 草地更亮
-  if (type === "water") fill = "#93c5fd";
-  if (type === "mountain") fill = "#cbd5e1";
-  if (type === "forest") fill = "#86efac";
-  if (type === "stone") fill = "#e2e8f0";
-  if (type === "iron") fill = "#fca5a5";
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + w, y + h);
-  ctx.lineTo(x, y + h * 2);
-  ctx.lineTo(x - w, y + h);
-  ctx.closePath();
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.strokeStyle = "rgba(0,0,0,0.06)";
-  ctx.stroke();
-  // 移除深色遮罩，让画面变亮
-  // if (!inTerritory) {
-  //   ctx.fillStyle = "rgba(0,0,0,0.22)";
-  //   ctx.fill();
-  // }
-}
-
-function drawBuilding(x, y, b) {
-  const lv = b.level || 1;
-  ctx.fillStyle = "rgba(0,0,0,0.18)";
-  ctx.beginPath();
-  ctx.ellipse(x, y + 18, 22, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-  let color = "#fde68a";
-  if (b.type === "house") color = "#fef3c7";
-  if (b.type === "lumber") color = "#bbf7d0";
-  if (b.type === "quarry") color = "#e2e8f0";
-  if (b.type === "mine") color = "#fecaca";
-  if (b.type === "farm") color = "#fde68a";
-  if (b.type === "factory") color = "#bae6fd";
-  if (b.type === "wall") color = "#cbd5e1";
-  if (b.type === "market") color = "#f0abfc";
-  ctx.fillStyle = color;
-  drawRoundedRect(x - 18, y - 18, 36, 28, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fbbf24";
-  ctx.beginPath();
-  ctx.moveTo(x - 22, y - 18);
-  ctx.quadraticCurveTo(x, y - 38, x + 22, y - 18);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 10px system-ui";
-  ctx.fillText("Lv" + lv, x - 12, y - 2);
-}
-
-function drawAnimal(x, y) {
-  ctx.fillStyle = "#fb7185";
-  ctx.beginPath();
-  ctx.arc(x, y - 12, 6, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawWorker(x, y) {
-  ctx.fillStyle = "#0ea5e9";
-  ctx.beginPath();
-  ctx.arc(x, y - 10, 5, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function draw() {
-  // 修复画面漆黑：先画一个浅色背景
-  ctx.fillStyle = "#1e293b"; // 深灰蓝背景，比纯黑更清晰
-  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-
-  ctx.save();
-  ctx.translate(window.innerWidth / 2 + cameraX, 180 + cameraY);
-  ctx.scale(zoomLevel, zoomLevel);
-  const tiles = planetSave.map.tiles;
-  for (let y = 0; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      const t = tiles[y * MAP_W + x];
-      const p = tileToScreen(x, y);
-      drawTile(p.x, p.y, t.type, isInTerritory(x, y));
+    // 強制更新 Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js?v=" + Date.now()).then((reg) => {
+        reg.update();
+      });
     }
   }
-  for (const b of planetSave.buildings) {
-    const p = tileToScreen(b.x, b.y);
-    drawBuilding(p.x, p.y, b);
-  }
-  for (const a of planetSave.animals) {
-    const p = tileToScreen(a.x, a.y);
-    drawAnimal(p.x, p.y);
-  }
-  for (const w of planetSave.workers) {
-    const p = tileToScreen(w.x, w.y);
-    drawWorker(p.x, p.y);
-  }
-  ctx.restore();
-  updateHUD();
-}
 
-function updateHUD() {
-  const planet = planets.find(p => p.id === planetSave.planetId);
-  if (ui.planetName) ui.planetName.textContent = planet ? planet.name : "?";
-  if (ui.gameYear) ui.gameYear.textContent = Math.floor(planetSave.gameYear);
-  if (ui.popCount) ui.popCount.textContent = Math.floor(planetSave.pop);
-  if (ui.coins) ui.coins.textContent = Math.floor(planetSave.coins);
-  if (ui.aeno) ui.aeno.textContent = (globalSave.aeno || 0).toFixed(4);
-  if (ui.wood) ui.wood.textContent = Math.floor(planetSave.wood);
-  if (ui.stone) ui.stone.textContent = Math.floor(planetSave.stone);
-  if (ui.iron) ui.iron.textContent = Math.floor(planetSave.iron);
-  if (ui.food) ui.food.textContent = Math.floor(planetSave.food);
-  if (ui.factoryCount) ui.factoryCount.textContent = planetSave.buildings.filter(b => b.type === "factory").length;
-  if (ui.robotCount) ui.robotCount.textContent = planetSave.robots.length;
-  if (ui.autoState) ui.autoState.textContent = globalSave.autoBuild ? "ON" : "OFF";
-  if (ui.loopState) ui.loopState.textContent = globalSave.loopSong ? "ON" : "OFF";
-}
-
-let lastTick = performance.now();
-
-function tick(now) {
-  const dt = Math.min(0.2, (now - lastTick) / 1000);
-  lastTick = now;
-  planetSave.gameYear += GAME_YEARS_PER_REAL_SECOND * dt;
-  planetSave.coins += calcIncomePerSecond() * dt;
-  produceResources(dt);
-  for (const a of planetSave.animals) {
-    a.t += dt;
-    if (a.t > 1.2) {
-      a.t = 0;
-      a.x += Math.floor(Math.random() * 3) - 1;
-      a.y += Math.floor(Math.random() * 3) - 1;
-      a.x = Math.max(0, Math.min(MAP_W - 1, a.x));
-      a.y = Math.max(0, Math.min(MAP_H - 1, a.y));
-    }
-  }
-  planetSave.coins = Math.max(0, planetSave.coins);
-  planetSave.wood = Math.max(0, planetSave.wood);
-  planetSave.stone = Math.max(0, planetSave.stone);
-  planetSave.iron = Math.max(0, planetSave.iron);
-  planetSave.food = Math.max(0, planetSave.food);
-  runAutoBuild();
-  draw();
-  requestAnimationFrame(tick);
-}
-
-if (ui.btnSave) ui.btnSave.onclick = () => saveAll();
-if (ui.btnAuto) ui.btnAuto.onclick = () => {
-  globalSave.autoBuild = !globalSave.autoBuild;
-  logSys(globalSave.autoBuild ? "🤖 自動建造 ON" : "🛑 自動建造 OFF");
-  saveAll();
-};
-if (ui.btnLoopSong) ui.btnLoopSong.onclick = () => {
-  globalSave.loopSong = !globalSave.loopSong;
-  logSys(globalSave.loopSong ? "🔁 Loop ON" : "⏹️ Loop OFF");
-  saveAll();
-};
-
-let adAudio = null;
-if (ui.btnAdSong) ui.btnAdSong.onclick = () => {
-  try {
-    if (!adAudio) {
-      adAudio = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_9c1a1c1d66.mp3?filename=happy-day-113985.mp3");
-      adAudio.volume = 0.8;
-    }
-    adAudio.loop = globalSave.loopSong;
-    adAudio.play().then(() => {
-      logSys("🎵 廣告歌播放中（60秒後獲獎勵）");
-      setTimeout(() => {
-        planetSave.coins += 120;
-        globalSave.aenoFragments += 1500;
-        while (globalSave.aenoFragments >= 1000) {
-          globalSave.aenoFragments -= 1000;
-          globalSave.aeno += 0.0001;
-        }
-        logSys("🎁 獎勵：金幣 +120 / AENO碎片 +1500");
-        saveAll();
-      }, 60000);
-    }).catch(() => {
-      logSys("❌ Chrome 手機需再按一次播放");
-    });
-  } catch {
-    logSys("❌ 音樂系統錯誤");
-  }
-};
-
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    saveCamera();
-    saveAll();
-  } else {
-    loadCamera();
-  }
-});
-
-window.addEventListener("pagehide", () => {
-  saveCamera();
-  saveAll();
-});
-
-loadGlobal();
-loadPlanet(globalSave.currentPlanetId);
-loadCamera();
-applyOfflineProgress();
-saveAll();
-requestAnimationFrame(tick);
-setInterval(() => saveAll(), 20000);
-
-logSys("🌍 星球存檔已分離：每個星球有獨立建築與資源");
-logSys("⚙️ Chrome 黑畫面已修復（淺色背景 + 移除深色遮罩）");
-logSys("⏱️ 流速固定：現實 1日 = 遊戲 10年");
-logSys("🤖 AI 半自动建造已啟動：只用一半資源");
-logSys("🔍 所有瀏覽器縮放已統一，建築可升級至Lv10");
-logSys("🗺️ 領土藍色問題已修復，所有地圖均可建造");
-logSys("⬆️ 升級選項已恢復：面板與點擊建築均可升級");
+  init();
+})();
