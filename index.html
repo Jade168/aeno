@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scaleable=yes,user-scalable=yes" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 <title>AENO V3 文明帝國（完整版）</title>
 
 <style>
@@ -32,7 +32,7 @@ html,body{
 canvas{
   position:absolute; inset:0;
   background:linear-gradient(#bfe8ff,#dff1ff);
-  touch-action:manipulation;
+  touch-action:none;
 }
 
 .floatBar{
@@ -1192,4 +1192,235 @@ function drawBuilding(b){
   if(b.type==="farm"){ctx.fillStyle="#fde68a";ctx.fillRect(px+12,py+26,40,22);ctx.fillStyle="#16a34a";ctx.fillRect(px+16,py+30,32,4);ctx.fillRect(px+16,py+38,32,4);}
   if(b.type==="lumber"){ctx.fillStyle="#fef3c7";ctx.fillRect(px+14,py+26,36,22);ctx.fillStyle="#92400e";ctx.fillRect(px+28,py+20,8,30);ctx.fillStyle="#22c55e";ctx.beginPath();ctx.arc(px+32,py+18,10,0,Math.PI*2);ctx.fill();}
   if(b.type==="mine"){ctx.fillStyle="#cbd5e1";ctx.fillRect(px+14,py+28,36,20);ctx.fillStyle="#64748b";ctx.beginPath();ctx.moveTo(px+12,py+30);ctx.lineTo(px+32,py+12);ctx.lineTo(px+52,py+30);ctx.closePath();ctx.fill();}
-  if(b.type==="wall"){ctx.fillStyle="#94a3b8";ctx.fillRect(px+10,py+28,44,22);ctx.fillStyle="#6474
+  if(b.type==="wall"){ctx.fillStyle="#94a3b8";ctx.fillRect(px+10,py+28,44,22);ctx.fillStyle="#64748b";for(let i=0;i<4;i++){ctx.fillRect(px+12+i*11,py+22,8,10);}}
+  // level label
+  ctx.fillStyle="rgba(0,0,0,.65)";
+  ctx.font="bold 12px sans-serif";
+  ctx.fillText("Lv"+b.level, px+6, py+14);
+}
+
+function drawAI(){
+  const px=state.ai.x*TILE + TILE/2;
+  const py=state.ai.y*TILE + TILE/2;
+
+  // body
+  ctx.fillStyle="#fde68a";
+  ctx.beginPath();
+  ctx.arc(px,py,18,0,Math.PI*2);
+  ctx.fill();
+
+  // face
+  ctx.fillStyle="#111827";
+  ctx.beginPath();
+  ctx.arc(px-6,py-4,2.5,0,Math.PI*2);
+  ctx.arc(px+6,py-4,2.5,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.strokeStyle="#111827";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(px,py+4,6,0,Math.PI);
+  ctx.stroke();
+
+  // ad flag
+  ctx.fillStyle="#ef4444";
+  ctx.fillRect(px-10,py-34,20,12);
+  ctx.fillStyle="#fff";
+  ctx.font="bold 10px sans-serif";
+  ctx.fillText("AD",px-7,py-24);
+  ctx.strokeStyle="#92400e";
+  ctx.beginPath();
+  ctx.moveTo(px-10,py-34);
+  ctx.lineTo(px-10,py-12);
+  ctx.stroke();
+}
+
+function render(){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  ctx.setTransform(cam.scale,0,0,cam.scale,cam.x,cam.y);
+
+  for(let y=0;y<GRID_H;y++){
+    for(let x=0;x<GRID_W;x++){
+      drawTile(x,y,state.map.tiles[y][x].t);
+    }
+  }
+
+  // buildings
+  for(const b of state.map.buildings){
+    drawBuilding(b);
+  }
+
+  // AI
+  drawAI();
+
+  // selected highlight
+  if(selectedTile){
+    ctx.strokeStyle="#3b82f6";
+    ctx.lineWidth=4;
+    ctx.strokeRect(selectedTile.x*TILE+2, selectedTile.y*TILE+2, TILE-4, TILE-4);
+  }
+}
+
+/* ===== main loop ===== */
+let lastTick=Date.now();
+let gameTick=0;
+
+function gameLoop(){
+  const now=Date.now();
+  const dt=(now-lastTick)/1000;
+  lastTick=now;
+
+  // 每秒simulate一次（在線模式）
+  simulate(dt);
+
+  // AI巡邏移動（純動畫）
+  if(state.ai.mode==="patrol"){
+    if(Math.random()<0.03){
+      state.ai.x=clamp(state.ai.x+(Math.random()>0.5?1:-1),0,GRID_W-1);
+      state.ai.y=clamp(state.ai.y+(Math.random()>0.5?1:-1),0,GRID_H-1);
+    }
+  }
+
+  // 倒數
+  if(state.beast.timer>0) state.beast.timer--;
+  if(state.ads.cooldown>0) state.ads.cooldown--;
+  if(state.robot.active && state.robot.timer>0) state.robot.timer--;
+  if(state.robot.stealTimer>0) state.robot.stealTimer--;
+
+  // 每3分鐘更新價格
+  if(gameTick%180===0) tickPrices();
+  if(gameTick%180===0) tickStock();
+
+  // 事件觸發
+  if(state.beast.timer<=0 && !state.beast.active){
+    spawnBeastWave();
+    resolveBeastWave();
+  }
+
+  if(state.robot.active && state.robot.timer<=0){
+    robotReturn();
+  }
+
+  if(!state.robot.active && gameTick%750===0){
+    // 隨機出現機器人探索
+    if(Math.random()<0.35) spawnRobot();
+  }
+
+  if(state.robot.stealTimer<=0){
+    robotSteal();
+  }
+
+  refreshUI();
+  render();
+
+  gameTick++;
+  requestAnimationFrame(gameLoop);
+}
+
+/* ===== refresh UI ===== */
+function refreshUI(){
+  statusText.textContent="運作中・V"+VERSION;
+
+  r_wood.textContent=Math.floor(state.resources.wood);
+  r_stone.textContent=Math.floor(state.resources.stone);
+  r_iron.textContent=Math.floor(state.resources.iron);
+  r_food.textContent=Math.floor(state.resources.food);
+  r_coin.textContent=Math.floor(state.resources.coin);
+  r_aeno.textContent=state.resources.aeno.toFixed(6);
+
+  r_pop.textContent=state.pop.population;
+  r_popcap.textContent=state.pop.cap;
+  r_workers.textContent=Math.max(1,Math.floor(state.pop.population*0.6));
+
+  r_radius.textContent=state.territory.radius;
+
+  autoTxt.textContent=state.settings.autoBuild?"ON":"OFF";
+  expandTxt.textContent=state.settings.autoExpand?"ON":"OFF";
+
+  p_wood.textContent=state.prices.wood;
+  p_stone.textContent=state.prices.stone;
+  p_iron.textContent=state.prices.iron;
+  p_food.textContent=state.prices.food;
+
+  s_ind.textContent=state.stock.ind+" (持股:"+state.stock.holding.ind+")";
+  s_space.textContent=state.stock.space+" (持股:"+state.stock.holding.space+")";
+  s_farm.textContent=state.stock.farm+" (持股:"+state.stock.holding.farm+")";
+
+  t_ind.textContent=state.tech.ind;
+  t_def.textContent=state.tech.def;
+  t_robot.textContent=state.tech.robot;
+
+  beastTimer.textContent=Math.max(0,state.beast.timer);
+  shards.textContent=state.beast.shards;
+
+  const ratio=Math.floor(100*clamp(state.ads.listenedToday/Math.max(1,state.ads.totalToday),0,1));
+  adRatio.textContent=ratio+"%";
+  adCd.textContent=state.ads.cooldown;
+
+  robotStatus.textContent=state.robot.status;
+  robotTimer.textContent=Math.max(0,state.robot.timer);
+  stealTimer.textContent=Math.max(0,state.stealTimer);
+}
+
+/* ===== manual save ===== */
+function manualSave(){
+  saveGame();
+  showToast("已存檔");
+}
+
+/* ===== resize ===== */
+function resize(){
+  W=window.innerWidth;
+  H=window.innerHeight;
+  cv.width=W;
+  cv.height=H;
+}
+window.addEventListener("resize",resize);
+
+/* ===== init ===== */
+async function initGame(){
+  resize();
+
+  makeDraggable(document.getElementById("panel"));
+  makeDraggable(document.getElementById("aiPanel"));
+
+  loadGame();
+  await loadAds();
+
+  centerView();
+
+  // 離線補算
+  const now=Date.now();
+  const offlineSec=Math.floor((now-(state.lastSeen||now))/1000);
+  r_offline.textContent=offlineSec;
+
+  if(offlineSec>2){
+    simulate(offlineSec);
+    addChatMsg("ai","🕒 你離線 "+offlineSec+" 秒，已補算資源與文明進度。");
+    showToast("離線補算完成");
+  }
+
+  addChatMsg("ai","AENO V3 完整版已啟動。地形有河流森林礦脈，獸潮會周期爆發。你可拖拉/縮放地圖。");
+  addChatMsg("ai","提示：先聽廣告歌提升比例，碎片比例亦會影響 AENO 增長。");
+
+  // 自動存檔
+  setInterval(saveGame, 25000);
+
+  gameLoop();
+}
+
+/* ===== SW 強制更新 ===== */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js?v="+Date.now()).then(reg=>reg.update());
+  navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.update()));
+}
+
+// 頁面加載完成後，顯示登錄頁面
+window.addEventListener('load', function() {
+  // 登錄頁面已經默認顯示，無需額外操作
+});
+</script>
+</body>
+</html>
