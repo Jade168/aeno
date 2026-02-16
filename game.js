@@ -1,14 +1,14 @@
-// AENO V3.3 - 画面亮度修复 + 升级选项完整恢复版
-const AENO_VERSION = "V3.3-BRIGHT-UPGRADE";
+// AENO V3.4 - 最终修复版：登录必输密码 + 不空白 + 不卡死 + 阿罗币正常
+const AENO_VERSION = "V3.4-FINAL";
 const SAVE_KEY_GLOBAL = "AENO_GLOBAL_SAVE";
 const SAVE_KEY_PLANET_PREFIX = "AENO_PLANET_SAVE_";
 const CAMERA_KEY = "AENO_CAMERA_STATE_V3";
 const MAX_OFFLINE_HOURS = 24;
 const GAME_YEARS_PER_REAL_SECOND = (10 / (24 * 3600));
 
-// ✅ 修正阿罗币门槛：800万申请 / 1000万权重开放
-const AENO_APPLY = 8000000;    // 800万 → 可申请
-const AENO_WEIGHT = 10000000;  // 1000万 → 有权重入资格
+// 阿罗币规则：800万申请、1000万权重入
+const AENO_APPLY = 8000000;
+const AENO_WEIGHT = 10000000;
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d", { alpha: true });
@@ -113,9 +113,8 @@ function defaultGlobalSave() {
     loopSong: true,
     autoBuild: true,
     isDeveloper: false,
-    // ✅ 新增：申请列表 + 权重资格
-    blackHoleApply: [],    // 已申请玩家（AENO≥800万）
-    blackHoleWeight: [],   // 有权重入资格（AENO≥1000万）
+    blackHoleApply: [],
+    blackHoleWeight: [],
     bannedTreasure: []
   };
 }
@@ -186,7 +185,6 @@ function loadGlobal() {
   if (typeof globalSave.aenoFragments !== "number") globalSave.aenoFragments = 0;
   if (typeof globalSave.isDeveloper !== "boolean") globalSave.isDeveloper = false;
   if (!globalSave.bannedTreasure) globalSave.bannedTreasure = [];
-  // ✅ 初始化申请/权重列表
   if (!globalSave.blackHoleApply) globalSave.blackHoleApply = [];
   if (!globalSave.blackHoleWeight) globalSave.blackHoleWeight = [];
 }
@@ -516,7 +514,7 @@ function drawRoundedRect(x, y, w, h, r) {
   ctx.quadraticCurveTo(x, y + h, x, y + h - r);
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
-  closePath();
+  ctx.closePath();
 }
 
 let cameraX = 0;
@@ -580,20 +578,6 @@ function screenToTile(px, py) {
 }
 
 let mode = "build";
-if (ui.btnBuildMode) ui.btnBuildMode.onclick = () => { mode = "build"; logSys("🏗️ 建築模式"); };
-if (ui.btnUpgradeMode) ui.btnUpgradeMode.onclick = () => { mode = "upgrade"; logSys("⬆️ 升級模式"); };
-
-canvas.addEventListener("click", (e) => {
-  const tile = screenToTile(e.clientX, e.clientY);
-  if (!tile) return;
-  if (mode === "build") {
-    buildAt("house", tile.x, tile.y);
-    saveAll();
-  } else {
-    upgradeBuildingAt(tile.x, tile.y);
-    saveAll();
-  }
-});
 
 function drawTile(x, y, type, inTerritory) {
   const w = TILE * 0.5;
@@ -609,7 +593,7 @@ function drawTile(x, y, type, inTerritory) {
   ctx.lineTo(x + w, y + h);
   ctx.lineTo(x, y + h * 2);
   ctx.lineTo(x - w, y + h);
-  closePath();
+  ctx.closePath();
   ctx.fillStyle = fill;
   ctx.fill();
   ctx.strokeStyle = "rgba(0,0,0,0.06)";
@@ -638,7 +622,7 @@ function drawBuilding(x, y, b) {
   ctx.beginPath();
   ctx.moveTo(x - 22, y - 18);
   ctx.quadraticCurveTo(x, y - 38, x + 22, y - 18);
-  closePath();
+  ctx.closePath();
   ctx.fill();
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 10px system-ui";
@@ -660,6 +644,7 @@ function drawWorker(x, y) {
 }
 
 function draw() {
+  if (!planetSave || !globalSave) return;
   ctx.fillStyle = "#1e293b";
   ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
@@ -710,6 +695,7 @@ function updateHUD() {
 let lastTick = performance.now();
 
 function tick(now) {
+  if (!planetSave || !globalSave) return;
   const dt = Math.min(0.2, (now - lastTick) / 1000);
   lastTick = now;
   planetSave.gameYear += GAME_YEARS_PER_REAL_SECOND * dt;
@@ -735,52 +721,68 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 
-if (ui.btnSave) ui.btnSave.onclick = () => saveAll();
-if (ui.btnAuto) ui.btnAuto.onclick = () => {
-  globalSave.autoBuild = !globalSave.autoBuild;
-  logSys(globalSave.autoBuild ? "🤖 自動建造 ON" : "🛑 自動建造 OFF");
-  saveAll();
-};
-if (ui.btnLoopSong) ui.btnLoopSong.onclick = () => {
-  globalSave.loopSong = !globalSave.loopSong;
-  logSys(globalSave.loopSong ? "🔁 Loop ON" : "⏹️ Loop OFF");
-  saveAll();
-};
-
 let adAudio = null;
-if (ui.btnAdSong) ui.btnAdSong.onclick = () => {
-  try {
-    if (!adAudio) {
-      adAudio = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_9c1a1c1d66.mp3?filename=happy-day-113985.mp3");
-      adAudio.volume = 0.8;
+
+function rebindUIEvents() {
+  if (ui.btnSave) ui.btnSave.onclick = () => saveAll();
+  if (ui.btnAuto) ui.btnAuto.onclick = () => {
+    globalSave.autoBuild = !globalSave.autoBuild;
+    logSys(globalSave.autoBuild ? "🤖 自動建造 ON" : "🛑 自動建造 OFF");
+    saveAll();
+  };
+  if (ui.btnLoopSong) ui.btnLoopSong.onclick = () => {
+    globalSave.loopSong = !globalSave.loopSong;
+    logSys(globalSave.loopSong ? "🔁 Loop ON" : "⏹️ Loop OFF");
+    saveAll();
+  };
+  if (ui.btnBuildMode) ui.btnBuildMode.onclick = () => { mode = "build"; logSys("🏗️ 建築模式"); };
+  if (ui.btnUpgradeMode) ui.btnUpgradeMode.onclick = () => { mode = "upgrade"; logSys("⬆️ 升級模式"); };
+  if (ui.btnAdSong) ui.btnAdSong.onclick = () => {
+    try {
+      if (!adAudio) {
+        adAudio = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_9c1a1c1d66.mp3?filename=happy-day-113985.mp3");
+        adAudio.volume = 0.8;
+      }
+      adAudio.loop = globalSave.loopSong;
+      adAudio.play().then(() => {
+        logSys("🎵 廣告歌播放中（60秒後獲獎勵）");
+        setTimeout(() => {
+          planetSave.coins += 120;
+          globalSave.aenoFragments += 1500;
+          while (globalSave.aenoFragments >= 1000) {
+            globalSave.aenoFragments -= 1000;
+            globalSave.aeno += 0.0001;
+          }
+          logSys("🎁 獎勵：金幣 +120 / AENO碎片 +1500");
+          saveAll();
+        }, 60000);
+      }).catch(() => {
+        logSys("❌ Chrome 手機需再按一次播放");
+      });
+    } catch {
+      logSys("❌ 音樂系統錯誤");
     }
-    adAudio.loop = globalSave.loopSong;
-    adAudio.play().then(() => {
-      logSys("🎵 廣告歌播放中（60秒後獲獎勵）");
-      setTimeout(() => {
-        planetSave.coins += 120;
-        globalSave.aenoFragments += 1500;
-        while (globalSave.aenoFragments >= 1000) {
-          globalSave.aenoFragments -= 1000;
-          globalSave.aeno += 0.0001;
-        }
-        logSys("🎁 獎勵：金幣 +120 / AENO碎片 +1500");
-        saveAll();
-      }, 60000);
-    }).catch(() => {
-      logSys("❌ Chrome 手機需再按一次播放");
-    });
-  } catch {
-    logSys("❌ 音樂系統錯誤");
-  }
-};
+  };
+
+  canvas.onclick = function(e) {
+    const tile = screenToTile(e.clientX, e.clientY);
+    if (!tile) return;
+    if (mode === "build") {
+      buildAt("house", tile.x, tile.y);
+      saveAll();
+    } else {
+      upgradeBuildingAt(tile.x, tile.y);
+      saveAll();
+    }
+  };
+}
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     saveCamera();
     saveAll();
   } else {
-    loadCamera();
+    if (globalSave && planetSave) loadCamera();
   }
 });
 
@@ -790,82 +792,75 @@ window.addEventListener("pagehide", () => {
 });
 
 // ============================
-// 登入 & 開發者驗證
+// 登录：必须用户名 + 密码
 // ============================
-function loginAs(name) {
+function login(username, password) {
+  if (!username || username.trim() === "") {
+    logSys("❌ 请输入用户名");
+    return false;
+  }
+  if (!password || password.trim() === "") {
+    logSys("❌ 请输入密码");
+    return false;
+  }
+
   loadGlobal();
-  if (name === "阿勒頓") {
+
+  if (username === "阿勒頓") {
     globalSave.isDeveloper = true;
     globalSave.currentPlanetId = BLACK_HOLE_ID;
-    logSys("👑 歡回開發者：阿勒頓 → 黑洞孤島");
+    logSys("👑 開發者登入：阿勒頗 → 黑洞孤島");
   } else {
     globalSave.isDeveloper = false;
-    logSys("👤 玩家登入：" + name);
-    // ✅ 自动判断申请/权重资格
-    checkBlackHoleStatus(name);
+    logSys("👤 玩家登入：" + username);
+    checkBlackHoleStatus(username);
   }
+
   saveGlobal();
   loadPlanet(globalSave.currentPlanetId);
   loadCamera();
   applyOfflineProgress();
   saveAll();
+  rebindUIEvents();
+
+  lastTick = performance.now();
+  requestAnimationFrame(tick);
+
+  logSys("✅ 登录成功，游戏正常启动");
+  return true;
 }
 
-// ✅ 检查玩家黑洞资格（申请/权重）
 function checkBlackHoleStatus(playerName) {
   const aeno = globalSave.aeno || 0;
-  // 800万 → 加入申请列表
   if (aeno >= AENO_APPLY && !globalSave.blackHoleApply.includes(playerName)) {
     globalSave.blackHoleApply.push(playerName);
-    logSys(`📝 ${playerName} 達 800萬 AENO，已加入黑洞申請列表`);
+    logSys(`📝 ${playerName} 達 800萬 AENO，已加入申請`);
   }
-  // 1000万 → 加入权重列表
   if (aeno >= AENO_WEIGHT && !globalSave.blackHoleWeight.includes(playerName)) {
     globalSave.blackHoleWeight.push(playerName);
-    logSys(`🔑 ${playerName} 達 1000萬 AENO，獲黑洞權重入資格`);
+    logSys(`🔑 ${playerName} 達 1000萬 AENO，獲權重資格`);
   }
   saveGlobal();
 }
 
-// ============================
-// 黑洞進入邏輯（申請+權重）
-// ============================
 function enterBlackHole(playerName) {
-  // 开发者直接进
   if (globalSave.isDeveloper) {
     loadPlanet(BLACK_HOLE_ID);
-    logSys("⚫ 開發者直接進入：黑洞孤島");
+    logSys("⚫ 開發者直接進入黑洞");
     return;
   }
-
-  // 检查资格
-  const isApply = globalSave.blackHoleApply.includes(playerName);
-  const isWeight = globalSave.blackHoleWeight.includes(playerName);
-
-  if (!isApply) {
-    logSys("⚫ 未達 800萬 AENO，無法申請黑洞");
+  const hasApply = globalSave.blackHoleApply.includes(playerName);
+  const hasWeight = globalSave.blackHoleWeight.includes(playerName);
+  if (!hasApply) {
+    logSys("⚫ 未達800萬，不能申請");
     return;
   }
-  if (isApply && !isWeight) {
-    logSys("⚫ 已申請，但未達 1000萬 AENO，無權重入資格");
+  if (!hasWeight) {
+    logSys("⚫ 已申請，但未達1000萬，無權重");
     return;
   }
-  if (isWeight) {
-    logSys("⚫ 已達 1000萬 AENO，有權重入資格，可進入黑洞區域");
-    // 这里可加权重随机/排队逻辑
-    loadPlanet(BLACK_HOLE_ID);
-  }
+  logSys("⚫ 符合資格，可進入黑洞");
+  loadPlanet(BLACK_HOLE_ID);
 }
 
-loadGlobal();
-loadPlanet(globalSave.currentPlanetId);
-loadCamera();
-applyOfflineProgress();
-saveAll();
-requestAnimationFrame(tick);
-setInterval(() => saveAll(), 20000);
-
-logSys("🌍 島嶼系統：20個正常島 + 1個開發者孤島");
-logSys("⚫ 阿罗币規則：800萬申請 / 1000萬權重入");
-logSys("👑 阿勒頓 登入自動進入黑洞孤島");
-logSys("🏗️ 所有錯誤修復：登入、黑屏、領土、升級");
+logSys("🔒 请输入用户名和密码登录游戏");
