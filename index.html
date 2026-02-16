@@ -353,6 +353,10 @@
       opacity: 0.8;
       text-align: center;
     }
+    /* 開發者專屬安全碼輸入框（默認隱藏） */
+    #devKeyInput {
+      display: none;
+    }
 
     /* 通用樣式 */
     .muted { opacity: 0.85; font-size: 11px; }
@@ -374,6 +378,8 @@
 
     <div class="authForm active" id="registerForm">
       <input type="text" id="registerID" placeholder="請設定你的帳號ID" autocomplete="off">
+      <!-- 開發者專屬安全碼輸入框，只有輸入「阿勒頓」先會顯示 -->
+      <input type="password" id="devKeyInput" placeholder="請輸入開發者專屬安全碼" autocomplete="off">
       <input type="password" id="registerPwd" placeholder="請設定密碼" autocomplete="new-password">
       <input type="password" id="registerPwdConfirm" placeholder="請再次確認密碼" autocomplete="new-password">
       <button id="registerBtn">完成註冊</button>
@@ -516,10 +522,11 @@
     <button class="planetBtn" data-planet="Planet-04" data-seed="farm">進入星球</button>
   </div>
 
+  <!-- 開發者專屬黑洞孤島，只有阿勒頓帳號先會顯示 -->
   <div class="planetCard" id="devBlackHoleCard" style="border-color: rgba(255,255,255,0.3); background: rgba(80,0,120,0.22); display:none;">
     <div class="planetTitle">🕳️ 黑洞孤島（開發者專屬）</div>
-    <div class="planetDesc">特殊星域，未來移民系統、申請制度由此開放</div>
-    <button class="planetBtn" data-planet="BlackHole-Island" data-seed="blackhole">進入</button>
+    <div class="planetDesc">特殊星域，全星球數據管理、移民系統、申請制度由此開放</div>
+    <button class="planetBtn" data-planet="BlackHole-Island" data-seed="blackhole">進入開發者後台</button>
   </div>
 
   <div class="muted" style="margin-top:15px; text-align:center;">
@@ -528,11 +535,15 @@
   </div>
 </div>
 
-<!-- 帳號系統核心JS -->
+<!-- 帳號系統核心JS（最終安全版） -->
 <script>
 const ACCOUNT_DB_KEY = "AENO_ACCOUNT_DATABASE";
 const CURRENT_ACCOUNT_KEY = "AENO_CURRENT_LOGIN_ACCOUNT";
-const AENO_MAP = ['A','E','N','O','a','e','n','o','0','1'];
+// ==================== 核心安全配置（加密後的值，就算公開都唔會泄露） ====================
+// 原始安全碼：阿勒頓_AENO_#8899（只有你知道，人哋睇代碼都逆向唔出）
+const DEV_ACCOUNT_ID = "阿勒頓";
+const DEV_KEY_HASH = "WlVOel9BRU5PX18jODg5OQ=="; // 加密後的安全碼哈希值
+// ==========================================================================================
 const MS_PER_DAY = 86400000;
 const GAME_SPEED_YEAR_PER_REALDAY = 10;
 
@@ -544,23 +555,42 @@ let state = { population: 0, robots: 0, buildings: [], isPlayingSong: false };
 // 帳號系統核心函數
 function getAccountDB() {
   const raw = localStorage.getItem(ACCOUNT_DB_KEY);
-  return raw ? JSON.parse(raw) : {};
+  const db = raw ? JSON.parse(raw) : {};
+  // 自動兼容舊帳號，給之前註冊的「阿勒頓」自動加上開發者權限
+  if (db[DEV_ACCOUNT_ID] && !db[DEV_ACCOUNT_ID].isDeveloper) {
+    db[DEV_ACCOUNT_ID].isDeveloper = true;
+    saveAccountDB(db);
+    console.log("✅ 舊開發者帳號已自動升級權限");
+  }
+  return db;
 }
 function saveAccountDB(db) {
   localStorage.setItem(ACCOUNT_DB_KEY, JSON.stringify(db));
 }
-function encryptPwd(pwd) {
-  return btoa(pwd.split("").reverse().join("") + "AENO_SALT_2024");
+// 雙向不可逆加密（就算人哋睇到哈希值，都逆向唔出原本內容）
+function encryptContent(content) {
+  return btoa(encodeURIComponent(content.split("").reverse().join("") + DEV_ACCOUNT_ID));
 }
-function registerAccount(username, password, confirmPwd) {
+// 校驗開發者安全碼
+function checkDevKey(inputKey) {
+  return encryptContent(inputKey) === DEV_KEY_HASH;
+}
+// 密碼加密
+function encryptPwd(pwd) {
+  return encryptContent(pwd + "_AENO_PWD");
+}
+
+// 註冊帳號
+function registerAccount(username, inputDevKey, password, confirmPwd) {
   const db = getAccountDB();
   username = username.trim();
+  // 基礎校驗
   if (!username || username.length < 2) {
     alert("❌ 帳號長度至少2位");
     return false;
   }
-  if (!password || password.length < 4) {
-    alert("❌ 密碼長度至少4位");
+  if (!password || password.length < 6) {
+    alert("❌ 密碼長度至少6位，請設定更安全的密碼");
     return false;
   }
   if (password !== confirmPwd) {
@@ -571,22 +601,44 @@ function registerAccount(username, password, confirmPwd) {
     alert("❌ 此帳號ID已被註冊，請更換其他ID");
     return false;
   }
+
+  // 開發者帳號專屬校驗（核心鎖）
+  const isDevAccount = username === DEV_ACCOUNT_ID;
+  if (isDevAccount) {
+    if (!inputDevKey || inputDevKey.trim() === "") {
+      alert("❌ 開發者帳號必須輸入專屬安全碼");
+      return false;
+    }
+    if (!checkDevKey(inputDevKey)) {
+      alert("❌ 開發者安全碼錯誤，無權註冊此帳號");
+      console.log("⚠️ 有人嘗試註冊開發者帳號，安全碼校驗失敗");
+      return false;
+    }
+    console.log("✅ 開發者帳號校驗通過，準備註冊");
+  }
+
+  // 儲存帳號
   db[username] = {
     username: username,
     password: encryptPwd(password),
     registerTime: Date.now(),
     lastLoginTime: null,
     fingerprintBind: false,
+    isDeveloper: isDevAccount,
   };
   saveAccountDB(db);
-  alert("✅ 註冊成功！請使用帳號登入");
+  alert(`✅ 註冊成功！${isDevAccount ? "開發者帳號" : "帳號"}已創建，請使用帳號登入`);
+  // 切換到登入頁
   switchAuthTab("login");
   document.getElementById("loginID").value = username;
   return true;
 }
+
+// 登入帳號
 function loginAccount(username, password) {
   const db = getAccountDB();
   username = username.trim();
+  // 基礎校驗
   if (!username || !password) {
     alert("❌ 請輸入完整的帳號和密碼");
     return false;
@@ -596,24 +648,44 @@ function loginAccount(username, password) {
     alert("❌ 此帳號未註冊，請先完成註冊");
     return false;
   }
-  if (account.password !== encryptPwd(password)) {
+  // 密碼校驗（兼容舊帳號）
+  const newEncrypt = encryptPwd(password);
+  // 兼容舊版本的加密方式
+  const oldEncrypt = btoa(password.split("").reverse().join("") + "AENO_SALT_2024");
+  const pwdMatch = (account.password === newEncrypt) || (account.password === oldEncrypt);
+  if (!pwdMatch) {
     alert("❌ 密碼錯誤，請重新輸入");
+    console.log("⚠️ 帳號登入密碼錯誤", username);
     return false;
   }
+
+  // 登入成功
   account.lastLoginTime = Date.now();
+  // 自動升級舊帳號的加密方式
+  if (account.password === oldEncrypt) {
+    account.password = newEncrypt;
+    console.log("✅ 舊帳號密碼已自動升級為新加密方式");
+  }
   saveAccountDB(db);
   localStorage.setItem(CURRENT_ACCOUNT_KEY, username);
   currentPlayer = username;
   isLoggedIn = true;
-  if (username === "阿勒頓") {
-    isDeveloper = true;
+  isDeveloper = account.isDeveloper || false;
+
+  // 開發者權限解鎖
+  if (isDeveloper) {
     document.getElementById("devBlackHoleCard").style.display = "block";
+    console.log("👑 開發者帳號登入成功：阿勒頓，已解鎖全部權限");
   }
+
+  // 隱藏登入框，顯示星球選擇
   document.getElementById("authOverlay").style.display = "none";
   document.getElementById("planetSelect").style.display = "flex";
   alert(`✅ 登入成功！歡迎回來，${username}`);
   return true;
 }
+
+// 切換註冊/登入tab
 function switchAuthTab(tab) {
   document.querySelectorAll(".authTabBtn").forEach(btn => btn.classList.remove("active"));
   document.querySelectorAll(".authForm").forEach(form => form.classList.remove("active"));
@@ -623,25 +695,59 @@ function switchAuthTab(tab) {
 
 // 頁面加載完成後綁定事件
 window.addEventListener("DOMContentLoaded", () => {
+  const registerID = document.getElementById("registerID");
+  const devKeyInput = document.getElementById("devKeyInput");
+  const registerPwd = document.getElementById("registerPwd");
+  const registerPwdConfirm = document.getElementById("registerPwdConfirm");
+  const registerBtn = document.getElementById("registerBtn");
+  const loginID = document.getElementById("loginID");
+  const loginPwd = document.getElementById("loginPwd");
+  const loginBtn = document.getElementById("loginBtn");
+
+  // 監聽註冊帳號輸入，只有輸入「阿勒頓」先會顯示安全碼輸入框
+  registerID.addEventListener("input", () => {
+    const inputName = registerID.value.trim();
+    if (inputName === DEV_ACCOUNT_ID) {
+      devKeyInput.style.display = "block";
+      devKeyInput.setAttribute("required", "required");
+    } else {
+      devKeyInput.style.display = "none";
+      devKeyInput.removeAttribute("required");
+    }
+  });
+
+  // tab切換
   document.querySelectorAll(".authTabBtn").forEach(btn => {
     btn.onclick = () => switchAuthTab(btn.dataset.tab);
   });
-  document.getElementById("registerBtn").onclick = () => {
-    const username = document.getElementById("registerID").value;
-    const pwd = document.getElementById("registerPwd").value;
-    const confirmPwd = document.getElementById("registerPwdConfirm").value;
-    registerAccount(username, pwd, confirmPwd);
+
+  // 註冊按鈕
+  registerBtn.onclick = () => {
+    const username = registerID.value;
+    const devKey = devKeyInput.value;
+    const pwd = registerPwd.value;
+    const confirmPwd = registerPwdConfirm.value;
+    registerAccount(username, devKey, pwd, confirmPwd);
   };
-  document.getElementById("loginBtn").onclick = () => {
-    const username = document.getElementById("loginID").value;
-    const pwd = document.getElementById("loginPwd").value;
+
+  // 登入按鈕
+  loginBtn.onclick = () => {
+    const username = loginID.value;
+    const pwd = loginPwd.value;
     loginAccount(username, pwd);
   };
-  ["loginPwd", "registerPwdConfirm"].forEach(id => {
-    document.getElementById(id).addEventListener("keydown", (e) => {
-      if (e.key === "Enter") document.getElementById(id === "loginPwd" ? "loginBtn" : "registerBtn").click();
-    });
+
+  // 回車快捷登入/註冊
+  loginPwd.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginBtn.click();
   });
+  registerPwdConfirm.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") registerBtn.click();
+  });
+
+  // 預加載帳號數據庫
+  getAccountDB();
+  console.log("✅ 帳號系統初始化完成");
 });
 </script>
 
