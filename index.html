@@ -89,13 +89,12 @@ canvas{
 .btnOrange{background:linear-gradient(#fdba74,#f97316); color:#fff;}
 .btnPurple{background:linear-gradient(#c4b5fd,#8b5cf6); color:#fff;}
 
+/* 面板：開放手動自由放大，無最大限制 */
 .panel{
   position:absolute;
   top:88px; left:10px;
   width:24vw;
-  max-width:24vw;
   height:24vh;
-  max-height:24vh;
   background:rgba(255,255,255,.92);
   border:1px solid rgba(255,255,255,.6);
   border-radius:22px;
@@ -106,6 +105,8 @@ canvas{
   display:flex;
   flex-direction:column;
   resize:both;
+  min-width:300px;
+  min-height:400px;
 }
 
 .panel.hidden{display:none;}
@@ -143,7 +144,7 @@ canvas{
   border-radius:16px;
   background:#f1f5ff;
   cursor:pointer;
-  font-weight:700;
+  font-weight:70;
   font-size:12px;
 }
 .tabBtn.active{
@@ -202,14 +203,13 @@ canvas{
   outline:none;
 }
 
+/* AI面板：開放手動自由放大 */
 .aiPanel{
   position:absolute;
   right:10px;
   top:120px;
   width:24vw;
-  max-width:24vw;
   height:24vh;
-  max-height:24vh;
   background:rgba(255,255,255,.92);
   border-radius:22px;
   border:1px solid rgba(255,255,255,.6);
@@ -219,6 +219,8 @@ canvas{
   display:flex;
   flex-direction:column;
   resize:both;
+  min-width:300px;
+  min-height:400px;
 }
 
 .aiPanel.hidden{display:none;}
@@ -317,29 +319,95 @@ canvas{
   display:none;
 }
 
+/* 登錄彈窗 */
 #loginModal{
-  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .loginBox{
-  background:#fff;padding:25px 30px;border-radius:20px;width:90%;max-width:380px;box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  background:#fff;
+  padding:25px 30px;
+  border-radius:20px;
+  width:90%;
+  max-width:380px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
-.loginBox h3{margin:0 0 15px;text-align:center;}
-.loginBox input{width:100%;padding:12px;margin-bottom:12px;border-radius:12px;border:1px solid #ddd;box-sizing:border-box;font-size:15px;}
-.loginBox button{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,#3b82f6,#8b5cf6);color:#fff;font-weight:bold;font-size:16px;cursor:pointer;}
+.loginBox h3{
+  margin:0 0 15px;
+  text-align:center;
+}
+.loginBox input{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  box-sizing:border-box;
+  font-size:15px;
+}
+.loginBox button{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:none;
+  background:linear-gradient(90deg,#3b82f6,#8b5cf6);
+  color:#fff;
+  font-weight:bold;
+  font-size:16px;
+  cursor:pointer;
+}
 
+/* 星球選擇彈窗 */
 #planetModal{
-  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9998;display:none;align-items:center;justify-content:center;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);
+  z-index:9998;
+  display:none;
+  align-items:center;
+  justify-content:center;
 }
 .planetBox{
-  background:#fff;padding:25px 30px;border-radius:20px;width:90%;max-width:380px;box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  background:#fff;
+  padding:25px 30px;
+  border-radius:20px;
+  width:90%;
+  max-width:380px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
-.planetBox h3{margin:0 0 15px;text-align:center;}
-.planetBox select{width:100%;padding:12px;margin-bottom:12px;border-radius:12px;border:1px solid #ddd;font-size:15px;}
-.planetBox button{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,#22c55e,#3b82f6);color:#fff;font-weight:bold;font-size:16px;cursor:pointer;}
+.planetBox h3{
+  margin:0 0 15px;
+  text-align:center;
+}
+.planetBox select{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-size:15px;
+}
+.planetBox button{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:none;
+  background:linear-gradient(90deg,#22c55e,#3b82f6);
+  color:#fff;
+  font-weight:bold;
+  font-size:16px;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
 
+<!-- 登錄彈窗：ID必填，密碼任意都可以過 -->
 <div id="loginModal">
   <div class="loginBox">
     <h3>AENO 會員登錄</h3>
@@ -349,6 +417,7 @@ canvas{
   </div>
 </div>
 
+<!-- 星球選擇彈窗 -->
 <div id="planetModal">
   <div class="planetBox">
     <h3>選擇你的星球</h3>
@@ -380,6 +449,7 @@ canvas{
     </div>
   </div>
 
+  <!-- 主面板 -->
   <div id="panel" class="panel">
     <header>
       <div>
@@ -401,6 +471,7 @@ canvas{
         <button class="tabBtn" data-tab="robot" onclick="switchTab('robot')">機器人</button>
       </div>
 
+      <!-- 資源 -->
       <div class="tab" id="tab_res">
         <div class="card">
           <div class="row">
@@ -424,6 +495,7 @@ canvas{
             <div>離線收益: <span id="r_offline">0</span> 秒</div>
           </div>
         </div>
+
         <div class="card">
           <div class="row">
             <button class="btn bPurple" onclick="toggleAutoBuild()">AI自動建設: <span id="autoTxt">ON</span></button>
@@ -435,10 +507,12 @@ canvas{
         </div>
       </div>
 
+      <!-- 建設 -->
       <div class="tab" id="tab_build" style="display:none">
         <div class="card">
           <div class="small">點地圖格仔後，可建造（領土內才可）。AI亦會自動起屋/農田/伐木。</div>
         </div>
+
         <div class="card">
           <div class="row"><b>建築列表</b></div>
           <div class="row">
@@ -455,11 +529,13 @@ canvas{
           </div>
           <div class="small" id="buildModeText">建造模式：無</div>
         </div>
+
         <div class="card">
           <b>升級中心</b>
           <div class="small">選中建築後可升級（AI亦會半自動升級）。</div>
           <button class="btn bBlue full" onclick="upgradeSelected()">⬆️ 升級選中建築</button>
         </div>
+
         <div class="card">
           <b>擴張領土（手動）</b>
           <div class="small">主要由系統自動擴張，但你可手動推進。</div>
@@ -467,11 +543,13 @@ canvas{
         </div>
       </div>
 
+      <!-- 交易所 -->
       <div class="tab" id="tab_market" style="display:none">
         <div class="card">
           <b>交易所（資源換金幣）</b>
           <div class="small">價格會波動（每3分鐘更新）。</div>
         </div>
+
         <div class="card">
           <div class="row">
             <div>木材價格: <b id="p_wood">0</b></div>
@@ -502,11 +580,13 @@ canvas{
         </div>
       </div>
 
+      <!-- 股市 -->
       <div class="tab" id="tab_stock" style="display:none">
         <div class="card">
           <b>股市（簡化版）</b>
           <div class="small">玩家可投資星球公司。每180秒波動。</div>
         </div>
+
         <div class="card">
           <div class="row">
             <div>🏭 工業股: <b id="s_ind">0</b></div>
@@ -523,14 +603,17 @@ canvas{
             <button class="btn bGreen" onclick="stock('buy','farm')">買</button>
             <button class="btn bOrange" onclick="stock('sell','farm')">賣</button>
           </div>
+          <div class="small">（股市收益會轉成金幣，正式版可連接 Firebase。）</div>
         </div>
       </div>
 
+      <!-- 科技樹 -->
       <div class="tab" id="tab_tech" style="display:none">
         <div class="card">
           <b>科技樹（骨架）</b>
           <div class="small">科技會影響效率、解鎖建築、機器人。</div>
         </div>
+
         <div class="card">
           <div class="row">
             <div>🔧 工業Lv: <b id="t_ind">0</b></div>
@@ -547,11 +630,13 @@ canvas{
         </div>
       </div>
 
+      <!-- 事件 -->
       <div class="tab" id="tab_events" style="display:none">
         <div class="card">
           <b>事件中心</b>
           <div class="small">獸潮 / 掠奪 / 探索事件都會記錄。</div>
         </div>
+
         <div class="card">
           <div class="row">
             <div>獸潮倒數: <b id="beastTimer">0</b>s</div>
@@ -561,14 +646,19 @@ canvas{
             <div>野蠻碎片: <b id="shards">0</b></div>
             <button class="btn bOrange" onclick="collectLoot()">收取戰利品</button>
           </div>
+          <div class="small">碎片比例會影響 AENO 增長。</div>
         </div>
       </div>
 
+      <!-- 廣告 -->
       <div class="tab" id="tab_ads" style="display:none">
         <div class="card">
           <b>廣告 / 歌曲</b>
-          <div class="small">廣告商未來只要改 ads.json，就可以換歌/換廣告，不用更新程式。</div>
+          <div class="small">
+            廣告商未來只要改 ads.json，就可以換歌/換廣告，不用更新程式。
+          </div>
         </div>
+
         <div class="card">
           <div class="row">
             <button class="btn bPurple" onclick="unlockAudio()">🔊 解鎖音訊</button>
@@ -582,11 +672,13 @@ canvas{
         </div>
       </div>
 
+      <!-- 機器人 -->
       <div class="tab" id="tab_robot" style="display:none">
         <div class="card">
           <b>機器人中心</b>
           <div class="small">機器人會外出帶回資源，也可能隨機偷你 20%。</div>
         </div>
+
         <div class="card">
           <div class="row">
             <div>狀態: <b id="robotStatus">待命</b></div>
@@ -598,9 +690,11 @@ canvas{
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
+  <!-- AI 助手面板 -->
   <div id="aiPanel" class="aiPanel">
     <header>
       <div>
@@ -609,7 +703,9 @@ canvas{
       </div>
       <button class="btn bGray" onclick="toggleAI()">收起</button>
     </header>
+
     <div class="chat" id="chat"></div>
+
     <div class="chatInput">
       <input id="cmd" placeholder="輸入：巡邏 / 收集 / 建造 房屋 / 升級 / 停止自動..." />
       <button onclick="sendCmd()">送出</button>
@@ -623,20 +719,33 @@ canvas{
   </div>
 
   <div class="toast" id="toast"></div>
+
   <audio id="audio">
 </div>
 
 <script>
+/* =========================================================
+   AENO V3 優化版
+   - 保留ID登錄 + 密碼任意放寬
+   - 面板可手動自由放大
+   - 城牆+100PS先出第二次獸潮
+   - 機器人遊戲內1~6個月先搶一次
+========================================================= */
+
 const SAVE_KEY="AENO_V3_SAVE_FULL";
 const VERSION=9;
+
 const GRID_W=26, GRID_H=26;
 const TILE=64;
+
 const cv=document.getElementById("cv");
 const ctx=cv.getContext("2d");
+
 let W=0,H=0;
 
 const statusText=document.getElementById("statusText");
 const toast=document.getElementById("toast");
+
 const r_wood=document.getElementById("r_wood");
 const r_stone=document.getElementById("r_stone");
 const r_iron=document.getElementById("r_iron");
@@ -648,33 +757,43 @@ const r_popcap=document.getElementById("r_popcap");
 const r_workers=document.getElementById("r_workers");
 const r_radius=document.getElementById("r_radius");
 const r_offline=document.getElementById("r_offline");
+
 const autoTxt=document.getElementById("autoTxt");
 const expandTxt=document.getElementById("expandTxt");
+
 const p_wood=document.getElementById("p_wood");
 const p_stone=document.getElementById("p_stone");
 const p_iron=document.getElementById("p_iron");
 const p_food=document.getElementById("p_food");
+
 const s_ind=document.getElementById("s_ind");
 const s_space=document.getElementById("s_space");
 const s_farm=document.getElementById("s_farm");
+
 const t_ind=document.getElementById("t_ind");
 const t_def=document.getElementById("t_def");
 const t_robot=document.getElementById("t_robot");
+
 const beastTimer=document.getElementById("beastTimer");
 const shards=document.getElementById("shards");
+
 const adRatio=document.getElementById("adRatio");
 const adCd=document.getElementById("adCd");
 const adNow=document.getElementById("adNow");
+
 const robotStatus=document.getElementById("robotStatus");
 const robotTimer=document.getElementById("robotTimer");
 const stealTimer=document.getElementById("stealTimer");
+
 const chat=document.getElementById("chat");
 const cmd=document.getElementById("cmd");
+
 const audio=document.getElementById("audio");
 let audioUnlocked=false;
 
 let state={
-  version:VERSION, lastSeen:Date.now(),
+  version:VERSION,
+  lastSeen:Date.now(),
   resources:{wood:80,stone:50,iron:10,food:120,coin:200,aeno:1.0},
   pop:{population:6,cap:10},
   territory:{radius:3},
@@ -684,22 +803,30 @@ let state={
   tech:{ind:0,def:0,robot:0},
   ads:{cooldown:0,listenedToday:0,totalToday:10},
   beast:{timer:420,active:false,lootCoin:0,shards:0},
-  robot:{active:false,timer:0,stealTimer:240,status:"待命",guard:false},
+  robot:{active:false,timer:0,stealTimer:43200,status:"待命",guard:false},
   map:{tiles:[],buildings:[]},
   ai:{x:12,y:12,mode:"patrol"},
   buildMode:null,selected:null
 };
 
+// 登錄邏輯：ID必填，密碼任意
 function doLogin(){
   const id=document.getElementById("loginId").value.trim();
-  if(!id){alert("請輸入玩家ID！");return;}
+  if(!id){
+    alert("請輸入玩家ID！");
+    return;
+  }
   document.getElementById("loginModal").style.display="none";
   document.getElementById("planetModal").style.display="flex";
 }
 
+// 星球選擇後啟動遊戲
 function startGameAfterSelect(){
   const p=document.getElementById("planetSelect").value;
-  if(p==="mars"){state.resources.stone=80;state.resources.iron=40;}
+  if(p==="mars"){
+    state.resources.stone=80;
+    state.resources.iron=40;
+  }
   document.getElementById("planetModal").style.display="none";
   initGame();
 }
@@ -724,7 +851,10 @@ function genMap(){
   state.map.buildings=[{x:12,y:12,type:"base",level:1}];
 }
 
-function saveGame(){state.lastSeen=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(state));}
+function saveGame(){
+  state.lastSeen=Date.now();
+  localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+}
 function loadGame(){
   const s=localStorage.getItem(SAVE_KEY);
   if(!s){genMap();saveGame();return;}
@@ -740,7 +870,7 @@ function loadGame(){
     if(!state.stock)state.stock={ind:100,space:120,farm:90,holding:{ind:0,space:0,farm:0}};
     if(!state.tech)state.tech={ind:0,def:0,robot:0};
     if(!state.beast)state.beast={timer:420,active:false,lootCoin:0,shards:0};
-    if(!state.robot)state.robot={active:false,timer:0,stealTimer:240,status:"待命",guard:false};
+    if(!state.robot)state.robot={active:false,timer:0,stealTimer:43200,status:"待命",guard:false};
     if(!state.ai)state.ai={x:12,y:12,mode:"patrol"};
     if(!state.map||!state.map.tiles||state.map.tiles.length===0)genMap();
     state.version=VERSION;
@@ -749,12 +879,16 @@ function loadGame(){
 
 let toastTimer=null;
 function showToast(txt){
-  toast.style.display="block";toast.textContent=txt;
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.style.display="none",1600);
+  toast.style.display="block";
+  toast.textContent=txt;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.style.display="none",1600);
 }
 
 function switchTab(tab){
-  document.querySelectorAll(".tabBtn").forEach(b=>{b.classList.toggle("active",b.dataset.tab===tab);});
+  document.querySelectorAll(".tabBtn").forEach(b=>{
+    b.classList.toggle("active",b.dataset.tab===tab);
+  });
   document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
   document.getElementById("tab_"+tab).style.display="block";
 }
@@ -767,13 +901,15 @@ function makeDraggable(box){
   let dragging=false,sx=0,sy=0,ox=0,oy=0;
   header.addEventListener("pointerdown",(e)=>{
     dragging=true;sx=e.clientX;sy=e.clientY;
-    const rect=box.getBoundingClientRect();ox=rect.left;oy=rect.top;
+    const rect=box.getBoundingClientRect();
+    ox=rect.left;oy=rect.top;
     header.setPointerCapture(e.pointerId);
   });
   header.addEventListener("pointermove",(e)=>{
     if(!dragging)return;
     const dx=e.clientX-sx;const dy=e.clientY-sy;
-    box.style.left=(ox+dx)+"px";box.style.top=(oy+dy)+"px";
+    box.style.left=(ox+dx)+"px";
+    box.style.top=(oy+dy)+"px";
   });
   header.addEventListener("pointerup",()=>{dragging=false;});
 }
@@ -788,12 +924,15 @@ function addChatMsg(type,text){
   const div=document.createElement("div");
   div.className="msg "+type;
   div.innerHTML=type==="ai"?"<b>Aenko：</b> "+text:type==="sys"?"<b>系統：</b> "+text:text;
-  chat.appendChild(div);chat.scrollTop=chat.scrollHeight;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
 }
 
 function sendCmd(){
-  const t=cmd.value.trim();if(!t)return;cmd.value="";
-  addChatMsg("sys","你："+t);parseCmd(t);
+  const t=cmd.value.trim();
+  if(!t)return;cmd.value="";
+  addChatMsg("sys","你："+t);
+  parseCmd(t);
 }
 
 function parseCmd(t){
@@ -816,6 +955,7 @@ function parseCmd(t){
 
 function toggleAutoBuild(){state.settings.autoBuild=!state.settings.autoBuild;addChatMsg("ai",state.settings.autoBuild?"🤖 自動建設ON":"⛔ OFF");}
 function toggleAutoExpand(){state.settings.autoExpand=!state.settings.autoExpand;addChatMsg("ai",state.settings.autoExpand?"🗺️ 自動擴土ON":"⛔ OFF");}
+
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 
 let cam={x:0,y:0,scale:1};
@@ -904,6 +1044,7 @@ function calcAenoGain(seconds){
   return base+(0.000018*seconds*ratio)+(0.00002*seconds*shardRatio);
 }
 
+// 獸潮：城牆總等級 >=10 先觸發
 function spawnBeastWave(){
   let wallTotal=0;
   for(const b of state.map.buildings){if(b.type==="wall")wallTotal+=b.level;}
@@ -912,6 +1053,7 @@ function spawnBeastWave(){
   addChatMsg("ai","⚔️ 獸潮爆發！");showToast("獸潮爆發！");
 }
 
+// 獸潮結算：必須滿100PS先開啟第二次
 function resolveBeastWave(){
   let wall=0;for(const b of state.map.buildings){if(b.type==="wall")wall+=b.level;}
   const defPower=wall+state.tech.def*3;
@@ -926,7 +1068,15 @@ function resolveBeastWave(){
     state.resources.coin-=stolen;
     addChatMsg("ai","❌ 被掠奪金幣-"+stolen);
   }
-  state.beast.active=false;state.beast.timer=360+Math.floor(Math.random()*300);
+  state.beast.active=false;
+  // 核心規則：未滿100PS，絕對唔出第二次獸潮
+  if(state.beast.shards >= 100){
+    state.beast.timer=360+Math.floor(Math.random()*300);
+    addChatMsg("ai","🛡️ 城牆修復+PS滿100，可觸發下一輪獸潮");
+  } else {
+    state.beast.timer = 9999999;
+    addChatMsg("ai","⚠️ 未滿100PS，暫停獸潮");
+  }
 }
 
 function forceBeast(){state.beast.timer=0;}
@@ -946,6 +1096,7 @@ function robotReturn(){
   state.robot.active=false;state.robot.status="待命";state.robot.guard=false;
 }
 
+// 機器人掠奪：遊戲內1~6個月先一次
 function robotSteal(){
   const ratio=state.robot.guard?0.05:0.20;
   const steal=(v)=>Math.floor(v*ratio);
@@ -953,7 +1104,8 @@ function robotSteal(){
   state.resources.wood-=sw;state.resources.stone-=ss;state.resources.iron-=si;state.resources.food-=sf;state.resources.coin-=sc;
   addChatMsg("ai",`🚨 被搶${Math.round(ratio*100)}%：木-${sw} 金-${sc}`);
   showToast(`被搶${Math.round(ratio*100)}%`);
-  state.robot.stealTimer=240+Math.floor(Math.random()*240);
+  // 遊戲內1~6個月掠奪間隔
+  state.robot.stealTimer= 43200 + Math.floor(Math.random() * 129600);
 }
 
 function tickPrices(){const d=(p)=>Math.max(1,Math.floor(p*(0.9+Math.random()*0.25)));state.prices.wood=d(state.prices.wood);state.prices.stone=d(state.prices.stone);state.prices.iron=d(state.prices.iron);state.prices.food=d(state.prices.food);}
@@ -1049,52 +1201,4 @@ function drawBuilding(b){
   if(b.type==="house"){ctx.fillStyle="#fef3c7";ctx.fillRect(px+14,py+24,36,26);ctx.fillStyle="#fb7185";ctx.beginPath();ctx.moveTo(px+12,py+26);ctx.lineTo(px+32,py+10);ctx.lineTo(px+52,py+26);ctx.closePath();ctx.fill();}
   if(b.type==="farm"){ctx.fillStyle="#fde68a";ctx.fillRect(px+12,py+26,40,22);ctx.fillStyle="#16a34a";ctx.fillRect(px+16,py+30,32,4);ctx.fillRect(px+16,py+38,32,4);}
   if(b.type==="lumber"){ctx.fillStyle="#fef3c7";ctx.fillRect(px+14,py+26,36,22);ctx.fillStyle="#92400e";ctx.fillRect(px+28,py+20,8,30);ctx.fillStyle="#22c55e";ctx.beginPath();ctx.arc(px+32,py+18,10,0,Math.PI*2);ctx.fill();}
-  if(b.type==="mine"){ctx.fillStyle="#cbd5e1";ctx.fillRect(px+14,py+28,36,20);ctx.fillStyle="#64748b";ctx.beginPath();ctx.moveTo(px+12,py+30);ctx.lineTo(px+32,py+12);ctx.lineTo(px+52,py+30);ctx.closePath();ctx.fill();}
-  if(b.type==="wall"){ctx.fillStyle="#94a3b8";ctx.fillRect(px+10,py+28,44,22);ctx.fillStyle="#64748b";for(let i=0;i<4;i++){ctx.fillRect(px+12+i*11,py+22,8,10);}}
-  ctx.fillStyle="rgba(0,0,0,.65)";
-  ctx.font="bold 12px sans-serif";
-  ctx.fillText("Lv"+b.level, px+6, py+14);
-}
-
-function drawAI(){
-  const px=state.ai.x*TILE + TILE/2;
-  const py=state.ai.y*TILE + TILE/2;
-  ctx.fillStyle="#fde68a";ctx.beginPath();ctx.arc(px,py,18,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#111827";ctx.beginPath();ctx.arc(px-6,py-4,2.5,0,Math.PI*2);ctx.arc(px+6,py-4,2.5,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle="#111827";ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py+4,6,0,Math.PI);ctx.stroke();
-  ctx.fillStyle="#ef4444";ctx.fillRect(px-10,py-34,20,12);ctx.fillStyle="#fff";ctx.font="bold 10px sans-serif";ctx.fillText("AD",px-7,py-24);
-  ctx.strokeStyle="#92400e";ctx.beginPath();ctx.moveTo(px-10,py-34);ctx.lineTo(px-10,py-12);ctx.stroke();
-}
-
-function render(){
-  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);
-  ctx.setTransform(cam.scale,0,0,cam.scale,cam.x,cam.y);
-  for(let y=0;y<GRID_H;y++){for(let x=0;x<GRID_W;x++){drawTile(x,y,state.map.tiles[y][x].t);}}
-  for(const b of state.map.buildings){drawBuilding(b);}
-  drawAI();
-  if(selectedTile){ctx.strokeStyle="#3b82f6";ctx.lineWidth=4;ctx.strokeRect(selectedTile.x*TILE+2, selectedTile.y*TILE+2, TILE-4, TILE-4);}
-}
-
-let lastTick=Date.now();
-let gameTick=0;
-function gameLoop(){
-  const now=Date.now();
-  const dt=(now-lastTick)/1000;
-  lastTick=now;
-  simulate(dt);
-  if(state.ai.mode==="patrol"){
-    if(Math.random()<0.03){
-      state.ai.x=clamp(state.ai.x+(Math.random()>0.5?1:-1),0,GRID_W-1);
-      state.ai.y=clamp(state.ai.y+(Math.random()>0.5?1:-1),0,GRID_H-1);
-    }
-  }
-  if(state.beast.timer>0)state.beast.timer--;
-  if(state.ads.cooldown>0)state.ads.cooldown--;
-  if(state.robot.active&&state.robot.timer>0)state.robot.timer--;
-  if(state.robot.stealTimer>0)state.robot.stealTimer--;
-  if(gameTick%180===0)tickPrices();
-  if(gameTick%180===0)tickStock();
-  if(state.beast.timer<=0&&!state.beast.active){spawnBeastWave();resolveBeastWave();}
-  if(state.robot.active&&state.robot.timer<=0)robotReturn();
-  if(!state.robot.active&&gameTick%750===0){if(Math.random()<0.35)spawnRobot();}
-  if(state.
+  if(b.type==="mine"){ctx.fillStyle="#cbd5e1";ctx.fill
