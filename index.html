@@ -2,1032 +2,193 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>AENO - 量子星球文明模擬</title>
-  <link rel="manifest" href="manifest.json" />
-  <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #0b1020;
-  overflow: hidden;
-  font-family: Arial, "Microsoft JhengHei", "PingFang HK", sans-serif;
-  touch-action: manipulation;
-  -webkit-user-select: none;
-  user-select: none;
-}
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>AENO V3 直屏卡通版</title>
 
-/* 遊戲畫布 - 默認隱藏，進入星球先顯示 */
-#game {
-  display: none;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(#091224, #081018);
-}
-
-/* 頂部HUD - 默認隱藏 */
-#hudTop {
-  position: fixed;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  display: none;
-  gap: 6px;
-  justify-content: space-between;
-  z-index: 50;
-  pointer-events: none;
-}
-.hudBox {
-  pointer-events: auto;
-  background: rgba(0,0,0,0.75);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  line-height: 1.3em;
-  backdrop-filter: blur(8px);
-  max-width: 48vw;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-.hudRow {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.pill {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-/* 控制中心 - 默認隱藏 */
-#panel {
-  position: fixed;
-  right: 8px;
-  bottom: 80px;
-  width: min(340px, 85vw);
-  max-height: 30vh;
-  background: rgba(10,14,20,0.9);
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 16px;
-  color: #fff;
-  z-index: 100;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  backdrop-filter: blur(12px);
-  overflow: hidden;
-  display: none;
-  flex-direction: column;
-  touch-action: none;
-}
-#panelHeader {
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255,255,255,0.06);
-  cursor: grab;
-}
-#panelBody {
-  padding: 10px 12px;
-  overflow: auto;
-  font-size: 12px;
-}
-.btnRow {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-button {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18);
-  color: #fff;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  touch-action: manipulation;
-}
-button:active { transform: scale(0.96); background: rgba(255,255,255,0.15); }
-button.active { background: #2563eb; }
-#togglePanelBtn {
-  position: fixed;
-  right: 8px;
-  bottom: 12px;
-  z-index: 200;
-  border-radius: 999px;
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: bold;
-  background: rgba(0,0,0,0.7);
-  border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(10px);
-  color: #fff;
-  display: none;
-}
-
-/* 星球選擇界面 */
-#planetSelect {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  z-index: 999;
-  display: none;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  color: #fff;
-  padding: 60px 20px 20px;
-  backdrop-filter: blur(15px);
-  overflow-y: auto;
-}
-.planetCard {
-  width: min(380px, 92vw);
-  padding: 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.06);
-  margin-bottom: 12px;
-  transition: all 0.2s;
-}
-.planetTitle {
-  font-size: 15px;
-  font-weight: bold;
-  margin-bottom: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-/* 【新增】星球語言標籤樣式 */
-.planetLangTag {
-  font-size: 11px;
-  font-weight: normal;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(74, 108, 247, 0.3);
-  border: 1px solid rgba(74, 108, 247, 0.5);
-  opacity: 0.95;
-}
-.planetDesc {
-  font-size: 12px;
-  opacity: 0.9;
-  margin-bottom: 10px;
-}
-
-/* 註冊+登入界面 */
-#authOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: #fff;
-  padding: 20px;
-}
-.authBox {
-  width: min(360px, 90vw);
-  background: rgba(20,25,40,0.9);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-}
-.authBox h2 {
-  text-align: center;
-  margin-bottom: 24px;
-  font-size: 20px;
-  color: #4a6cf7;
-}
-.authTab {
-  display: flex;
-  gap: 2px;
-  margin-bottom: 20px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.05);
-}
-.authTabBtn {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  background: transparent;
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 0;
-}
-.authTabBtn.active {
-  background: #4a6cf7;
-  font-weight: bold;
-}
-.authForm {
-  display: none;
-  flex-direction: column;
-  gap: 14px;
-}
-.authForm.active {
-  display: flex;
-}
-.authForm input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(0,0,0,0.4);
-  color: #fff;
-  font-size: 14px;
-}
-.authForm button {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  background: #4a6cf7;
-  color: #fff;
-  border: none;
-  font-size: 15px;
-  font-weight: bold;
-  margin-top: 8px;
-}
-.devNote {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 11px;
-  opacity: 0.7;
-}
-.authTip {
-  font-size: 11px;
-  opacity: 0.8;
-  text-align: center;
-}
-
-/* AI助手對話框 */
-#assistantChat {
-  position: fixed;
-  left: 8px;
-  bottom: 80px;
-  width: min(340px, 85vw);
-  max-height: 40vh;
-  background: rgba(10,14,20,0.9);
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 16px;
-  color: #fff;
-  z-index: 100;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  backdrop-filter: blur(12px);
-  overflow: hidden;
-  display: none;
-  flex-direction: column;
-}
-#assistantChatHeader {
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255,255,255,0.06);
-}
-#assistantChatBody {
-  padding: 10px 12px;
-  overflow: auto;
-  font-size: 12px;
-  flex: 1;
-}
-#assistantInputBox {
-  padding: 8px 12px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  display: flex;
-  gap: 8px;
-}
-#assistantInput {
-  flex: 1;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(0,0,0,0.4);
-  color: #fff;
-  font-size: 12px;
-}
-#sendAssistant {
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #4a6cf7;
-  color: #fff;
-  border: none;
-  font-size: 12px;
-  font-weight: bold;
-}
-#toggleAssistantBtn {
-  position: fixed;
-  left: 8px;
-  bottom: 12px;
-  z-index: 200;
-  border-radius: 999px;
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: bold;
-  background: rgba(0,0,0,0.7);
-  border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(10px);
-  color: #fff;
-  display: none;
-}
-
-/* 通用樣式 */
-.muted { opacity: 0.85; font-size: 11px; }
-.ok { color: #a8ffb8; }
-.warning { color: #ffd966; }
-.danger { color: #ff9aa2; }
-  </style>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./style.css?v=3.0.0" />
 </head>
-
 <body>
-<!-- 註冊+登入界面 -->
-<div id="authOverlay">
-  <div class="authBox">
-    <h2>🔐 AENO 星球文明</h2>
-    <div class="authTab">
-      <button class="authTabBtn active" data-tab="register">首次註冊</button>
-      <button class="authTabBtn" data-tab="login">已有帳號登入</button>
-    </div>
 
-    <div class="authForm active" id="registerForm">
-      <input type="text" id="registerID" placeholder="請設定你的帳號ID" autocomplete="off" />
-      <input type="password" id="devKeyInput" placeholder="請輸入開發者專屬安全碼" autocomplete="off" style="display:none;" />
-      <input type="password" id="registerPwd" placeholder="請設定密碼（至少6位）" autocomplete="new-password" />
-      <input type="password" id="registerPwdConfirm" placeholder="請再次確認密碼" autocomplete="new-password" />
-      <button id="registerBtn">完成註冊</button>
-      <div class="authTip">每個帳號ID唯一，註冊後不可修改，請妥善保管密碼</div>
-    </div>
-
-    <div class="authForm" id="loginForm">
-      <input type="text" id="loginID" placeholder="請輸入你的帳號ID" autocomplete="off" />
-      <input type="password" id="loginPwd" placeholder="請輸入密碼" autocomplete="current-password" />
-      <button id="loginBtn">登入遊戲</button>
-      <div class="authTip">未註冊請先點擊「首次註冊」</div>
-    </div>
-
-    <div class="devNote">開發者：阿勒頓 | 未來將開放指紋認證</div>
-  </div>
-</div>
-
-<!-- 遊戲畫布 -->
-<canvas id="game"></canvas>
-
-<!-- 頂部HUD -->
-<div id="hudTop">
-  <div class="hudBox" id="hudLeft">
-    <div class="hudRow">
-      <span class="pill">🌍 <span id="planetName">?</span></span>
-      <span class="pill">⏱️ <span id="gameYear">0</span> 年</span>
-      <span class="pill">👥 <span id="popCount">0</span></span>
-    </div>
-    <div class="hudRow" style="margin-top:4px;">
-      <span class="pill">🪙 金幣: <span id="coins">0</span></span>
-      <span class="pill">🟡 AENO: <span id="aeno">0.0000</span></span>
+  <div id="bootScreen">
+    <div class="bootCard">
+      <div class="logo">AENO</div>
+      <div class="bootText">載入中…</div>
+      <div class="bootHint">如卡住請刷新一次</div>
     </div>
   </div>
-  <div class="hudBox" id="hudRight">
-    <div class="hudRow">
-      <span class="pill">🪵 木: <span id="wood">0</span></span>
-      <span class="pill">🪨 石: <span id="stone">0</span></span>
-      <span class="pill">⛏️ 鐵: <span id="iron">0</span></span>
-      <span class="pill">🌾 糧: <span id="food">0</span></span>
-    </div>
-    <div class="hudRow" style="margin-top:4px;">
-      <span class="pill">⚙️ 工廠: <span id="factoryCount">0</span></span>
-      <span class="pill">🤖 機器人: <span id="robotCount">0</span></span>
-    </div>
-  </div>
-</div>
 
-<!-- 按鈕區 -->
-<button id="toggleAssistantBtn">🤖 AI助手</button>
-<button id="togglePanelBtn">📌 控制中心</button>
+  <canvas id="gameCanvas"></canvas>
 
-<!-- AI助手對話框 -->
-<div id="assistantChat">
-  <div id="assistantChatHeader">
-    <span>🤖 AENO AI助手</span>
-    <button id="closeChat">關閉</button>
-  </div>
-  <div id="assistantChatBody"></div>
-  <div id="assistantInputBox">
-    <input type="text" id="assistantInput" placeholder="輸入指令，例如：修復、建造、升級..." />
-    <button id="sendAssistant">發送</button>
-  </div>
-</div>
+  <div id="uiRoot">
 
-<!-- 控制中心面板 -->
-<div id="panel">
-  <div id="panelHeader">
-    <span>📌 控制中心</span>
-    <span>
-      <button id="btnSave">保存</button>
-      <button id="btnHidePanel">收起</button>
-    </span>
-  </div>
-  <div id="panelBody">
-    <div><b>提示：</b>點領土空地可以建築房屋</div>
-    <div class="muted">Zoom: 雙指縮放 / 滾輪 | 拖地圖：一指拖動</div>
-
-    <div class="btnRow">
-      <button id="btnBuildMode" class="active">🏗️ 建築模式</button>
-      <button id="btnUpgradeMode">⬆️ 升級模式</button>
-      <button id="btnAuto">🤖 自動建造: <span id="autoState">ON</span></button>
+    <!-- 浮動助手 -->
+    <div id="assistant">
+      <div class="assistantAdFlag">AD</div>
+      <div class="assistantFace">🐻</div>
+      <div class="assistantName">AENO 熊仔助手</div>
+      <button id="assistantTalkBtn">💬</button>
     </div>
 
-    <div class="btnRow">
-      <button id="btnAdSong">🎵 播放廣告歌</button>
-      <button id="btnLoopSong">🔁 Loop: <span id="loopState">ON</span></button>
-    </div>
-
-    <div class="btnRow">
-      <button id="btnRobotSend">🚀 派機器人探索</button>
-      <button id="btnExchange">🏦 交易所</button>
-      <button id="btnTech">🧬 科技樹</button>
-    </div>
-
-    <div style="margin-top:12px;">
-      <b>AI助手優先順序：</b>
-      <div class="btnRow">
-        <button class="prioBtn" data-prio="house">🏠 房屋</button>
-        <button class="prioBtn" data-prio="lumber">🪵 伐木</button>
-        <button class="prioBtn" data-prio="quarry">🪨 採石</button>
-        <button class="prioBtn" data-prio="mine">⛏️ 礦場</button>
-        <button class="prioBtn" data-prio="farm">🌾 農田</button>
+    <!-- 對話框 -->
+    <div id="chatBox" class="hidden">
+      <div class="chatHeader">
+        <div>助手對話</div>
+        <button id="chatClose">✖</button>
       </div>
-      <div class="muted">AI會嚴格遵守優先級，自動平衡資源</div>
+      <div id="chatLog"></div>
+      <div class="chatInputRow">
+        <input id="chatInput" placeholder="輸入指令：建造 / 升級 / 收集 / 巡邏 / 停止自動" />
+        <button id="chatSend">送出</button>
+      </div>
     </div>
 
-    <div style="margin-top:12px;">
-      <b>系統訊息：</b>
-      <div id="logBox" style="margin-top:6px; max-height: 10vh; overflow:auto; font-size: 11px; opacity:0.92;"></div>
+    <!-- 主面板 -->
+    <div id="mainPanel">
+      <div id="panelHeader">
+        <div class="panelTitle">📌 AENO 面板</div>
+        <div class="panelBtns">
+          <button id="panelMinBtn">—</button>
+          <button id="panelHideBtn">▢</button>
+        </div>
+      </div>
+
+      <div id="panelTabs">
+        <button class="tabBtn active" data-tab="tabResources">資源</button>
+        <button class="tabBtn" data-tab="tabBuild">建築</button>
+        <button class="tabBtn" data-tab="tabMarket">交易所</button>
+        <button class="tabBtn" data-tab="tabTech">科技樹</button>
+        <button class="tabBtn" data-tab="tabAds">廣告/歌曲</button>
+        <button class="tabBtn" data-tab="tabLog">系統</button>
+      </div>
+
+      <div id="panelBody">
+
+        <!-- 資源 -->
+        <div class="tabPage active" id="tabResources">
+          <div class="grid2">
+            <div class="statCard"><div class="k">金幣</div><div class="v" id="statGold">0</div></div>
+            <div class="statCard"><div class="k">AENO</div><div class="v" id="statAeno">0</div></div>
+            <div class="statCard"><div class="k">木材</div><div class="v" id="statWood">0</div></div>
+            <div class="statCard"><div class="k">石頭</div><div class="v" id="statStone">0</div></div>
+            <div class="statCard"><div class="k">鐵礦</div><div class="v" id="statIron">0</div></div>
+            <div class="statCard"><div class="k">食物</div><div class="v" id="statFood">0</div></div>
+          </div>
+
+          <div class="grid2 mt8">
+            <div class="statCard"><div class="k">人口</div><div class="v" id="statPop">0</div></div>
+            <div class="statCard"><div class="k">領土</div><div class="v" id="statTerritory">0</div></div>
+            <div class="statCard"><div class="k">文明度</div><div class="v" id="statCivil">0%</div></div>
+            <div class="statCard"><div class="k">獸潮</div><div class="v" id="statBeast">未啟動</div></div>
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnExpand">🏞️ 擴大領土</button>
+            <button id="btnZoomReset">🔍 重置縮放</button>
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnAutoOn">🤖 自動模式 ON</button>
+            <button id="btnAutoOff">🛑 自動模式 OFF</button>
+          </div>
+        </div>
+
+        <!-- 建築 -->
+        <div class="tabPage" id="tabBuild">
+          <div class="buildList">
+            <button class="buildBtn" data-build="house">🏠 房屋</button>
+            <button class="buildBtn" data-build="farm">🌾 農田</button>
+            <button class="buildBtn" data-build="lumber">🪓 伐木場</button>
+            <button class="buildBtn" data-build="quarry">⛏️ 石礦場</button>
+            <button class="buildBtn" data-build="mine">⚒️ 鐵礦場</button>
+            <button class="buildBtn" data-build="factory">🏭 工廠</button>
+            <button class="buildBtn" data-build="wall">🧱 城牆</button>
+            <button class="buildBtn" data-build="robot">🤖 機器人中心</button>
+          </div>
+
+          <div class="mt10">
+            <div class="hint">
+              📌 點上面按鈕會「排程建築」<br/>
+              AI 助手會自動搵位置建造（唔會再話森林外）
+            </div>
+          </div>
+        </div>
+
+        <!-- 市場 -->
+        <div class="tabPage" id="tabMarket">
+          <div class="hint">交易所（簡化測試版）</div>
+          <div class="marketRow">
+            <select id="marketItem">
+              <option value="wood">木材</option>
+              <option value="stone">石頭</option>
+              <option value="iron">鐵礦</option>
+              <option value="food">食物</option>
+            </select>
+            <input id="marketQty" type="number" value="10" min="1" />
+          </div>
+          <div class="btnRow mt10">
+            <button id="btnBuy">買入</button>
+            <button id="btnSell">賣出</button>
+          </div>
+          <div class="hint mt10" id="marketPriceHint">價格會波動（每分鐘更新）</div>
+        </div>
+
+        <!-- 科技 -->
+        <div class="tabPage" id="tabTech">
+          <div class="hint">科技樹（簡化版）</div>
+          <div class="techList">
+            <button class="techBtn" data-tech="tools">🔧 工具學</button>
+            <button class="techBtn" data-tech="agri">🌾 農業學</button>
+            <button class="techBtn" data-tech="mining">⛏️ 採礦學</button>
+            <button class="techBtn" data-tech="robotics">🤖 機械學</button>
+            <button class="techBtn" data-tech="economy">📈 經濟學</button>
+          </div>
+        </div>
+
+        <!-- Ads -->
+        <div class="tabPage" id="tabAds">
+          <div class="hint">
+            📌 廣告位設計（正式版會由廣告商上傳音樂/歌曲）<br/>
+            目前用測試音樂模擬「看廣告/聽歌」。
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnPlayAd">▶ 播放廣告歌曲</button>
+            <button id="btnStopAd">⏹ 停止</button>
+          </div>
+
+          <div class="hint mt10">
+            🎵 聽歌越耐，AENO 增長越快（算法已隱藏）
+          </div>
+
+          <div class="hint mt10">
+            🏷️ 機器人貼紙位（Ad Slot）已預留<br/>
+            🏳️ 助手頭頂旗幟位（Ad Slot）已預留
+          </div>
+        </div>
+
+        <!-- Log -->
+        <div class="tabPage" id="tabLog">
+          <div class="btnRow">
+            <button id="btnSaveNow">💾 即時保存</button>
+            <button id="btnReset">⚠ 清除存檔</button>
+          </div>
+          <div id="sysLog"></div>
+        </div>
+
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- 星球選擇界面（【核心修改】20星球對應20種語言，完全匹配ai-assistant.js邏輯） -->
-<div id="planetSelect">
-  <div style="font-size:20px; font-weight:bold; margin-bottom:15px;">🌌 選擇你的星球</div>
-  <div style="font-size:12px; opacity:0.8; margin-bottom:20px; text-align:center;">每個星球對應一門全球主流語言，選擇你的母語星球，AI助手將自動匹配對應語言</div>
+    <!-- Panel minimized button -->
+    <button id="panelRestoreBtn" class="hidden">📌 面板</button>
 
-  <!-- Planet-01 中文粵語星球（全程粵語，無簡體） -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🟩 Planet-01 綠原星
-      <span class="planetLangTag">🌐 粵語繁體</span>
-    </div>
-    <div class="planetDesc">森林茂密，木材產出高，適合新手入門</div>
-    <button class="planetBtn" data-planet="earth" data-seed="forest">進入星球</button>
   </div>
 
-  <!-- Planet-02 英語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🟫 Planet-02 岩石星
-      <span class="planetLangTag">🌐 English</span>
-    </div>
-    <div class="planetDesc">石礦豐富，建築升級更快，地形崎嶇</div>
-    <button class="planetBtn" data-planet="mars" data-seed="rock">進入星球</button>
-  </div>
+  <audio id="adAudio" preload="auto"></audio>
 
-  <!-- Planet-03 西班牙語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      ⚙️ Planet-03 工業星
-      <span class="planetLangTag">🌐 Español</span>
-    </div>
-    <div class="planetDesc">鐵礦儲量高，適合發展工廠與機器人文明</div>
-    <button class="planetBtn" data-planet="ocean" data-seed="iron">進入星球</button>
-  </div>
-
-  <!-- Planet-04 葡萄牙語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌾 Planet-04 農牧星
-      <span class="planetLangTag">🌐 Português</span>
-    </div>
-    <div class="planetDesc">土地肥沃，糧食產出高，人口成長速度快</div>
-    <button class="planetBtn" data-planet="jungle" data-seed="farm">進入星球</button>
-  </div>
-
-  <!-- Planet-05 法語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌊 Planet-05 河流星
-      <span class="planetLangTag">🌐 Français</span>
-    </div>
-    <div class="planetDesc">水系發達，糧食與木材均衡，野獸強度中等</div>
-    <button class="planetBtn" data-planet="river" data-seed="river">進入星球</button>
-  </div>
-
-  <!-- Planet-06 阿拉伯語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🏜️ Planet-06 荒漠星
-      <span class="planetLangTag">🌐 العربية</span>
-    </div>
-    <div class="planetDesc">資源稀少，但鐵礦與稀有礦產豐富，適合高階玩家</div>
-    <button class="planetBtn" data-planet="desert" data-seed="desert">進入星球</button>
-  </div>
-
-  <!-- Planet-07 德語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌲 Planet-07 針葉星
-      <span class="planetLangTag">🌐 Deutsch</span>
-    </div>
-    <div class="planetDesc">寒帶森林，木材產出極高，石礦中等</div>
-    <button class="planetBtn" data-planet="taiga" data-seed="forest">進入星球</button>
-  </div>
-
-  <!-- Planet-08 俄語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      ⛰️ Planet-08 山嶽星
-      <span class="planetLangTag">🌐 Русский</span>
-    </div>
-    <div class="planetDesc">高山地形，石礦與鐵礦豐富，建築難度稍高</div>
-    <button class="planetBtn" data-planet="mountain" data-seed="mountain">進入星球</button>
-  </div>
-
-  <!-- Planet-09 意大利語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌾 Planet-09 沃土星
-      <span class="planetLangTag">🌐 Italiano</span>
-    </div>
-    <div class="planetDesc">黑土平原，糧食產出翻倍，人口成長速度極快</div>
-    <button class="planetBtn" data-planet="steppe" data-seed="farm">進入星球</button>
-  </div>
-
-  <!-- Planet-10 日語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      ⚙️ Planet-10 重工星
-      <span class="planetLangTag">🌐 日本語</span>
-    </div>
-    <div class="planetDesc">工業發達，工廠效率提升，適合機器人與科技發展</div>
-    <button class="planetBtn" data-planet="volcanic" data-seed="iron">進入星球</button>
-  </div>
-
-  <!-- Planet-11 韓語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌿 Planet-11 雨林星
-      <span class="planetLangTag">🌐 한국어</span>
-    </div>
-    <div class="planetDesc">熱帶雨林，木材與糧食豐富，野獸強度較高</div>
-    <button class="planetBtn" data-planet="tundra" data-seed="forest">進入星球</button>
-  </div>
-
-  <!-- Planet-12 越南語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🪨 Planet-12 花崗星
-      <span class="planetLangTag">🌐 Tiếng Việt</span>
-    </div>
-    <div class="planetDesc">堅硬岩石地形，石礦產出翻倍，建築防禦力提升</div>
-    <button class="planetBtn" data-planet="swamp" data-seed="rock">進入星球</button>
-  </div>
-
-  <!-- Planet-13 泰語星球（合併老撾、緬甸等亞洲相近語種） -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      ⛏️ Planet-13 金屬星
-      <span class="planetLangTag">🌐 ไทย</span>
-    </div>
-    <div class="planetDesc">金屬礦脈密集，鐵礦產出翻倍，適合工業發展</div>
-    <button class="planetBtn" data-planet="crystal" data-seed="iron">進入星球</button>
-  </div>
-
-  <!-- Planet-14 印地語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌾 Planet-14 牧場星
-      <span class="planetLangTag">🌐 हिन्दी</span>
-    </div>
-    <div class="planetDesc">廣闊草原，糧食與人口均衡，適合穩定發展</div>
-    <button class="planetBtn" data-planet="radiant" data-seed="farm">進入星球</button>
-  </div>
-
-  <!-- Planet-15 馬來語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌊 Planet-15 群島星
-      <span class="planetLangTag">🌐 Bahasa Melayu</span>
-    </div>
-    <div class="planetDesc">海洋群島，資源均衡，貿易與交易所收益提升</div>
-    <button class="planetBtn" data-planet="abyssal" data-seed="river">進入星球</button>
-  </div>
-
-  <!-- Planet-16 土耳其語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🏜️ Planet-16 鹽漠星
-      <span class="planetLangTag">🌐 Türkçe</span>
-    </div>
-    <div class="planetDesc">荒漠鹽地，資源稀少，但稀有掉落概率提升</div>
-    <button class="planetBtn" data-planet="meadow" data-seed="desert">進入星球</button>
-  </div>
-
-  <!-- Planet-17 波斯語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌲 Planet-17 寒帶星
-      <span class="planetLangTag">🌐 فارسی</span>
-    </div>
-    <div class="planetDesc">寒帶凍土，木材產出高，野獸強度高，獎勵豐厚</div>
-    <button class="planetBtn" data-planet="canyon" data-seed="forest">進入星球</button>
-  </div>
-
-  <!-- Planet-18 烏爾都語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      ⛰️ Planet-18 高原星
-      <span class="planetLangTag">🌐 اردو</span>
-    </div>
-    <div class="planetDesc">高原地形，石礦與鐵礦豐富，建築成本稍高</div>
-    <button class="planetBtn" data-planet="plateau" data-seed="mountain">進入星球</button>
-  </div>
-
-  <!-- Planet-19 他加祿語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      ⚙️ Planet-19 科技星
-      <span class="planetLangTag">🌐 Tagalog</span>
-    </div>
-    <div class="planetDesc">科技發達，研究所效率提升，科技解鎖成本降低</div>
-    <button class="planetBtn" data-planet="archipelago" data-seed="iron">進入星球</button>
-  </div>
-
-  <!-- Planet-20 斯瓦希里語星球 -->
-  <div class="planetCard">
-    <div class="planetTitle">
-      🌾 Planet-20 生態星
-      <span class="planetLangTag">🌐 Kiswahili</span>
-    </div>
-    <div class="planetDesc">生態完美，所有資源均衡產出，適合全方面發展</div>
-    <button class="planetBtn" data-planet="badlands" data-seed="farm">進入星球</button>
-  </div>
-
-  <!-- 開發者專屬黑洞孤島（固定粵語繁體） -->
-  <div class="planetCard" id="devBlackHoleCard" style="border-color: rgba(255,255,255,0.3); background: rgba(80,0,120,0.22); display:none;">
-    <div class="planetTitle">
-      🕳️ 黑洞孤島（開發者專屬）
-      <span class="planetLangTag">🌐 粵語繁體</span>
-    </div>
-    <div class="planetDesc">特殊星域，全星球數據管理、移民系統、申請制度由此開放</div>
-    <button class="planetBtn" data-planet="blackhole" data-seed="blackhole">進入開發者後台</button>
-  </div>
-
-  <div class="muted" style="margin-top:15px; text-align:center;">
-    ⚠️ 遊戲會自動保存，更新版本後仍可保留進度<br/>
-    音樂需手動點擊播放（手機瀏覽器限制）
-  </div>
-</div>
-
-<!-- 遊戲核心JS引入，順序不可亂 -->
-<script src="ai-assistant.js"></script>
-<script src="game.js"></script>
-
-<script>
-// ==================== 全局配置（固定不變） ====================
-const AENO_CONFIG = {
-  ACCOUNT_DB_KEY: "AENO_ACCOUNT_DATABASE_V4",
-  CURRENT_ACCOUNT_KEY: "AENO_CURRENT_LOGIN",
-  DEV_ACCOUNT_ID: "阿勒頓",
-  DEV_KEY_HASH: "YWxldG9uX2Flbm9fMjAyNA==", // 安全碼：aleton_aeno_2024
-};
-
-// ==================== 全局狀態 ====================
-window.AENO_GLOBAL = {
-  auth: {
-    currentPlayer: null,
-    isLoggedIn: false,
-    isDeveloper: false,
-  },
-  currentPlanet: {
-    planetId: null,
-    seedType: null,
-    isLoaded: false,
-  },
-  elements: {}, // 頁面元素緩存，避免重複查找
-};
-
-// ==================== 工具函數 ====================
-// 加密函數（固定不變）
-function encryptContent(content) {
-  return btoa(encodeURIComponent(content.trim().toLowerCase()));
-}
-function checkDevKey(inputKey) {
-  return encryptContent(inputKey) === AENO_CONFIG.DEV_KEY_HASH;
-}
-function encryptPassword(pwd) {
-  return encryptContent(pwd + "_" + AENO_CONFIG.DEV_ACCOUNT_ID);
-}
-// 系統日誌（與game.js、ai-assistant.js共用）
-window.log = function log(msg, type="") {
-  console.log(`[AENO] ${msg}`);
-  const logBox = window.AENO_GLOBAL.elements.logBox;
-  if (!logBox) return;
-  const div = document.createElement("div");
-  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  if (type === "ok") div.style.color = "#a8ffb8";
-  if (type === "warning") div.style.color = "#ffd966";
-  if (type === "danger") div.style.color = "#ff9aa2";
-  logBox.prepend(div);
-  while (logBox.children.length > 50) logBox.removeChild(logBox.lastChild);
-};
-
-// ==================== 帳號系統 ====================
-function getAccountDB() {
-  try {
-    const raw = localStorage.getItem(AENO_CONFIG.ACCOUNT_DB_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (e) {
-    console.error("讀取帳號數據庫失敗", e);
-    return {};
-  }
-}
-function saveAccountDB(db) {
-  try {
-    localStorage.setItem(AENO_CONFIG.ACCOUNT_DB_KEY, JSON.stringify(db));
-  } catch (e) {
-    console.error("保存帳號數據庫失敗", e);
-    alert("❌ 保存帳號數據失敗，請檢查瀏覽器存儲權限");
-  }
-}
-
-// 註冊帳號
-function registerAccount(username, inputDevKey, password, confirmPwd) {
-  try {
-    const db = getAccountDB();
-    username = username.trim();
-
-    if (!username || username.length < 2) {
-      alert("❌ 帳號長度至少2位");
-      return false;
-    }
-    if (!password || password.length < 6) {
-      alert("❌ 密碼長度至少6位，請設定更安全的密碼");
-      return false;
-    }
-    if (password !== confirmPwd) {
-      alert("❌ 兩次輸入的密碼不一致");
-      return false;
-    }
-    if (db[username]) {
-      alert("❌ 此帳號ID已被註冊，請更換其他ID");
-      return false;
-    }
-
-    // 開發者帳號校驗
-    const isDevAccount = username === AENO_CONFIG.DEV_ACCOUNT_ID;
-    if (isDevAccount) {
-      if (!inputDevKey || inputDevKey.trim() === "") {
-        alert("❌ 開發者帳號必須輸入專屬安全碼");
-        return false;
-      }
-      if (!checkDevKey(inputDevKey)) {
-        alert("❌ 開發者安全碼錯誤，無權註冊此帳號");
-        return false;
-      }
-    }
-
-    // 儲存帳號
-    db[username] = {
-      username: username,
-      password: encryptPassword(password),
-      registerTime: Date.now(),
-      lastLoginTime: null,
-      fingerprintBind: false,
-      isDeveloper: isDevAccount,
-    };
-    saveAccountDB(db);
-
-    alert(`✅ 註冊成功！${isDevAccount ? "開發者帳號" : "帳號"}已創建，請使用帳號登入`);
-    switchAuthTab("login");
-    window.AENO_GLOBAL.elements.loginID.value = username;
-    return true;
-  } catch (e) {
-    console.error("註冊失敗", e);
-    alert("❌ 註冊失敗，請重試");
-    return false;
-  }
-}
-
-// 登入帳號
-function loginAccount(username, password) {
-  try {
-    const db = getAccountDB();
-    username = username.trim();
-    if (!username || !password) {
-      alert("❌ 請輸入帳號與密碼");
-      return false;
-    }
-    const account = db[username];
-    if (!account) {
-      alert("❌ 帳號不存在，請先註冊");
-      return false;
-    }
-    if (account.password !== encryptPassword(password)) {
-      alert("❌ 密碼錯誤，請重試");
-      return false;
-    }
-
-    // 更新登入狀態
-    account.lastLoginTime = Date.now();
-    db[username] = account;
-    saveAccountDB(db);
-
-    // 設置全局狀態
-    window.AENO_GLOBAL.auth.currentPlayer = account;
-    window.AENO_GLOBAL.auth.isLoggedIn = true;
-    window.AENO_GLOBAL.auth.isDeveloper = account.isDeveloper;
-
-    // 保存當前登入狀態
-    localStorage.setItem(AENO_CONFIG.CURRENT_ACCOUNT_KEY, JSON.stringify(account));
-
-    // 開發者帳號顯示黑洞孤島
-    if (account.isDeveloper) {
-      window.AENO_GLOBAL.elements.devBlackHoleCard.style.display = "block";
-    }
-
-    // 隱藏登入界面，顯示星球選擇界面
-    window.AENO_GLOBAL.elements.authOverlay.style.display = "none";
-    window.AENO_GLOBAL.elements.planetSelect.style.display = "flex";
-
-    log(`✅ 帳號 ${username} 登入成功`, "ok");
-    alert(`✅ 登入成功！歡迎回來，${username}`);
-    return true;
-  } catch (e) {
-    console.error("登入失敗", e);
-    alert("❌ 登入失敗，請重試");
-    return false;
-  }
-}
-
-// 切換登入/註冊標籤
-function switchAuthTab(tabName) {
-  const tabs = window.AENO_GLOBAL.elements.authTabBtns;
-  const forms = window.AENO_GLOBAL.elements.authForms;
-  tabs.forEach(btn => {
-    if (btn.dataset.tab === tabName) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
-  });
-  forms.forEach(form => {
-    if (form.id === `${tabName}Form`) {
-      form.classList.add("active");
-    } else {
-      form.classList.remove("active");
-    }
-  });
-  // 開發者帳號顯示安全碼輸入框
-  if (tabName === "register") {
-    const registerID = window.AENO_GLOBAL.elements.registerID;
-    const devKeyInput = window.AENO_GLOBAL.elements.devKeyInput;
-    registerID.addEventListener("input", () => {
-      if (registerID.value.trim() === AENO_CONFIG.DEV_ACCOUNT_ID) {
-        devKeyInput.style.display = "block";
-      } else {
-        devKeyInput.style.display = "none";
-      }
-    });
-  }
-}
-
-// ==================== 頁面加載完成後初始化 ====================
-window.addEventListener("DOMContentLoaded", () => {
-  // 緩存所有頁面元素
-  window.AENO_GLOBAL.elements = {
-    // 登入相關
-    authOverlay: document.getElementById("authOverlay"),
-    authTabBtns: document.querySelectorAll(".authTabBtn"),
-    authForms: document.querySelectorAll(".authForm"),
-    registerID: document.getElementById("registerID"),
-    devKeyInput: document.getElementById("devKeyInput"),
-    registerPwd: document.getElementById("registerPwd"),
-    registerPwdConfirm: document.getElementById("registerPwdConfirm"),
-    registerBtn: document.getElementById("registerBtn"),
-    loginID: document.getElementById("loginID"),
-    loginPwd: document.getElementById("loginPwd"),
-    loginBtn: document.getElementById("loginBtn"),
-    // 星球選擇相關
-    planetSelect: document.getElementById("planetSelect"),
-    planetBtns: document.querySelectorAll(".planetBtn"),
-    devBlackHoleCard: document.getElementById("devBlackHoleCard"),
-    // 遊戲相關
-    gameCanvas: document.getElementById("game"),
-    hudTop: document.getElementById("hudTop"),
-    panel: document.getElementById("panel"),
-    togglePanelBtn: document.getElementById("togglePanelBtn"),
-    toggleAssistantBtn: document.getElementById("toggleAssistantBtn"),
-    assistantChat: document.getElementById("assistantChat"),
-    logBox: document.getElementById("logBox"),
-    planetName: document.getElementById("planetName"),
-  };
-
-  // 登入/註冊按鈕事件
-  window.AENO_GLOBAL.elements.authTabBtns.forEach(btn => {
-    btn.addEventListener("click", () => switchAuthTab(btn.dataset.tab));
-  });
-  window.AENO_GLOBAL.elements.registerBtn.addEventListener("click", () => {
-    const username = window.AENO_GLOBAL.elements.registerID.value;
-    const devKey = window.AENO_GLOBAL.elements.devKeyInput.value;
-    const pwd = window.AENO_GLOBAL.elements.registerPwd.value;
-    const confirmPwd = window.AENO_GLOBAL.elements.registerPwdConfirm.value;
-    registerAccount(username, devKey, pwd, confirmPwd);
-  });
-  window.AENO_GLOBAL.elements.loginBtn.addEventListener("click", () => {
-    const username = window.AENO_GLOBAL.elements.loginID.value;
-    const pwd = window.AENO_GLOBAL.elements.loginPwd.value;
-    loginAccount(username, pwd);
-  });
-
-  // 【核心新增】星球按鈕點擊事件：自動切換AI語言，進入遊戲
-  window.AENO_GLOBAL.elements.planetBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const planetKey = btn.dataset.planet;
-      const planetSeed = btn.dataset.seed;
-      const planetName = btn.closest(".planetCard").querySelector(".planetTitle").textContent.trim().split("\n")[0];
-
-      // 1. 設置全局星球狀態
-      window.AENO_GLOBAL.currentPlanet.planetId = planetKey;
-      window.AENO_GLOBAL.currentPlanet.seedType = planetSeed;
-      window.AENO_GLOBAL.currentPlanet.isLoaded = false;
-
-      // 2. 調用AI助手接口，自動切換對應語言同星球助手
-      if (window.AI_SetCurrentPlanet) {
-        window.AI_SetCurrentPlanet(planetKey);
-      }
-
-      // 3. 更新HUD星球名稱
-      window.AENO_GLOBAL.elements.planetName.textContent = planetName;
-
-      // 4. 隱藏星球選擇界面，顯示遊戲畫面
-      window.AENO_GLOBAL.elements.planetSelect.style.display = "none";
-      window.AENO_GLOBAL.elements.game.style.display = "block";
-      window.AENO_GLOBAL.elements.hudTop.style.display = "flex";
-      window.AENO_GLOBAL.elements.togglePanelBtn.style.display = "block";
-      window.AENO_GLOBAL.elements.toggleAssistantBtn.style.display = "block";
-
-      // 5. 觸發game.js的遊戲初始化
-      if (window.initGame) {
-        window.initGame(planetSeed, planetKey);
-      }
-
-      log(`✅ 已進入${planetName}，AI助手已自動匹配對應語言`, "ok");
-    });
-  });
-
-  // 檢查是否已有登入狀態
-  try {
-    const savedAccount = localStorage.getItem(AENO_CONFIG.CURRENT_ACCOUNT_KEY);
-    if (savedAccount) {
-      const account = JSON.parse(savedAccount);
-      window.AENO_GLOBAL.auth.currentPlayer = account;
-      window.AENO_GLOBAL.auth.isLoggedIn = true;
-      window.AENO_GLOBAL.auth.isDeveloper = account.isDeveloper;
-
-      // 開發者帳號顯示黑洞孤島
-      if (account.isDeveloper) {
-        window.AENO_GLOBAL.elements.devBlackHoleCard.style.display = "block";
-      }
-
-      // 隱藏登入界面，顯示星球選擇界面
-      window.AENO_GLOBAL.elements.authOverlay.style.display = "none";
-      window.AENO_GLOBAL.elements.planetSelect.style.display = "flex";
-      log(`✅ 自動登入成功，帳號：${account.username}`, "ok");
-    }
-  } catch (e) {
-    console.error("自動登入失敗", e);
-  }
-
-  console.log("AENO 登入+星球選擇系統初始化完成");
-});
-</script>
+  <script src="./game.js?v=3.0.0"></script>
 </body>
 </html>
