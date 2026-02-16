@@ -1,5 +1,5 @@
-// AENO V3.9 - 註冊系統+平衡建設+資源修復最終版
-const AENO_VERSION = "V3.9-FINAL";
+// AENO V4.0 - 核心AI模塊+DNA進化+畫面優化+自動修復最終版
+const AENO_VERSION = "V4.0-FINAL";
 const SAVE_KEY_GLOBAL = "AENO_GLOBAL_SAVE";
 const SAVE_KEY_PLANET_PREFIX = "AENO_PLANET_SAVE_";
 const MAX_OFFLINE_HOURS = 24;
@@ -16,10 +16,12 @@ let adAudio = null;
 let songLoop = true;
 let autoBuild = true;
 let customPriority = [];
+let isGameStarted = false;
+let isGameRunning = false;
 
 // 畫布初始化
 const canvas = document.getElementById("game");
-const ctx = canvas ? canvas.getContext("2d", { alpha: true }) : null;
+const ctx = canvas ? canvas.getContext("2d", { alpha: true, willReadFrequently: true }) : null;
 
 // 畫布大小調整
 function resizeCanvas() {
@@ -63,6 +65,452 @@ const ui = {
   btnExchange: document.getElementById("btnExchange"),
   btnTech: document.getElementById("btnTech"),
   planetSelect: document.getElementById("planetSelect"),
+  assistantInput: document.getElementById("assistantInput"),
+  sendAssistant: document.getElementById("sendAssistant"),
+  closeChat: document.getElementById("closeChat"),
+  assistantChatBody: document.getElementById("assistantChatBody"),
+};
+
+// ==================== 【核心】AENO AI模塊 ====================
+const AENO_AI = {
+  // 1. 資源管家AI - 嚴格遵守優先級，杜絕死循環
+  resourceManager: {
+    config: {
+      RESERVE_RATIO: 0.6,
+      MAX_TRIES_PER_TICK: 2,
+      AUTO_UPGRADE: true,
+      BUILD_SPACING: 1,
+      SAFE_RATIO: 0.8,
+    },
+    // 獲取建築優先級（手動優先級 > 資源缺口優先級）
+    getBuildPriority() {
+      if (!planetSave) return [];
+      // 手動優先級最高
+      if (customPriority.length > 0) {
+        const basePriority = ["lumber", "quarry", "mine", "farm", "house", "factory", "market"];
+        return customPriority.concat(basePriority.filter(p => !customPriority.includes(p)));
+      }
+      // 自動計算資源缺口
+      const resourceOutput = { wood: 0, stone: 0, iron: 0, food: 0 };
+      for (const b of planetSave.buildings) {
+        const def = BUILD_TYPES[b.type];
+        if (!def || def.type !== "resource") continue;
+        const lv = b.level || 1;
+        resourceOutput[def.resource] += def.perLevel * lv;
+      }
+      const workerCount = planetSave.workers.length;
+      resourceOutput.wood += workerCount * 0.06;
+      resourceOutput.stone += workerCount * 0.05;
+      resourceOutput.iron += workerCount * 0.05;
+      resourceOutput.food += workerCount * 0.07;
+
+      // 計算資源壓力
+      const buildCostAvg = { wood: 0, stone: 0, iron: 0, food: 0 };
+      let buildCount = 0;
+      for (const key in BUILD_TYPES) {
+        const def = BUILD_TYPES[key];
+        if (def.cost.wood) buildCostAvg.wood += def.cost.wood;
+        if (def.cost.stone) buildCostAvg.stone += def.cost.stone;
+        if (def.cost.iron) buildCostAvg.iron += def.cost.iron;
+        buildCount++;
+      }
+      for (const key in buildCostAvg) buildCostAvg[key] = buildCostAvg[key] / buildCount;
+
+      const pressure = {};
+      for (const res of ["wood", "stone", "iron", "food"]) {
+        const stockRatio = planetSave[res] / (buildCostAvg[res] * 10);
+        const outputRatio = resourceOutput[res] / buildCostAvg[res];
+        pressure[res] = (1 / Math.max(0.1, stockRatio)) * (1 / Math.max(0.1, outputRatio));
+      }
+
+      const resToBuild = { wood: "lumber", stone: "quarry", iron: "mine", food: "farm" };
+      const sortedRes = Object.keys(pressure).sort((a, b) => pressure[b] - pressure[a]);
+      const priority = sortedRes.map(res => resToBuild[res]);
+
+      // 資源安全後再加經濟建築
+      const minPressure = Math.min(...Object.values(pressure));
+      if (minPressure < 3) priority.push("house", "factory", "market");
+      return priority;
+    },
+    // 檢查是否可以自動支付
+    canAutoPay(cost) {
+      if (!planetSave) return false;
+      const maxCoins = Math.floor(planetSave.coins * this.config.RESERVE_RATIO);
+      const maxWood = Math.floor(planetSave.wood * this.config.RESERVE_RATIO);
+      const maxStone = Math.floor(planetSave.stone * this.config.RESERVE_RATIO);
+      const maxIron = Math.floor(planetSave.iron * this.config.RESERVE_RATIO);
+      const maxFood = Math.floor(planetSave.food * this.config.RESERVE_RATIO);
+      if (cost.coins && cost.coins > maxCoins) return false;
+      if (cost.wood && cost.wood > maxWood) return false;
+      if (cost.stone && cost.stone > maxStone) return false;
+      if (cost.iron && cost.iron > maxIron) return false;
+      if (cost.food && cost.food > maxFood) return false;
+      return true;
+    },
+    // 尋找空地
+    findEmptyTile() {
+      if (!planetSave) return null;
+      const cx = planetSave.territoryCenter.x;
+      const cy = planetSave.territoryCenter.y;
+      const r = planetSave.territoryRadius;
+      for (let d = 1; d <= r; d++) {
+        for (let dx = -d; dx <= d; dx++) {
+          for (let dy = -d; dy <= d; dy++) {
+            if (Math.abs(dx) !== d && Math.abs(dy) !== d) continue;
+            const x = cx + dx;
+            const y = cy + dy;
+            if (planetSave.buildings.some(b => b.x === x && b.y === y)) continue;
+            let tooClose = false;
+            for (let ox = -1; ox <= 1; ox++) {
+              for (let oy = -1; oy <= 1; oy++) {
+                if (ox === 0 && oy === 0) continue;
+                if (planetSave.buildings.some(b => b.x === x+ox && b.y === y+oy)) {
+                  tooClose = true;
+                  break;
+                }
+              }
+              if (tooClose) break;
+            }
+            if (!tooClose) return { x, y };
+          }
+        }
+      }
+      return null;
+    },
+    // 執行一次自動建造/升級
+    runAutoBuildOnce() {
+      if (!autoBuild || !planetSave) return false;
+      const priority = this.getBuildPriority();
+
+      // 優先升級
+      if (this.config.AUTO_UPGRADE) {
+        const upgradable = planetSave.buildings
+          .filter(b => b.level < 10)
+          .sort((a, b) => {
+            const aIdx = priority.indexOf(BUILD_TYPES[a.type].resource ? BUILD_TYPES[a.type].resource : a.type);
+            const bIdx = priority.indexOf(BUILD_TYPES[b.type].resource ? BUILD_TYPES[b.type].resource : b.type);
+            return aIdx - bIdx;
+          });
+        for (const b of upgradable) {
+          const def = BUILD_TYPES[b.type];
+          const lv = b.level;
+          const cost = {
+            coins: Math.floor((def.cost.coins || 0) * (0.8 + lv * 0.5)),
+            wood: Math.floor((def.cost.wood || 0) * (0.7 + lv * 0.35)),
+            stone: Math.floor((def.cost.stone || 0) * (0.7 + lv * 0.35)),
+            iron: Math.floor((def.cost.iron || 0) * (0.7 + lv * 0.35)),
+          };
+          if (this.canAutoPay(cost)) {
+            payCost(cost);
+            b.level++;
+            // DNA突變檢測
+            AENO_AI.evolution.checkBuildingMutation(b);
+            log(`🤖 AI 升級 ${def.name} → Lv${b.level}`);
+            return true;
+          }
+        }
+      }
+
+      // 新建建築
+      for (const type of priority) {
+        const def = BUILD_TYPES[type];
+        if (!def) continue;
+        if (!this.canAutoPay(def.cost)) continue;
+        const tile = this.findEmptyTile();
+        if (!tile) continue;
+        payCost(def.cost);
+        const newBuilding = {
+          id: "auto_" + type + "_" + Date.now(),
+          type,
+          x: tile.x,
+          y: tile.y,
+          level: 1,
+          dna: AENO_AI.evolution.generateBuildingDNA(),
+        };
+        planetSave.buildings.push(newBuilding);
+        log(`🤖 AI 建成 ${def.name} Lv1`);
+        return true;
+      }
+      return false;
+    },
+    // 執行自動建造循環
+    run() {
+      if (!autoBuild || !planetSave) return;
+      let built = 0;
+      while (built < this.config.MAX_TRIES_PER_TICK && this.runAutoBuildOnce()) {
+        built++;
+      }
+    },
+  },
+
+  // 2. DNA進化AI - 建築、動物、植物突變進化
+  evolution: {
+    MUTATION_CHANCE_PER_YEAR: 0.002,
+    EVOLUTION_THRESHOLD: 5,
+    // 生成建築DNA
+    generateBuildingDNA() {
+      return {
+        growthRate: 1,
+        costReduction: 0,
+        outputBoost: 0,
+        mutationCount: 0,
+        isMutated: false,
+        evolutionLevel: 0,
+      };
+    },
+    // 生成動物DNA
+    generateAnimalDNA() {
+      return {
+        speed: 1,
+        strength: 1,
+        foodDrop: 1,
+        woodDrop: 0,
+        isHostile: false,
+        evolutionLevel: 0,
+        mutationCount: 0,
+      };
+    },
+    // 檢查建築突變
+    checkBuildingMutation(building) {
+      if (!building.dna) building.dna = this.generateBuildingDNA();
+      const roll = Math.random();
+      if (roll > this.MUTATION_CHANCE_PER_YEAR * building.level) return;
+      // 觸發突變
+      building.dna.mutationCount++;
+      building.dna.isMutated = true;
+      const mutationType = Math.floor(Math.random() * 3);
+      switch(mutationType) {
+        case 0:
+          building.dna.outputBoost += 0.2;
+          log(`🧬 突變！${BUILD_TYPES[building.type].name} 產出提升20%`, "ok");
+          break;
+        case 1:
+          building.dna.costReduction += 0.1;
+          log(`🧬 突變！${BUILD_TYPES[building.type].name} 升級成本降低10%`, "ok");
+          break;
+        case 2:
+          building.dna.growthRate += 0.3;
+          log(`🧬 突變！${BUILD_TYPES[building.type].name} 等級成長速度提升30%`, "ok");
+          break;
+      }
+      // 進化檢測
+      if (building.dna.mutationCount >= this.EVOLUTION_THRESHOLD) {
+        building.dna.evolutionLevel++;
+        building.dna.mutationCount = 0;
+        log(`✨ 進化！${BUILD_TYPES[building.type].name} 進化到 Lv${building.dna.evolutionLevel}`, "ok");
+      }
+    },
+    // 檢查動物突變
+    checkAnimalMutation(animal) {
+      if (!animal.dna) animal.dna = this.generateAnimalDNA();
+      const roll = Math.random();
+      if (roll > this.MUTATION_CHANCE_PER_YEAR * 0.5) return;
+      animal.dna.mutationCount++;
+      const mutationType = Math.floor(Math.random() * 4);
+      switch(mutationType) {
+        case 0:
+          animal.dna.speed += 0.2;
+          log(`🐾 動物突變！移動速度提升20%`);
+          break;
+        case 1:
+          animal.dna.foodDrop += 0.5;
+          log(`🐾 動物突變！掉落糧食提升50%`);
+          break;
+        case 2:
+          animal.dna.isHostile = true;
+          log(`⚠️ 動物突變！變成了具有攻擊性的野獸`, "warning");
+          break;
+        case 3:
+          animal.dna.woodDrop += 0.3;
+          log(`🐾 動物突變！掉落木材提升30%`);
+          break;
+      }
+      if (animal.dna.mutationCount >= this.EVOLUTION_THRESHOLD) {
+        animal.dna.evolutionLevel++;
+        animal.dna.mutationCount = 0;
+        log(`✨ 動物進化！進化到 Lv${animal.dna.evolutionLevel}`, "ok");
+      }
+    },
+    // 全局進化檢測
+    runGlobalMutationCheck() {
+      if (!planetSave) return;
+      planetSave.buildings.forEach(b => this.checkBuildingMutation(b));
+      planetSave.animals.forEach(a => this.checkAnimalMutation(a));
+    },
+  },
+
+  // 3. 自檢修復AI - 自動檢測並修復遊戲問題
+  repair: {
+    CHECK_INTERVAL: 10000, // 每10秒檢查一次
+    lastCheck: 0,
+    // 檢查遊戲狀態
+    checkGameState() {
+      const now = Date.now();
+      if (now - this.lastCheck < this.CHECK_INTERVAL) return;
+      this.lastCheck = now;
+
+      // 檢查1：遊戲循環是否停止
+      if (isGameStarted && (now - lastTick > 5000)) {
+        log("🔧 檢測到遊戲循環停止，自動重啟", "warning");
+        this.restartGameLoop();
+      }
+
+      // 檢查2：資源死循環
+      if (planetSave) {
+        const resourceCheck = [
+          { res: "wood", build: "lumber" },
+          { res: "stone", build: "quarry" },
+          { res: "iron", build: "mine" },
+          { res: "food", build: "farm" },
+        ];
+        resourceCheck.forEach(({ res, build }) => {
+          if (planetSave[res] <= 10 && !planetSave.buildings.some(b => b.type === build)) {
+            log(`🔧 檢測到${res}即將耗盡且無對應建築，自動補建1個${BUILD_TYPES[build].name}`, "warning");
+            const tile = this.resourceManager.findEmptyTile();
+            if (tile) {
+              planetSave.buildings.push({
+                id: "repair_" + build + "_" + Date.now(),
+                type: build,
+                x: tile.x,
+                y: tile.y,
+                level: 1,
+                dna: this.evolution.generateBuildingDNA(),
+              });
+            }
+          }
+        });
+      }
+
+      // 檢查3：畫布黑屏/無渲染
+      if (canvas && (canvas.width === 0 || canvas.height === 0)) {
+        log("🔧 檢測到畫布異常，自動重置", "warning");
+        resizeCanvas();
+      }
+
+      // 檢查4：存檔損壞
+      if (!planetSave || !globalSave) {
+        log("🔧 檢測到存檔損壞，自動恢復", "warning");
+        this.restoreSave();
+      }
+
+      // 檢查5：按鈕事件丟失
+      if (isGameStarted && !ui.btnSave.onclick) {
+        log("🔧 檢測到按鈕事件丟失，自動重新綁定", "warning");
+        rebindUIEvents();
+      }
+    },
+    // 重啟遊戲循環
+    restartGameLoop() {
+      if (!isGameStarted) return;
+      isGameRunning = false;
+      lastTick = performance.now();
+      isGameRunning = true;
+      requestAnimationFrame(tick);
+    },
+    // 恢復存檔
+    restoreSave() {
+      if (!globalSave) {
+        globalSave = defaultGlobalSave();
+        saveGlobal();
+      }
+      if (!planetSave && globalSave.currentPlanetId) {
+        loadPlanet(globalSave.currentPlanetId, "forest");
+        savePlanet();
+      }
+    },
+    // 手動修復指令
+    manualRepair() {
+      log("🔧 執行手動全量修復", "ok");
+      this.restoreSave();
+      resizeCanvas();
+      rebindUIEvents();
+      this.restartGameLoop();
+      log("✅ 全量修復完成", "ok");
+    },
+  },
+
+  // 4. 對話助手AI
+  assistant: {
+    commandMap: {
+      "修復": () => this.repair.manualRepair(),
+      "建造": (type) => {
+        const tile = this.resourceManager.findEmptyTile();
+        if (tile && BUILD_TYPES[type]) {
+          buildAt(type, tile.x, tile.y);
+          log(`✅ 已建造${BUILD_TYPES[type].name}`);
+        }
+      },
+      "升級": (type) => {
+        const building = planetSave.buildings.find(b => b.type === type && b.level < 10);
+        if (building) {
+          upgradeBuildingAt(building.x, building.y);
+          log(`✅ 已升級${BUILD_TYPES[type].name}`);
+        }
+      },
+      "優先級": (type) => {
+        customPriority = [type];
+        log(`✅ 已設置優先級為${BUILD_TYPES[type].name}`);
+      },
+    },
+    // 處理指令
+    processCommand(input) {
+      input = input.trim().toLowerCase();
+      this.addChatMessage("玩家", input);
+      let response = "❌ 未識別指令，可用指令：修復、建造、升級、優先級";
+
+      if (input.includes("修復")) {
+        this.commandMap["修復"]();
+        response = "✅ 已執行全量修復，遊戲已恢復正常";
+      } else if (input.includes("建造")) {
+        for (const type in BUILD_TYPES) {
+          if (input.includes(BUILD_TYPES[type].name) || input.includes(type)) {
+            this.commandMap["建造"](type);
+            response = `✅ 已自動建造${BUILD_TYPES[type].name}`;
+            break;
+          }
+        }
+      } else if (input.includes("升級")) {
+        for (const type in BUILD_TYPES) {
+          if (input.includes(BUILD_TYPES[type].name) || input.includes(type)) {
+            this.commandMap["升級"](type);
+            response = `✅ 已自動升級${BUILD_TYPES[type].name}`;
+            break;
+          }
+        }
+      } else if (input.includes("優先級")) {
+        for (const type in BUILD_TYPES) {
+          if (input.includes(BUILD_TYPES[type].name) || input.includes(type)) {
+            this.commandMap["優先級"](type);
+            response = `✅ 已設置AI優先級為${BUILD_TYPES[type].name}`;
+            break;
+          }
+        }
+      }
+
+      this.addChatMessage("AI助手", response);
+      return response;
+    },
+    // 添加聊天消息
+    addChatMessage(sender, content) {
+      if (!ui.assistantChatBody) return;
+      const div = document.createElement("div");
+      div.style.marginBottom = "8px";
+      div.innerHTML = `<b>${sender}：</b>${content}`;
+      ui.assistantChatBody.appendChild(div);
+      ui.assistantChatBody.scrollTop = ui.assistantChatBody.scrollHeight;
+    },
+  },
+
+  // 初始化AI模塊
+  init() {
+    this.resourceManager.repair = this.repair;
+    this.resourceManager.evolution = this.evolution;
+    this.repair.resourceManager = this.resourceManager;
+    this.repair.evolution = this.evolution;
+    this.assistant.repair = this.repair;
+    this.assistant.resourceManager = this.resourceManager;
+    log("🧬 AENO 核心AI模塊初始化完成", "ok");
+  },
 };
 
 // 系統日誌
@@ -73,8 +521,9 @@ function log(msg, type="") {
   div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
   if (type === "danger") div.style.color = "#ff9aa2";
   if (type === "ok") div.style.color = "#a8ffb8";
+  if (type === "warning") div.style.color = "#ffd966";
   ui.logBox.prepend(div);
-  while (ui.logBox.children.length > 40) ui.logBox.removeChild(ui.logBox.lastChild);
+  while (ui.logBox.children.length > 50) ui.logBox.removeChild(ui.logBox.lastChild);
 }
 
 // 隨機數工具
@@ -101,7 +550,7 @@ const MAP_W = 80;
 const MAP_H = 80;
 const TILE = 42;
 
-// 建築配置（明確對應資源產出，修復石頭產出）
+// 建築配置
 const BUILD_TYPES = {
   house: { name: "房屋", cost: { wood: 30, stone: 10, coins: 80 }, baseIncome: 3, pop: 2, type: "economy" },
   lumber: { name: "伐木場", cost: { wood: 10, stone: 5, coins: 60 }, baseIncome: 0, resource: "wood", perLevel: 1.3, type: "resource" },
@@ -143,10 +592,10 @@ function defaultPlanetSave(planetId, seedType) {
     territoryRadius: 5,
     territoryCenter: { x: 40, y: 40 },
     buildings: [
-      { id: "b_house_1", type: "house", x: 40, y: 40, level: 1 },
-      { id: "b_house_2", type: "house", x: 41, y: 40, level: 1 },
-      { id: "b_lumber_1", type: "lumber", x: 39, y: 41, level: 1 },
-      { id: "b_quarry_1", type: "quarry", x: 42, y: 41, level: 1 },
+      { id: "b_house_1", type: "house", x: 40, y: 40, level: 1, dna: AENO_AI.evolution.generateBuildingDNA() },
+      { id: "b_house_2", type: "house", x: 41, y: 40, level: 1, dna: AENO_AI.evolution.generateBuildingDNA() },
+      { id: "b_lumber_1", type: "lumber", x: 39, y: 41, level: 1, dna: AENO_AI.evolution.generateBuildingDNA() },
+      { id: "b_quarry_1", type: "quarry", x: 42, y: 41, level: 1, dna: AENO_AI.evolution.generateBuildingDNA() },
     ],
     workers: [],
     animals: [],
@@ -202,6 +651,10 @@ function loadPlanet(planetId, seedType) {
   if (!planetSave.workers) planetSave.workers = [];
   if (!planetSave.animals) planetSave.animals = [];
   if (!planetSave.buildings) planetSave.buildings = [];
+  // 給舊建築補DNA
+  planetSave.buildings.forEach(b => {
+    if (!b.dna) b.dna = AENO_AI.evolution.generateBuildingDNA();
+  });
   if (!planetSave.map) initPlanetMap();
   if (planetSave.workers.length === 0) initPlanetUnits();
 }
@@ -217,12 +670,13 @@ function initPlanetUnits() {
     });
   }
   planetSave.animals = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 15; i++) {
     planetSave.animals.push({
       id: "a" + i,
       x: Math.floor(Math.random() * MAP_W),
       y: Math.floor(Math.random() * MAP_H),
-      t: 0
+      t: 0,
+      dna: AENO_AI.evolution.generateAnimalDNA(),
     });
   }
 }
@@ -293,183 +747,6 @@ function payCost(cost) {
   if (cost.food) planetSave.food -= cost.food;
 }
 
-// ==================== 核心：AI平衡建設機制 ====================
-const AUTO_BUILD_CONFIG = {
-  RESERVE_RATIO: 0.6, // 保留60%資源，唔會一次過用曬
-  MAX_TRIES_PER_TICK: 2,
-  AUTO_UPGRADE: true,
-  BUILD_SPACING: 1,
-  // 資源安全線：每小時消耗不能超過產出的80%
-  SAFE_RATIO: 0.8,
-};
-
-// 計算資源產出/消耗比，找出最缺的資源
-function getResourcePriority() {
-  if (!planetSave) return [];
-  // 計算每種資源的每秒產出
-  const resourceOutput = { wood: 0, stone: 0, iron: 0, food: 0 };
-  for (const b of planetSave.buildings) {
-    const def = BUILD_TYPES[b.type];
-    if (!def || def.type !== "resource") continue;
-    const lv = b.level || 1;
-    resourceOutput[def.resource] += def.perLevel * lv;
-  }
-  // 工人額外產出
-  const workerCount = planetSave.workers.length;
-  resourceOutput.wood += workerCount * 0.06;
-  resourceOutput.stone += workerCount * 0.05;
-  resourceOutput.iron += workerCount * 0.05;
-  resourceOutput.food += workerCount * 0.07;
-
-  // 計算建築升級/建造的平均消耗
-  const buildCostAvg = { wood: 0, stone: 0, iron: 0, food: 0 };
-  let buildCount = 0;
-  for (const key in BUILD_TYPES) {
-    const def = BUILD_TYPES[key];
-    if (def.cost.wood) buildCostAvg.wood += def.cost.wood;
-    if (def.cost.stone) buildCostAvg.stone += def.cost.stone;
-    if (def.cost.iron) buildCostAvg.iron += def.cost.iron;
-    buildCount++;
-  }
-  for (const key in buildCostAvg) {
-    buildCostAvg[key] = buildCostAvg[key] / buildCount;
-  }
-
-  // 計算資源壓力值，數值越高越優先
-  const pressure = {};
-  for (const res of ["wood", "stone", "iron", "food"]) {
-    // 庫存越少、產出越低，壓力越高
-    const stockRatio = planetSave[res] / (buildCostAvg[res] * 10);
-    const outputRatio = resourceOutput[res] / buildCostAvg[res];
-    pressure[res] = (1 / Math.max(0.1, stockRatio)) * (1 / Math.max(0.1, outputRatio));
-  }
-
-  // 按壓力排序，返回對應的建築類型
-  const resToBuild = {
-    wood: "lumber",
-    stone: "quarry",
-    iron: "mine",
-    food: "farm"
-  };
-  const sortedRes = Object.keys(pressure).sort((a, b) => pressure[b] - pressure[a]);
-  const priority = sortedRes.map(res => resToBuild[res]);
-
-  // 資源安全後，再加經濟建築
-  const minPressure = Math.min(...Object.values(pressure));
-  if (minPressure < 3) {
-    priority.push("house", "factory", "market");
-  }
-
-  // 自定義優先級覆蓋
-  if (customPriority.length > 0) {
-    return customPriority.concat(priority.filter(p => !customPriority.includes(p)));
-  }
-  return priority;
-}
-
-function canAutoPay(cost) {
-  if (!planetSave) return false;
-  const maxCoins = Math.floor(planetSave.coins * AUTO_BUILD_CONFIG.RESERVE_RATIO);
-  const maxWood = Math.floor(planetSave.wood * AUTO_BUILD_CONFIG.RESERVE_RATIO);
-  const maxStone = Math.floor(planetSave.stone * AUTO_BUILD_CONFIG.RESERVE_RATIO);
-  const maxIron = Math.floor(planetSave.iron * AUTO_BUILD_CONFIG.RESERVE_RATIO);
-  const maxFood = Math.floor(planetSave.food * AUTO_BUILD_CONFIG.RESERVE_RATIO);
-  if (cost.coins && cost.coins > maxCoins) return false;
-  if (cost.wood && cost.wood > maxWood) return false;
-  if (cost.stone && cost.stone > maxStone) return false;
-  if (cost.iron && cost.iron > maxIron) return false;
-  if (cost.food && cost.food > maxFood) return false;
-  return true;
-}
-function findEmptyTileInTerritory() {
-  if (!planetSave) return null;
-  const cx = planetSave.territoryCenter.x;
-  const cy = planetSave.territoryCenter.y;
-  const r = planetSave.territoryRadius;
-  for (let d = 1; d <= r; d++) {
-    for (let dx = -d; dx <= d; dx++) {
-      for (let dy = -d; dy <= d; dy++) {
-        if (Math.abs(dx) !== d && Math.abs(dy) !== d) continue;
-        const x = cx + dx;
-        const y = cy + dy;
-        if (!isInTerritory(x, y)) continue;
-        if (planetSave.buildings.some(b => b.x === x && b.y === y)) continue;
-        let tooClose = false;
-        for (let ox = -1; ox <= 1; ox++) {
-          for (let oy = -1; oy <= 1; oy++) {
-            if (ox === 0 && oy === 0) continue;
-            if (planetSave.buildings.some(b => b.x === x+ox && b.y === y+oy)) {
-              tooClose = true;
-              break;
-            }
-          }
-          if (tooClose) break;
-        }
-        if (!tooClose) return { x, y };
-      }
-    }
-  }
-  return null;
-}
-function autoBuildOne() {
-  if (!autoBuild || !planetSave) return false;
-  const priority = getResourcePriority();
-
-  // 優先升級資源建築
-  if (AUTO_BUILD_CONFIG.AUTO_UPGRADE) {
-    const upgradable = planetSave.buildings
-      .filter(b => b.level < 10)
-      .sort((a, b) => {
-        const aIdx = priority.indexOf(BUILD_TYPES[a.type].resource ? BUILD_TYPES[a.type].resource : a.type);
-        const bIdx = priority.indexOf(BUILD_TYPES[b.type].resource ? BUILD_TYPES[b.type].resource : b.type);
-        return aIdx - bIdx;
-      });
-    for (const b of upgradable) {
-      const def = BUILD_TYPES[b.type];
-      const lv = b.level;
-      const cost = {
-        coins: Math.floor((def.cost.coins || 0) * (0.8 + lv * 0.5)),
-        wood: Math.floor((def.cost.wood || 0) * (0.7 + lv * 0.35)),
-        stone: Math.floor((def.cost.stone || 0) * (0.7 + lv * 0.35)),
-        iron: Math.floor((def.cost.iron || 0) * (0.7 + lv * 0.35)),
-      };
-      if (canAutoPay(cost)) {
-        payCost(cost);
-        b.level++;
-        log(`🤖 AI 升級 ${def.name} → Lv${b.level}`);
-        return true;
-      }
-    }
-  }
-
-  // 按優先級建造
-  for (const type of priority) {
-    const def = BUILD_TYPES[type];
-    if (!def) continue;
-    if (!canAutoPay(def.cost)) continue;
-    const tile = findEmptyTileInTerritory();
-    if (!tile) continue;
-    payCost(def.cost);
-    planetSave.buildings.push({
-      id: "auto_" + type + "_" + Date.now(),
-      type,
-      x: tile.x,
-      y: tile.y,
-      level: 1
-    });
-    log(`🤖 AI 建成 ${def.name} Lv1`);
-    return true;
-  }
-  return false;
-}
-function runAutoBuild() {
-  if (!autoBuild || !planetSave) return;
-  let built = 0;
-  while (built < AUTO_BUILD_CONFIG.MAX_TRIES_PER_TICK && autoBuildOne()) {
-    built++;
-  }
-}
-
 // 手動建造/升級
 function buildAt(type, x, y) {
   if (!isInTerritory(x, y)) {
@@ -492,7 +769,8 @@ function buildAt(type, x, y) {
     type,
     x,
     y,
-    level: 1
+    level: 1,
+    dna: AENO_AI.evolution.generateBuildingDNA(),
   });
   log(`🏗️ 建成 ${def.name} Lv1`, "ok");
   return true;
@@ -510,10 +788,10 @@ function upgradeBuildingAt(x, y) {
   const def = BUILD_TYPES[b.type];
   const lv = b.level;
   const cost = {
-    coins: Math.floor((def.cost.coins || 0) * (0.8 + lv * 0.5)),
-    wood: Math.floor((def.cost.wood || 0) * (0.7 + lv * 0.35)),
-    stone: Math.floor((def.cost.stone || 0) * (0.7 + lv * 0.35)),
-    iron: Math.floor((def.cost.iron || 0) * (0.7 + lv * 0.35)),
+    coins: Math.floor((def.cost.coins || 0) * (0.8 + lv * 0.5) * (1 - (b.dna?.costReduction || 0))),
+    wood: Math.floor((def.cost.wood || 0) * (0.7 + lv * 0.35) * (1 - (b.dna?.costReduction || 0))),
+    stone: Math.floor((def.cost.stone || 0) * (0.7 + lv * 0.35) * (1 - (b.dna?.costReduction || 0))),
+    iron: Math.floor((def.cost.iron || 0) * (0.7 + lv * 0.35) * (1 - (b.dna?.costReduction || 0))),
   };
   if (!canPay(cost)) {
     log("❌ 升級資源不足", "danger");
@@ -521,11 +799,13 @@ function upgradeBuildingAt(x, y) {
   }
   payCost(cost);
   b.level++;
+  // DNA突變檢測
+  AENO_AI.evolution.checkBuildingMutation(b);
   log(`⬆️ ${def.name} 升級到 Lv${b.level}`, "ok");
   return true;
 }
 
-// 資源計算（修復石頭產出）
+// 資源計算
 function calcIncomePerSecond() {
   if (!planetSave) return 0;
   let income = 0;
@@ -533,7 +813,8 @@ function calcIncomePerSecond() {
     const def = BUILD_TYPES[b.type];
     if (!def) continue;
     const lv = b.level || 1;
-    income += (def.baseIncome || 0) * (1 + (lv - 1) * 0.6);
+    const boost = 1 + (b.dna?.outputBoost || 0);
+    income += (def.baseIncome || 0) * (1 + (lv - 1) * 0.6) * boost;
   }
   income += planetSave.pop * 0.08;
   return income;
@@ -541,23 +822,21 @@ function calcIncomePerSecond() {
 function produceResources(dt) {
   if (!planetSave) return;
   let woodGain = 0, stoneGain = 0, ironGain = 0, foodGain = 0;
-  // 建築產出
   for (const b of planetSave.buildings) {
     const def = BUILD_TYPES[b.type];
     if (!def || def.type !== "resource") continue;
     const lv = b.level || 1;
-    if (def.resource === "wood") woodGain += def.perLevel * lv * dt;
-    if (def.resource === "stone") stoneGain += def.perLevel * lv * dt;
-    if (def.resource === "iron") ironGain += def.perLevel * lv * dt;
-    if (def.resource === "food") foodGain += def.perLevel * lv * dt;
+    const boost = 1 + (b.dna?.outputBoost || 0);
+    if (def.resource === "wood") woodGain += def.perLevel * lv * dt * boost;
+    if (def.resource === "stone") stoneGain += def.perLevel * lv * dt * boost;
+    if (def.resource === "iron") ironGain += def.perLevel * lv * dt * boost;
+    if (def.resource === "food") foodGain += def.perLevel * lv * dt * boost;
   }
-  // 工人額外產出
   const workerCount = planetSave.workers.length;
   woodGain += workerCount * 0.06 * dt;
   stoneGain += workerCount * 0.05 * dt;
   ironGain += workerCount * 0.05 * dt;
   foodGain += workerCount * 0.07 * dt;
-  // 增加到庫存
   planetSave.wood += Math.floor(woodGain);
   planetSave.stone += Math.floor(stoneGain);
   planetSave.iron += Math.floor(ironGain);
@@ -599,7 +878,7 @@ function saveCamera() {
   planetSave.zoom = zoomLevel;
 }
 
-// 畫布事件綁定（兼容手機觸摸）
+// 畫布事件綁定
 if (canvas) {
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -640,320 +919,4 @@ if (canvas) {
   canvas.addEventListener("touchend", (e) => {
     e.preventDefault();
     if (!isGameStarted) return;
-    const touch = e.changedTouches[0];
-    const tile = screenToTile(touch.clientX, touch.clientY);
-    if (!tile) return;
-    if (mode === "build") {
-      buildAt("house", tile.x, tile.y);
-      saveAll();
-    } else {
-      upgradeBuildingAt(tile.x, tile.y);
-      saveAll();
-    }
-  });
-}
-
-// 座標轉換
-function tileToScreen(x, y) {
-  const sx = (x - y) * (TILE * 0.5);
-  const sy = (x + y) * (TILE * 0.25);
-  return { x: sx, y: sy };
-}
-function screenToTile(px, py) {
-  const cx = (px - window.innerWidth / 2 - cameraX) / zoomLevel;
-  const cy = (py - 180 - cameraY) / zoomLevel;
-  const tx = (cx / (TILE * 0.5) + cy / (TILE * 0.25)) / 2;
-  const ty = (cy / (TILE * 0.25) - cx / (TILE * 0.5)) / 2;
-  const x = Math.floor(tx);
-  const y = Math.floor(ty);
-  if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return null;
-  return { x, y };
-}
-
-// 繪圖函數
-function drawTile(x, y, type) {
-  if (!ctx) return;
-  const w = TILE * 0.5;
-  const h = TILE * 0.25;
-  let fill = "#dcfce7";
-  if (type === "water") fill = "#93c5fd";
-  if (type === "mountain") fill = "#cbd5e1";
-  if (type === "forest") fill = "#86efac";
-  if (type === "stone") fill = "#e2e8f0";
-  if (type === "iron") fill = "#fca5a5";
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + w, y + h);
-  ctx.lineTo(x, y + h * 2);
-  ctx.lineTo(x - w, y + h);
-  ctx.closePath();
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.strokeStyle = "rgba(0,0,0,0.06)";
-  ctx.stroke();
-}
-function drawBuilding(x, y, b) {
-  if (!ctx) return;
-  const lv = b.level || 1;
-  ctx.fillStyle = "rgba(0,0,0,0.18)";
-  ctx.beginPath();
-  ctx.ellipse(x, y + 18, 22, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-  let color = "#fde68a";
-  if (b.type === "house") color = "#fef3c7";
-  if (b.type === "lumber") color = "#bbf7d0";
-  if (b.type === "quarry") color = "#e2e8f0";
-  if (b.type === "mine") color = "#fecaca";
-  if (b.type === "farm") color = "#fde68a";
-  if (b.type === "factory") color = "#bae6fd";
-  if (b.type === "market") color = "#f0abfc";
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.rect(x - 18, y - 18, 36, 28);
-  ctx.fill();
-  ctx.fillStyle = "#fbbf24";
-  ctx.beginPath();
-  ctx.moveTo(x - 22, y - 18);
-  ctx.quadraticCurveTo(x, y - 38, x + 22, y - 18);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 10px system-ui";
-  ctx.fillText("Lv" + lv, x - 12, y - 2);
-}
-function drawAnimal(x, y) {
-  if (!ctx) return;
-  ctx.fillStyle = "#fb7185";
-  ctx.beginPath();
-  ctx.arc(x, y - 12, 6, 0, Math.PI * 2);
-  ctx.fill();
-}
-function drawWorker(x, y) {
-  if (!ctx) return;
-  ctx.fillStyle = "#0ea5e9";
-  ctx.beginPath();
-  ctx.arc(x, y - 10, 5, 0, Math.PI * 2);
-  ctx.fill();
-}
-function draw() {
-  if (!ctx || !planetSave || !isGameStarted) return;
-  ctx.fillStyle = "#091224";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.save();
-  ctx.translate(canvas.width / 2 + cameraX, 180 + cameraY);
-  ctx.scale(zoomLevel, zoomLevel);
-  const tiles = planetSave.map.tiles;
-  for (let y = 0; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      const t = tiles[y * MAP_W + x];
-      const p = tileToScreen(x, y);
-      drawTile(p.x, p.y, t.type);
-    }
-  }
-  for (const b of planetSave.buildings) {
-    const p = tileToScreen(b.x, b.y);
-    drawBuilding(p.x, p.y, b);
-  }
-  for (const a of planetSave.animals) {
-    const p = tileToScreen(a.x, a.y);
-    drawAnimal(p.x, p.y);
-  }
-  for (const w of planetSave.workers) {
-    const p = tileToScreen(w.x, w.y);
-    drawWorker(p.x, p.y);
-  }
-  ctx.restore();
-  updateHUD();
-}
-
-// HUD更新
-function updateHUD() {
-  if (!planetSave || !globalSave) return;
-  if (ui.planetName) ui.planetName.textContent = planetSave.planetId;
-  if (ui.gameYear) ui.gameYear.textContent = Math.floor(planetSave.gameYear);
-  if (ui.popCount) ui.popCount.textContent = Math.floor(planetSave.pop);
-  if (ui.coins) ui.coins.textContent = Math.floor(planetSave.coins);
-  if (ui.aeno) ui.aeno.textContent = (globalSave.aeno || 0).toFixed(4);
-  if (ui.wood) ui.wood.textContent = Math.floor(planetSave.wood);
-  if (ui.stone) ui.stone.textContent = Math.floor(planetSave.stone);
-  if (ui.iron) ui.iron.textContent = Math.floor(planetSave.iron);
-  if (ui.food) ui.food.textContent = Math.floor(planetSave.food);
-  if (ui.factoryCount) ui.factoryCount.textContent = planetSave.buildings.filter(b => b.type === "factory").length;
-  if (ui.robotCount) ui.robotCount.textContent = planetSave.robots.length;
-}
-
-// 遊戲主循環
-let isGameRunning = false;
-function tick(now) {
-  if (!isGameStarted || !planetSave || !globalSave) return;
-  const dt = Math.min(0.2, (now - lastTick) / 1000);
-  lastTick = now;
-  planetSave.gameYear += GAME_YEARS_PER_REAL_SECOND * dt;
-  planetSave.coins += calcIncomePerSecond() * dt;
-  produceResources(dt);
-  // 動物移動
-  for (const a of planetSave.animals) {
-    a.t += dt;
-    if (a.t > 1.2) {
-      a.t = 0;
-      a.x += Math.floor(Math.random() * 3) - 1;
-      a.y += Math.floor(Math.random() * 3) - 1;
-      a.x = Math.max(0, Math.min(MAP_W - 1, a.x));
-      a.y = Math.max(0, Math.min(MAP_H - 1, a.y));
-    }
-  }
-  // 資源下限
-  planetSave.coins = Math.max(0, planetSave.coins);
-  planetSave.wood = Math.max(0, planetSave.wood);
-  planetSave.stone = Math.max(0, planetSave.stone);
-  planetSave.iron = Math.max(0, planetSave.iron);
-  planetSave.food = Math.max(0, planetSave.food);
-  // 自動建造
-  runAutoBuild();
-  // 渲染
-  draw();
-  if (isGameRunning) requestAnimationFrame(tick);
-}
-
-// UI事件綁定
-function rebindUIEvents() {
-  // 面板控制
-  if (ui.togglePanelBtn) ui.togglePanelBtn.onclick = () => ui.panel.style.display = ui.panel.style.display === "none" ? "flex" : "none";
-  if (ui.btnHidePanel) ui.btnHidePanel.onclick = () => ui.panel.style.display = "none";
-  if (ui.btnSave) ui.btnSave.onclick = () => saveAll();
-
-  // 模式切換
-  if (ui.btnBuildMode) ui.btnBuildMode.onclick = () => {
-    mode = "build";
-    ui.btnBuildMode.style.background = "#2563eb";
-    ui.btnUpgradeMode.style.background = "rgba(255,255,255,0.08)";
-    log("🏗️ 切換到建造模式");
-  };
-  if (ui.btnUpgradeMode) ui.btnUpgradeMode.onclick = () => {
-    mode = "upgrade";
-    ui.btnUpgradeMode.style.background = "#2563eb";
-    ui.btnBuildMode.style.background = "rgba(255,255,255,0.08)";
-    log("⬆️ 切換到升級模式");
-  };
-
-  // 自動建造開關
-  if (ui.btnAuto) ui.btnAuto.onclick = () => {
-    autoBuild = !autoBuild;
-    globalSave.autoBuild = autoBuild;
-    ui.autoState.textContent = autoBuild ? "ON" : "OFF";
-    log(autoBuild ? "🤖 自動建造 ON" : "🤖 自動建造 OFF");
-    saveGlobal();
-  };
-
-  // 音樂控制
-  if (ui.btnLoopSong) ui.btnLoopSong.onclick = () => {
-    songLoop = !songLoop;
-    globalSave.loopSong = songLoop;
-    ui.loopState.textContent = songLoop ? "ON" : "OFF";
-    log(songLoop ? "🔁 循環播放 ON" : "🔁 循環播放 OFF");
-    saveGlobal();
-  };
-  if (ui.btnAdSong) ui.btnAdSong.onclick = () => {
-    try {
-      if (!adAudio) {
-        adAudio = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_9c1a1c1d66.mp3?filename=happy-day-113985.mp3");
-        adAudio.volume = 0.8;
-      }
-      adAudio.loop = songLoop;
-      adAudio.play().then(() => {
-        state.isPlayingSong = true;
-        log("🎵 廣告歌播放中（60秒後獲獎勵）", "ok");
-        setTimeout(() => {
-          planetSave.coins += 120;
-          globalSave.aenoFragments += 1500;
-          while (globalSave.aenoFragments >= 1000) {
-            globalSave.aenoFragments -= 1000;
-            globalSave.aeno += 0.0001;
-          }
-          log("🎁 獎勵：金幣 +120 / AENO碎片 +1500", "ok");
-          saveAll();
-        }, 60000);
-      }).catch(() => {
-        log("❌ 手機需再按一次播放", "danger");
-      });
-    } catch {
-      log("❌ 音樂系統錯誤", "danger");
-    }
-  };
-
-  // 其他按鈕
-  if (ui.btnRobotSend) ui.btnRobotSend.onclick = () => log("🤖 機械人派遣功能開發中");
-  if (ui.btnExchange) ui.btnExchange.onclick = () => log("💱 AENO兌換功能開發中");
-  if (ui.btnTech) ui.btnTech.onclick = () => log("🔬 科技樹功能開發中");
-
-  // 優先級按鈕
-  document.querySelectorAll(".prioBtn").forEach(btn => {
-    btn.onclick = () => {
-      const prio = btn.dataset.prio;
-      customPriority = [prio];
-      log(`📌 手動設置優先級：${btn.textContent}`);
-    };
-  });
-
-  log("✅ 所有按鈕已綁定，可正常操作", "ok");
-}
-
-// 黑洞資格檢查
-function checkBlackHoleStatus(playerName) {
-  const aeno = globalSave.aeno || 0;
-  if (aeno >= AENO_APPLY && !globalSave.blackHoleApply.includes(playerName)) {
-    globalSave.blackHoleApply.push(playerName);
-    log(`📝 ${playerName} 達 800萬 AENO，已加入黑洞申請列表`, "ok");
-  }
-  if (aeno >= AENO_WEIGHT && !globalSave.blackHoleWeight.includes(playerName)) {
-    globalSave.blackHoleWeight.push(playerName);
-    log(`🔑 ${playerName} 達 1000萬 AENO，獲黑洞權重入資格`, "ok");
-  }
-  saveGlobal();
-}
-
-// 啟動遊戲
-function startGame(planetName, seedType) {
-  loadGlobal();
-  loadPlanet(planetName, seedType);
-  loadCamera();
-  applyOfflineProgress();
-  checkBlackHoleStatus(currentPlayer);
-  saveAll();
-  rebindUIEvents();
-  resizeCanvas();
-  isGameStarted = true;
-  isGameRunning = true;
-  ui.planetSelect.style.display = "none";
-  lastTick = performance.now();
-  requestAnimationFrame(tick);
-  log(`✅ 成功進入 ${planetName}，遊戲已啟動`, "ok");
-}
-
-// 頁面加載完成後，綁定星球選擇按鈕
-window.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".planetBtn").forEach(btn => {
-    btn.onclick = () => {
-      const planet = btn.dataset.planet;
-      const seed = btn.dataset.seed;
-      startGame(planet, seed);
-    };
-  });
-});
-
-// 頁面隱藏/關閉時自動保存
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && isGameStarted) {
-    saveCamera();
-    saveAll();
-  } else if (isGameStarted) {
-    loadCamera();
-  }
-});
-window.addEventListener("pagehide", () => {
-  if (isGameStarted) {
-    saveCamera();
-    saveAll();
-  }
-});
+    const touch = e.changedTou
