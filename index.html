@@ -2,8 +2,8 @@
 <html lang="zh-HK">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AENO V3 文明帝國</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AENO V3 文明帝國（修復載入版）</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans HK", sans-serif; }
 body { background:#111; color:#fff; overflow:hidden; user-select:none; }
@@ -86,8 +86,7 @@ body { background:#111; color:#fff; overflow:hidden; user-select:none; }
     <button class="btn buildBtn" data-build="factory">工廠</button>
     <button class="btn buildBtn" data-build="wall">城牆</button>
     <button class="btn buildBtn" data-build="robot">機器人中心</button>
-    <!-- 新增：無上限升級按鈕 -->
-    <button class="btn" style="background:#0a0; margin-top:10px;" id="btnUpgradeAll">一鍵升級所有建築（無上限）</button>
+    <button class="btn" style="background:#0a0; margin-top:10px;" id="btnUpgradeAll">一鍵升級（無上限）</button>
   </div>
 
   <div id="tabMarket" class="tabPage">
@@ -128,7 +127,7 @@ body { background:#111; color:#fff; overflow:hidden; user-select:none; }
 <div id="chatBox" class="hidden">
   <div id="chatLog"></div>
   <div style="display:flex;">
-    <input id="chatInput" placeholder="輸入指令：建造 / 升級 / 自動 / 停止">
+    <input id="chatInput" placeholder="輸入指令：自動 / 停止 / 升級">
     <button class="btn" id="chatSend">送出</button>
     <button class="btn gray" id="chatClose">關閉</button>
   </div>
@@ -181,26 +180,26 @@ const panelHeader = document.getElementById("panelHeader");
 const panelMinBtn = document.getElementById("panelMinBtn");
 const panelHideBtn = document.getElementById("panelHideBtn");
 const panelRestoreBtn = document.getElementById("panelRestoreBtn");
-// 新增無上限升級按鈕
 const btnUpgradeAll = document.getElementById("btnUpgradeAll");
 
 // =========================
 // Canvas Resize
 // =========================
 function resize() {
-canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
-canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
+canvas.width = Math.floor(window.innerWidth * (window.devicePixelRatio || 1));
+canvas.height = Math.floor(window.innerHeight * (window.devicePixelRatio || 1));
 }
 window.addEventListener("resize", resize);
 resize();
 
 // =========================
-// 隨機工具（保密用）
+// 隨機工具（修復致命語法錯誤！）
 // =========================
 function xmur3(str) {
 let h = 1779033703 ^ str.length;
 for (let i = 0; i < str.length; i++) {
-h = Math.imul(h ^ charCodeAt(i), 3432918353);
+// 修復：漏咗 str.
+h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
 h = (h << 13) | (h >>> 19);
 }
 return function () {
@@ -209,6 +208,7 @@ h = Math.imul(h ^ (h >>> 13), 3266489909);
 return (h ^= h >>> 16) >>> 0;
 };
 }
+
 function mulberry32(a) {
 return function () {
 let t = (a += 0x6D2B79F5);
@@ -217,6 +217,7 @@ t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
 return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
 }
+
 function clamp(v, a, b) {
 return Math.max(a, Math.min(b, v));
 }
@@ -237,12 +238,11 @@ const ZOOM_MIN = 0.35;
 const ZOOM_MAX = 2.2;
 
 // =========================
-// 遊戲資料
+// 遊戲資料（初始資源：木/石/鐵/糧800，金幣2000）
 // =========================
 const STORAGE_KEY = "AENO_V3_SAVE";
 let game = null;
 
-// ========== 【修改1：初始資源改為你要求：金幣2000，木/石/鐵/糧800】 ==========
 const DEFAULT_SAVE = () => ({
 version: VERSION,
 seed: "AENO-" + Math.floor(Math.random() * 99999999),
@@ -272,7 +272,6 @@ factory: 0,
 wall: 0,
 robot: 0
 },
-// 新增：建築等級（無上限）
 buildingLevels: {
 house:1, farm:1, lumber:1, quarry:1, mine:1, factory:1, wall:1, robot:1
 },
@@ -315,13 +314,13 @@ game.lastTick = Date.now();
 localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
 log("已保存遊戲");
 }
+
 function loadGame() {
 const raw = localStorage.getItem(STORAGE_KEY);
 if (!raw) return DEFAULT_SAVE();
 try {
 const data = JSON.parse(raw);
 if (!data.resources || !data.stats) return DEFAULT_SAVE();
-// 兼容舊存檔，補上buildingLevels
 if(!data.buildingLevels) data.buildingLevels = DEFAULT_SAVE().buildingLevels;
 return data;
 } catch {
@@ -355,6 +354,7 @@ mountain: 2,
 river: 3
 };
 let map = [];
+
 function generateMap() {
 const seedFn = xmur3(game.seed);
 const rand = mulberry32(seedFn());
@@ -381,7 +381,7 @@ for (let x = 22; x < 26; x++) {
 map[y][x] = TILE_TYPES.grass;
 }
 }
-log("世界生成完成（森林/山脈/河流已存在）");
+log("世界生成完成");
 }
 
 // =========================
@@ -389,6 +389,7 @@ log("世界生成完成（森林/山脈/河流已存在）");
 // =========================
 const townCenter = { x: 24, y: 24 };
 const placedBuildings = [];
+
 function rebuildPlacedBuildings() {
 placedBuildings.length = 0;
 const add = (type, count) => {
@@ -465,6 +466,7 @@ drawMountain(cx, cy + h);
 drawWater(cx, cy + h);
 }
 }
+
 function drawTree(x, y) {
 const size = 10 * zoom;
 ctx.fillStyle = "#92400e";
@@ -478,6 +480,7 @@ ctx.beginPath();
 ctx.arc(x - 6 * zoom, y - 8 * zoom, 8 * zoom, 0, Math.PI * 2);
 ctx.fill();
 }
+
 function drawMountain(x, y) {
 ctx.fillStyle = "#94a3b8";
 ctx.beginPath();
@@ -487,6 +490,7 @@ ctx.lineTo(x + 22 * zoom, y + 18 * zoom);
 ctx.closePath();
 ctx.fill();
 }
+
 function drawWater(x, y) {
 ctx.fillStyle = "rgba(59,130,246,0.6)";
 ctx.beginPath();
@@ -495,7 +499,7 @@ ctx.fill();
 }
 
 // =========================
-// 建築繪圖
+// 建築繪圖（顯示等級）
 // =========================
 function drawBuilding(b) {
 const p = gridToScreen(b.x, b.y);
@@ -509,17 +513,18 @@ if (b.type === "mine") drawMine(x, y);
 if (b.type === "factory") drawFactory(x, y);
 if (b.type === "wall") drawWall(x, y);
 if (b.type === "robot") drawRobotCenter(x, y);
-// 顯示等級（無上限）
 ctx.fillStyle = "#fff";
 ctx.font = `${14*zoom}px bold`;
 ctx.fillText(`Lv${b.level}`,x-15*zoom,y-10*zoom);
 }
+
 function shadow(x, y, w, h) {
 ctx.fillStyle = "rgba(0,0,0,0.18)";
 ctx.beginPath();
 ctx.ellipse(x, y, w * zoom, h * zoom, 0, 0, Math.PI * 2);
 ctx.fill();
 }
+
 function drawHouse(x, y) {
 shadow(x, y + 42 * zoom, 42, 16);
 const bodyGrad = ctx.createLinearGradient(x, y, x, y + 60 * zoom);
@@ -548,6 +553,7 @@ ctx.arc(x - 18 * zoom, y + 18 * zoom, 8 * zoom, 0, Math.PI * 2);
 ctx.arc(x + 18 * zoom, y + 18 * zoom, 8 * zoom, 0, Math.PI * 2);
 ctx.fill();
 }
+
 function drawFarm(x, y) {
 shadow(x, y + 42 * zoom, 45, 16);
 ctx.fillStyle = "#fef9c3";
@@ -564,6 +570,7 @@ ctx.arc(x - 28 * zoom, y + 12 * zoom, 12 * zoom, 0, Math.PI * 2);
 ctx.arc(x + 28 * zoom, y + 12 * zoom, 12 * zoom, 0, Math.PI * 2);
 ctx.fill();
 }
+
 function drawLumber(x, y) {
 shadow(x, y + 42 * zoom, 45, 16);
 ctx.fillStyle = "#fde68a";
@@ -580,6 +587,7 @@ ctx.fillStyle = "#0f172a";
 ctx.font = `${14 * zoom}px system-ui`;
 ctx.fillText("🪓", x - 10 * zoom, y + 34 * zoom);
 }
+
 function drawQuarry(x, y) {
 shadow(x, y + 42 * zoom, 45, 16);
 ctx.fillStyle = "#e2e8f0";
@@ -592,6 +600,7 @@ ctx.arc(x - 18 * zoom, y + 30 * zoom, 12 * zoom, 0, Math.PI * 2);
 ctx.arc(x + 18 * zoom, y + 28 * zoom, 10 * zoom, 0, Math.PI * 2);
 ctx.fill();
 }
+
 function drawMine(x, y) {
 shadow(x, y + 42 * zoom, 45, 16);
 ctx.fillStyle = "#cbd5e1";
@@ -607,6 +616,7 @@ ctx.beginPath();
 ctx.arc(x + 18 * zoom, y + 20 * zoom, 6 * zoom, 0, Math.PI * 2);
 ctx.fill();
 }
+
 function drawFactory(x, y) {
 shadow(x, y + 42 * zoom, 45, 16);
 ctx.fillStyle = "#dbeafe";
@@ -621,6 +631,7 @@ ctx.fillStyle = "#fbbf24";
 ctx.font = `${14 * zoom}px system-ui`;
 ctx.fillText("AD", x + 22 * zoom, y + 20 * zoom);
 }
+
 function drawWall(x, y) {
 shadow(x, y + 42 * zoom, 50, 16);
 ctx.fillStyle = "#cbd5e1";
@@ -632,6 +643,7 @@ for (let i = -4; i <= 4; i++) {
 ctx.fillRect(x + i * 12 * zoom, y + 20 * zoom, 4 * zoom, 30 * zoom);
 }
 }
+
 function drawRobotCenter(x, y) {
 shadow(x, y + 42 * zoom, 45, 16);
 ctx.fillStyle = "#fef3c7";
@@ -713,7 +725,7 @@ chatLog.scrollTop = chatLog.scrollHeight;
 assistantTalkBtn.addEventListener("click", () => {
 chatBox.classList.toggle("hidden");
 if (!chatBox.classList.contains("hidden")) {
-addChat("助手", "我已經準備好幫你自動收資源、起建築、無上限升級。");
+addChat("助手", "已啟動！自動建造+無上限升級");
 }
 });
 chatClose.addEventListener("click", () => {
@@ -735,44 +747,37 @@ function handleCommand(text) {
 const t = text.toLowerCase();
 if (t.includes("停止") || t.includes("off")) {
 game.autoMode = false;
-addChat("助手", "收到！已停止自動建築/升級");
+addChat("助手", "已停止自動模式");
 return;
 }
 if (t.includes("自動") || t.includes("on")) {
 game.autoMode = true;
-addChat("助手", "已啟動自動模式：建造+升級平衡運行");
+addChat("助手", "已開啟平衡建造+自動升級");
 return;
 }
 if (t.includes("升級")) {
 upgradeAllBuildings();
-addChat("助手", "已執行一鍵無上限升級！");
+addChat("助手", "所有建築無上限升級完成！");
 return;
 }
-if (t.includes("建造")) {
-game.buildQueue.push({ type: "house", t: Date.now() });
-addChat("助手", "已排程建造房屋");
-return;
-}
-addChat("助手", "指令：自動 / 停止 / 升級 / 建造");
+addChat("助手", "指令：自動 / 停止 / 升級");
 }
 
 // =========================
-// 建築按鈕
+// 建築按鈕 + 無上限升級
 // =========================
 document.querySelectorAll(".buildBtn").forEach((btn) => {
 btn.addEventListener("click", () => {
 const type = btn.dataset.build;
 game.buildQueue.push({ type, t: Date.now() });
-log(`已排程建築：${type}`);
+log(`已排程建造：${type}`);
 });
 });
 
-// ========== 【修改2：新增無上限升級功能】 ==========
 function upgradeAllBuildings(){
 const types = ["house","farm","lumber","quarry","mine","factory","wall","robot"];
 types.forEach(type=>{
 if(game.buildings[type]>0){
-// 無上限：直接+1，無任何限制
 game.buildingLevels[type]++;
 }
 });
@@ -799,7 +804,7 @@ log(`科技升級成功：${tech} Lv.${game.tech[tech]}`);
 });
 
 // =========================
-// Market（數量輸入框正常使用）
+// Market（數量輸入框正常）
 // =========================
 function updateMarketPrices() {
 const now = Date.now();
@@ -853,7 +858,7 @@ adPlaying = true;
 adAudio.src = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_7f7b2fbe11.mp3?filename=future-bass-beat-117858.mp3";
 adAudio.volume = 0.55;
 adAudio.play().catch(() => {
-log("瀏覽器禁止自動播放，請再按一次播放");
+log("請手動點擊播放音頻");
 });
 log("開始播放廣告歌曲");
 if (adTimer) clearInterval(adTimer);
@@ -948,8 +953,8 @@ const dx = e.clientX - lastPX;
 const dy = e.clientY - lastPY;
 lastPX = e.clientX;
 lastPY = e.clientY;
-cameraX += dx * devicePixelRatio;
-cameraY += dy * devicePixelRatio;
+cameraX += dx * (window.devicePixelRatio || 1);
+cameraY += dy * (window.devicePixelRatio || 1);
 });
 canvas.addEventListener("pointerup", () => {
 draggingMap = false;
@@ -974,7 +979,7 @@ return aenoDelta;
 }
 
 // =========================
-// 每秒邏輯
+// 每秒邏輯（AI平衡建造+自動升級）
 // =========================
 function tickLogic(dtSec = 1, silent = false) {
 updateMarketPrices();
@@ -998,10 +1003,8 @@ game.stats.population += 1;
 if (!silent) log("人口增加 +1");
 }
 }
-// ========== 【修改3：AI 自動平衡建造 + 無上限升級】 ==========
 if (game.autoMode) {
 autoAssistantBuild(dtSec, silent);
-// 自動隨機升級（無上限）
 if(Math.random() < 0.3) autoUpgradeRandom();
 }
 if (game.stats.civil >= 100) {
@@ -1022,7 +1025,6 @@ if (game.resources[k] < 0) game.resources[k] = 0;
 });
 }
 
-// ========== 【修改4：AI自動隨機升級（無上限）】 ==========
 function autoUpgradeRandom(){
 const types = ["house","farm","lumber","quarry","mine","factory","wall","robot"];
 const avail = types.filter(t=>game.buildings[t]>0);
@@ -1032,7 +1034,6 @@ game.buildingLevels[pick]++;
 rebuildPlacedBuildings();
 }
 
-// ========== AI自動建造（平衡邏輯，完全保留你原版） ==========
 function autoAssistantBuild(dtSec, silent) {
 if (game.buildings.farm < 1) {
 tryBuild("farm", silent);
@@ -1189,7 +1190,7 @@ location.reload();
 setInterval(saveGame, 30000);
 
 // =========================
-// 初始化
+// 初始化（延長載入時間，适配手機）
 // =========================
 function init() {
 game = loadGame();
@@ -1201,14 +1202,16 @@ offlineProgress();
 updateUI();
 setInterval(gameLoop, 1000);
 requestAnimationFrame(draw);
+// 延長載入延遲，手機端足夠時間準備
 setTimeout(() => {
 bootScreen.style.display = "none";
-log("遊戲載入完成");
-addChat("助手", "已啟動無上限升級+AI平衡建造");
-}, 600);
+log("遊戲載入完成！可以正常玩啦");
+addChat("助手", "歡迎回來！初始資源已設為800/2000，支援無上限升級");
+}, 1500);
 }
 
-init();
+// 確保DOM完全加載再初始化
+document.addEventListener("DOMContentLoaded", init);
 
 })();
 </script>
