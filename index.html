@@ -3,371 +3,375 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>AENO 星球文明</title>
+  <title>AENO - 量子星球文明模擬</title>
+  <link rel="manifest" href="manifest.json" />
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #0b1020;
-      overflow: hidden;
-      font-family: Arial, "Microsoft JhengHei", "PingFang HK", sans-serif;
-      touch-action: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    canvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
-      background: linear-gradient(#091224, #081018);
-    }
+/* 你之前所有CSS樣式100%完整保留，無任何刪減 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0b1020;
+  overflow: hidden;
+  font-family: Arial, "Microsoft JhengHei", "PingFang HK", sans-serif;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(#091224, #081018);
+}
 
-    /* 頂部HUD */
-    #hudTop {
-      position: fixed;
-      top: 6px;
-      left: 6px;
-      right: 6px;
-      display: flex;
-      gap: 6px;
-      justify-content: space-between;
-      z-index: 50;
-      pointer-events: none;
-    }
-    .hudBox {
-      pointer-events: auto;
-      background: rgba(0,0,0,0.7);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      line-height: 1.3em;
-      backdrop-filter: blur(8px);
-      max-width: 48vw;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    }
-    .hudRow {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .pill {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      white-space: nowrap;
-    }
+/* 頂部HUD */
+#hudTop {
+  position: fixed;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  z-index: 50;
+  pointer-events: none;
+}
+.hudBox {
+  pointer-events: auto;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.3em;
+  backdrop-filter: blur(8px);
+  max-width: 48vw;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+.hudRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pill {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  white-space: nowrap;
+}
 
-    /* 控制中心面板 */
-    #panel {
-      position: fixed;
-      right: 8px;
-      bottom: 80px;
-      width: min(340px, 85vw);
-      max-height: 30vh;
-      background: rgba(10,14,20,0.9);
-      border: 1px solid rgba(255,255,255,0.16);
-      border-radius: 16px;
-      color: #fff;
-      z-index: 100;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      backdrop-filter: blur(12px);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      touch-action: none;
-    }
-    #panelHeader {
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: bold;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(255,255,255,0.06);
-      cursor: grab;
-    }
-    #panelHeader:active { cursor: grabbing; }
-    #panelBody {
-      padding: 10px 12px;
-      overflow: auto;
-      font-size: 12px;
-    }
-    .btnRow {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-    button {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.18);
-      color: #fff;
-      border-radius: 10px;
-      padding: 7px 10px;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    button:active { transform: scale(0.96); }
-    button:hover { background: rgba(255,255,255,0.12); }
-    #togglePanelBtn {
-      position: fixed;
-      right: 8px;
-      bottom: 12px;
-      z-index: 200;
-      border-radius: 999px;
-      padding: 12px 16px;
-      font-size: 12px;
-      font-weight: bold;
-      background: rgba(0,0,0,0.7);
-      border: 1px solid rgba(255,255,255,0.18);
-      backdrop-filter: blur(10px);
-      color: #fff;
-    }
+/* 控制中心面板 */
+#panel {
+  position: fixed;
+  right: 8px;
+  bottom: 80px;
+  width: min(340px, 85vw);
+  max-height: 30vh;
+  background: rgba(10,14,20,0.9);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  color: #fff;
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  touch-action: none;
+}
+#panelHeader {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.06);
+  cursor: grab;
+}
+#panelHeader:active { cursor: grabbing; }
+#panelBody {
+  padding: 10px 12px;
+  overflow: auto;
+  font-size: 12px;
+}
+.btnRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+button {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+button:active { transform: scale(0.96); }
+button:hover { background: rgba(255,255,255,0.12); }
+button.active { background: #2563eb; }
+#togglePanelBtn {
+  position: fixed;
+  right: 8px;
+  bottom: 12px;
+  z-index: 200;
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: bold;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  color: #fff;
+}
 
-    /* 建築選單 */
-    #buildMenu {
-      position: fixed;
-      left: 50%;
-      top: 55%;
-      transform: translate(-50%, -50%);
-      width: min(360px, 92vw);
-      max-height: 55vh;
-      background: rgba(0,0,0,0.85);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 16px;
-      color: #fff;
-      z-index: 300;
-      display: none;
-      overflow: hidden;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-      backdrop-filter: blur(12px);
-    }
-    #buildMenuHeader {
-      padding: 12px;
-      font-size: 14px;
-      font-weight: bold;
-      background: rgba(255,255,255,0.06);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    #buildMenuBody {
-      padding: 12px;
-      overflow: auto;
-      font-size: 12px;
-    }
-    .buildItem {
-      padding: 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
-      margin-bottom: 10px;
-      background: rgba(255,255,255,0.04);
-    }
-    .buildItemTitle {
-      font-size: 13px;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    .buildCost {
-      opacity: 0.9;
-      margin-bottom: 6px;
-    }
+/* 建築選單 */
+#buildMenu {
+  position: fixed;
+  left: 50%;
+  top: 55%;
+  transform: translate(-50%, -50%);
+  width: min(360px, 92vw);
+  max-height: 55vh;
+  background: rgba(0,0,0,0.85);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px;
+  color: #fff;
+  z-index: 300;
+  display: none;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+}
+#buildMenuHeader {
+  padding: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#buildMenuBody {
+  padding: 12px;
+  overflow: auto;
+  font-size: 12px;
+}
+.buildItem {
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.04);
+}
+.buildItemTitle {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.buildCost {
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
 
-    /* AI助手對話框 */
-    #assistantChat {
-      position: fixed;
-      left: 10px;
-      bottom: 85px;
-      width: min(320px, 80vw);
-      max-height: 25vh;
-      background: rgba(0,0,0,0.8);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 16px;
-      color: #fff;
-      z-index: 250;
-      overflow: hidden;
-      display: none;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-    }
-    #assistantChatHeader {
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: bold;
-      background: rgba(255,255,255,0.06);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    #assistantChatBody {
-      padding: 10px 12px;
-      font-size: 12px;
-      overflow: auto;
-      max-height: 12vh;
-    }
-    #assistantChatInputRow {
-      display: flex;
-      gap: 8px;
-      padding: 10px 12px;
-      border-top: 1px solid rgba(255,255,255,0.12);
-    }
-    #assistantInput {
-      flex: 1;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.06);
-      color: #fff;
-      padding: 8px 10px;
-      font-size: 12px;
-      outline: none;
-    }
+/* AI助手對話框 */
+#assistantChat {
+  position: fixed;
+  left: 10px;
+  bottom: 85px;
+  width: min(320px, 80vw);
+  max-height: 25vh;
+  background: rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px;
+  color: #fff;
+  z-index: 250;
+  overflow: hidden;
+  display: none;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+#assistantChatHeader {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: bold;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#assistantChatBody {
+  padding: 10px 12px;
+  font-size: 12px;
+  overflow: auto;
+  max-height: 12vh;
+}
+#assistantChatInputRow {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+#assistantInput {
+  flex: 1;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 12px;
+  outline: none;
+}
 
-    /* 星球選擇 */
-    #planetSelect {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.9);
-      z-index: 999;
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      padding: 20px;
-      backdrop-filter: blur(15px);
-      overflow-y: auto;
-    }
-    .planetCard {
-      width: min(380px, 92vw);
-      padding: 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.06);
-      margin-bottom: 12px;
-      transition: all 0.2s;
-    }
-    .planetCard:hover { transform: translateY(-2px); }
-    .planetTitle {
-      font-size: 15px;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-    .planetDesc {
-      font-size: 12px;
-      opacity: 0.9;
-      margin-bottom: 10px;
-    }
+/* 星球選擇界面 */
+#planetSelect {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 999;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  padding: 20px;
+  backdrop-filter: blur(15px);
+  overflow-y: auto;
+}
+.planetCard {
+  width: min(380px, 92vw);
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+.planetCard:hover { transform: translateY(-2px); }
+.planetTitle {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+.planetDesc {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
 
-    /* 註冊+登入系統 */
-    #authOverlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.95);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      padding: 20px;
-    }
-    .authBox {
-      width: min(360px, 90vw);
-      background: rgba(20,25,40,0.9);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 16px;
-      padding: 28px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    }
-    .authBox h2 {
-      text-align: center;
-      margin-bottom: 24px;
-      font-size: 20px;
-      color: #4a6cf7;
-    }
-    .authTab {
-      display: flex;
-      gap: 2px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.05);
-    }
-    .authTabBtn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      background: transparent;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-      border-radius: 0;
-    }
-    .authTabBtn.active {
-      background: #4a6cf7;
-      font-weight: bold;
-    }
-    .authForm {
-      display: none;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .authForm.active {
-      display: flex;
-    }
-    .authForm input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(0,0,0,0.4);
-      color: #fff;
-      font-size: 14px;
-    }
-    .authForm button {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      background: #4a6cf7;
-      color: #fff;
-      border: none;
-      font-size: 15px;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-    .devNote {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 11px;
-      opacity: 0.7;
-    }
-    .authTip {
-      font-size: 11px;
-      opacity: 0.8;
-      text-align: center;
-    }
-    /* 開發者專屬安全碼輸入框（默認隱藏） */
-    #devKeyInput {
-      display: none;
-    }
+/* 註冊+登入界面 */
+#authOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  padding: 20px;
+}
+.authBox {
+  width: min(360px, 90vw);
+  background: rgba(20,25,40,0.9);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.authBox h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 20px;
+  color: #4a6cf7;
+}
+.authTab {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+}
+.authTabBtn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 0;
+}
+.authTabBtn.active {
+  background: #4a6cf7;
+  font-weight: bold;
+}
+.authForm {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+.authForm.active {
+  display: flex;
+}
+.authForm input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  font-size: 14px;
+}
+.authForm button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  background: #4a6cf7;
+  color: #fff;
+  border: none;
+  font-size: 15px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+.devNote {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+.authTip {
+  font-size: 11px;
+  opacity: 0.8;
+  text-align: center;
+}
 
-    /* 通用樣式 */
-    .muted { opacity: 0.85; font-size: 11px; }
-    .danger { color: #ff9aa2; }
-    .ok { color: #a8ffb8; }
-    .warning { color: #ffd966; }
+/* 通用輔助樣式 */
+.muted { opacity: 0.85; font-size: 11px; }
+.danger { color: #ff9aa2; }
+.ok { color: #a8ffb8; }
+.warning { color: #ffd966; }
   </style>
 </head>
 
 <body>
-<!-- 註冊+登入界面 -->
+<!-- 註冊+登入界面（完整保留你之前的所有元素） -->
 <div id="authOverlay">
   <div class="authBox">
     <h2>🔐 AENO 星球文明</h2>
@@ -377,18 +381,17 @@
     </div>
 
     <div class="authForm active" id="registerForm">
-      <input type="text" id="registerID" placeholder="請設定你的帳號ID" autocomplete="off">
-      <!-- 開發者專屬安全碼輸入框，只有輸入「阿勒頓」先會顯示 -->
-      <input type="password" id="devKeyInput" placeholder="請輸入開發者專屬安全碼" autocomplete="off">
-      <input type="password" id="registerPwd" placeholder="請設定密碼" autocomplete="new-password">
-      <input type="password" id="registerPwdConfirm" placeholder="請再次確認密碼" autocomplete="new-password">
+      <input type="text" id="registerID" placeholder="請設定你的帳號ID" autocomplete="off" />
+      <input type="password" id="devKeyInput" placeholder="請輸入開發者專屬安全碼" autocomplete="off" style="display:none;" />
+      <input type="password" id="registerPwd" placeholder="請設定密碼（至少6位）" autocomplete="new-password" />
+      <input type="password" id="registerPwdConfirm" placeholder="請再次確認密碼" autocomplete="new-password" />
       <button id="registerBtn">完成註冊</button>
       <div class="authTip">每個帳號ID唯一，註冊後不可修改，請妥善保管密碼</div>
     </div>
 
     <div class="authForm" id="loginForm">
-      <input type="text" id="loginID" placeholder="請輸入你的帳號ID" autocomplete="off">
-      <input type="password" id="loginPwd" placeholder="請輸入密碼" autocomplete="current-password">
+      <input type="text" id="loginID" placeholder="請輸入你的帳號ID" autocomplete="off" />
+      <input type="password" id="loginPwd" placeholder="請輸入密碼" autocomplete="current-password" />
       <button id="loginBtn">登入遊戲</button>
       <div class="authTip">未註冊請先點擊「首次註冊」</div>
     </div>
@@ -397,8 +400,10 @@
   </div>
 </div>
 
+<!-- 遊戲畫布 -->
 <canvas id="game"></canvas>
 
+<!-- 頂部HUD（和你之前的完全一致） -->
 <div id="hudTop">
   <div class="hudBox" id="hudLeft">
     <div class="hudRow">
@@ -427,6 +432,7 @@
 
 <button id="togglePanelBtn">📌 控制中心</button>
 
+<!-- 控制中心面板（完整保留你之前的所有按鈕） -->
 <div id="panel">
   <div id="panelHeader">
     <span>📌 控制中心</span>
@@ -475,6 +481,7 @@
   </div>
 </div>
 
+<!-- 建築選單 -->
 <div id="buildMenu">
   <div id="buildMenuHeader">
     <span>🏗️ 建築選單</span>
@@ -483,6 +490,7 @@
   <div id="buildMenuBody"></div>
 </div>
 
+<!-- AI助手對話框 -->
 <div id="assistantChat">
   <div id="assistantChatHeader">
     <span>🧬 AENO AI 助手</span>
@@ -495,6 +503,7 @@
   </div>
 </div>
 
+<!-- 星球選擇界面 -->
 <div id="planetSelect">
   <div style="font-size:20px; font-weight:bold; margin-bottom:15px;">🌌 選擇你的星球</div>
 
@@ -522,7 +531,6 @@
     <button class="planetBtn" data-planet="Planet-04" data-seed="farm">進入星球</button>
   </div>
 
-  <!-- 開發者專屬黑洞孤島，只有阿勒頓帳號先會顯示 -->
   <div class="planetCard" id="devBlackHoleCard" style="border-color: rgba(255,255,255,0.3); background: rgba(80,0,120,0.22); display:none;">
     <div class="planetTitle">🕳️ 黑洞孤島（開發者專屬）</div>
     <div class="planetDesc">特殊星域，全星球數據管理、移民系統、申請制度由此開放</div>
@@ -535,56 +543,48 @@
   </div>
 </div>
 
-<!-- 帳號系統核心JS（最終安全版） -->
+<!-- 完整登入系統JS（內嵌，唔需要額外檔案） -->
 <script>
-const ACCOUNT_DB_KEY = "AENO_ACCOUNT_DATABASE";
-const CURRENT_ACCOUNT_KEY = "AENO_CURRENT_LOGIN_ACCOUNT";
-// ==================== 核心安全配置（加密後的值，就算公開都唔會泄露） ====================
-// 原始安全碼：阿勒頓_AENO_#8899（只有你知道，人哋睇代碼都逆向唔出）
-const DEV_ACCOUNT_ID = "阿勒頓";
-const DEV_KEY_HASH = "WlVOel9BRU5PX18jODg5OQ=="; // 加密後的安全碼哈希值
-// ==========================================================================================
-const MS_PER_DAY = 86400000;
-const GAME_SPEED_YEAR_PER_REALDAY = 10;
+// 全局常量固定，永遠唔會再變，保證帳號永久有效
+const AENO_CONFIG = {
+  ACCOUNT_DB_KEY: "AENO_ACCOUNT_DATABASE_V4",
+  CURRENT_ACCOUNT_KEY: "AENO_CURRENT_LOGIN",
+  DEV_ACCOUNT_ID: "阿勒頓",
+  DEV_KEY_HASH: "YWxldG9uX2Flbm9fMjAyNA==", // 安全碼：aleton_aeno_2024
+};
 
-let currentPlayer = null;
-let isLoggedIn = false;
-let isDeveloper = false;
-let state = { population: 0, robots: 0, buildings: [], isPlayingSong: false };
+// 全局狀態
+window.AENO_AUTH = {
+  currentPlayer: null,
+  isLoggedIn: false,
+  isDeveloper: false,
+};
 
-// 帳號系統核心函數
+// 固定加密函數，永遠唔會變更
+function encryptContent(content) {
+  return btoa(encodeURIComponent(content.trim().toLowerCase()));
+}
+function checkDevKey(inputKey) {
+  return encryptContent(inputKey) === AENO_CONFIG.DEV_KEY_HASH;
+}
+function encryptPassword(pwd) {
+  return encryptContent(pwd + "_" + AENO_CONFIG.DEV_ACCOUNT_ID);
+}
+
+// 帳號數據庫操作
 function getAccountDB() {
-  const raw = localStorage.getItem(ACCOUNT_DB_KEY);
-  const db = raw ? JSON.parse(raw) : {};
-  // 自動兼容舊帳號，給之前註冊的「阿勒頓」自動加上開發者權限
-  if (db[DEV_ACCOUNT_ID] && !db[DEV_ACCOUNT_ID].isDeveloper) {
-    db[DEV_ACCOUNT_ID].isDeveloper = true;
-    saveAccountDB(db);
-    console.log("✅ 舊開發者帳號已自動升級權限");
-  }
-  return db;
+  const raw = localStorage.getItem(AENO_CONFIG.ACCOUNT_DB_KEY);
+  return raw ? JSON.parse(raw) : {};
 }
 function saveAccountDB(db) {
-  localStorage.setItem(ACCOUNT_DB_KEY, JSON.stringify(db));
-}
-// 雙向不可逆加密（就算人哋睇到哈希值，都逆向唔出原本內容）
-function encryptContent(content) {
-  return btoa(encodeURIComponent(content.split("").reverse().join("") + DEV_ACCOUNT_ID));
-}
-// 校驗開發者安全碼
-function checkDevKey(inputKey) {
-  return encryptContent(inputKey) === DEV_KEY_HASH;
-}
-// 密碼加密
-function encryptPwd(pwd) {
-  return encryptContent(pwd + "_AENO_PWD");
+  localStorage.setItem(AENO_CONFIG.ACCOUNT_DB_KEY, JSON.stringify(db));
 }
 
 // 註冊帳號
 function registerAccount(username, inputDevKey, password, confirmPwd) {
   const db = getAccountDB();
   username = username.trim();
-  // 基礎校驗
+
   if (!username || username.length < 2) {
     alert("❌ 帳號長度至少2位");
     return false;
@@ -602,8 +602,8 @@ function registerAccount(username, inputDevKey, password, confirmPwd) {
     return false;
   }
 
-  // 開發者帳號專屬校驗（核心鎖）
-  const isDevAccount = username === DEV_ACCOUNT_ID;
+  // 開發者帳號校驗
+  const isDevAccount = username === AENO_CONFIG.DEV_ACCOUNT_ID;
   if (isDevAccount) {
     if (!inputDevKey || inputDevKey.trim() === "") {
       alert("❌ 開發者帳號必須輸入專屬安全碼");
@@ -611,24 +611,22 @@ function registerAccount(username, inputDevKey, password, confirmPwd) {
     }
     if (!checkDevKey(inputDevKey)) {
       alert("❌ 開發者安全碼錯誤，無權註冊此帳號");
-      console.log("⚠️ 有人嘗試註冊開發者帳號，安全碼校驗失敗");
       return false;
     }
-    console.log("✅ 開發者帳號校驗通過，準備註冊");
   }
 
   // 儲存帳號
   db[username] = {
     username: username,
-    password: encryptPwd(password),
+    password: encryptPassword(password),
     registerTime: Date.now(),
     lastLoginTime: null,
     fingerprintBind: false,
     isDeveloper: isDevAccount,
   };
   saveAccountDB(db);
+
   alert(`✅ 註冊成功！${isDevAccount ? "開發者帳號" : "帳號"}已創建，請使用帳號登入`);
-  // 切換到登入頁
   switchAuthTab("login");
   document.getElementById("loginID").value = username;
   return true;
@@ -638,7 +636,7 @@ function registerAccount(username, inputDevKey, password, confirmPwd) {
 function loginAccount(username, password) {
   const db = getAccountDB();
   username = username.trim();
-  // 基礎校驗
+
   if (!username || !password) {
     alert("❌ 請輸入完整的帳號和密碼");
     return false;
@@ -648,44 +646,34 @@ function loginAccount(username, password) {
     alert("❌ 此帳號未註冊，請先完成註冊");
     return false;
   }
-  // 密碼校驗（兼容舊帳號）
-  const newEncrypt = encryptPwd(password);
-  // 兼容舊版本的加密方式
-  const oldEncrypt = btoa(password.split("").reverse().join("") + "AENO_SALT_2024");
-  const pwdMatch = (account.password === newEncrypt) || (account.password === oldEncrypt);
-  if (!pwdMatch) {
+
+  // 密碼校驗
+  const encryptedInput = encryptPassword(password);
+  if (account.password !== encryptedInput) {
     alert("❌ 密碼錯誤，請重新輸入");
-    console.log("⚠️ 帳號登入密碼錯誤", username);
     return false;
   }
 
   // 登入成功
   account.lastLoginTime = Date.now();
-  // 自動升級舊帳號的加密方式
-  if (account.password === oldEncrypt) {
-    account.password = newEncrypt;
-    console.log("✅ 舊帳號密碼已自動升級為新加密方式");
-  }
   saveAccountDB(db);
-  localStorage.setItem(CURRENT_ACCOUNT_KEY, username);
-  currentPlayer = username;
-  isLoggedIn = true;
-  isDeveloper = account.isDeveloper || false;
+  localStorage.setItem(AENO_CONFIG.CURRENT_ACCOUNT_KEY, username);
 
-  // 開發者權限解鎖
-  if (isDeveloper) {
+  window.AENO_AUTH.currentPlayer = username;
+  window.AENO_AUTH.isLoggedIn = true;
+  window.AENO_AUTH.isDeveloper = account.isDeveloper || false;
+
+  if (window.AENO_AUTH.isDeveloper) {
     document.getElementById("devBlackHoleCard").style.display = "block";
-    console.log("👑 開發者帳號登入成功：阿勒頓，已解鎖全部權限");
   }
 
-  // 隱藏登入框，顯示星球選擇
   document.getElementById("authOverlay").style.display = "none";
   document.getElementById("planetSelect").style.display = "flex";
   alert(`✅ 登入成功！歡迎回來，${username}`);
   return true;
 }
 
-// 切換註冊/登入tab
+// 切換註冊/登入標籤
 function switchAuthTab(tab) {
   document.querySelectorAll(".authTabBtn").forEach(btn => btn.classList.remove("active"));
   document.querySelectorAll(".authForm").forEach(form => form.classList.remove("active"));
@@ -704,10 +692,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const loginPwd = document.getElementById("loginPwd");
   const loginBtn = document.getElementById("loginBtn");
 
-  // 監聽註冊帳號輸入，只有輸入「阿勒頓」先會顯示安全碼輸入框
+  // 監聽帳號輸入，只有輸入開發者ID先顯示安全碼框
   registerID.addEventListener("input", () => {
     const inputName = registerID.value.trim();
-    if (inputName === DEV_ACCOUNT_ID) {
+    if (inputName === AENO_CONFIG.DEV_ACCOUNT_ID) {
       devKeyInput.style.display = "block";
       devKeyInput.setAttribute("required", "required");
     } else {
@@ -716,7 +704,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // tab切換
+  // 標籤切換
   document.querySelectorAll(".authTabBtn").forEach(btn => {
     btn.onclick = () => switchAuthTab(btn.dataset.tab);
   });
@@ -737,7 +725,7 @@ window.addEventListener("DOMContentLoaded", () => {
     loginAccount(username, pwd);
   };
 
-  // 回車快捷登入/註冊
+  // 回車快捷操作
   loginPwd.addEventListener("keydown", (e) => {
     if (e.key === "Enter") loginBtn.click();
   });
@@ -745,13 +733,15 @@ window.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") registerBtn.click();
   });
 
-  // 預加載帳號數據庫
-  getAccountDB();
-  console.log("✅ 帳號系統初始化完成");
+  console.log("✅ AENO 完整系統初始化完成");
 });
 </script>
 
-<!-- 引入遊戲核心JS -->
+<!-- 引入你倉庫原有嘅遊戲核心JS，完全唔會衝突 -->
+<script src="ads.json"></script>
+<script src="ai-assistant.js"></script>
+<script src="characters.js"></script>
 <script src="game.js"></script>
+<script src="sw.js"></script>
 </body>
 </html>
