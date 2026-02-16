@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>AENO V3 (Mobile Cartoon - Canvas)</title>
+  <title>AENO V3 星球文明</title>
   <style>
     html, body {
       margin: 0;
@@ -66,9 +66,9 @@
     #panel {
       position: fixed;
       right: 8px;
-      bottom: 80px; /* avoid mobile nav bar */
+      bottom: 80px;
       width: min(320px, 75vw);
-      max-height: 25vh; /* <= 1/4 screen */
+      max-height: 25vh;
       background: rgba(10,14,20,0.85);
       border: 1px solid rgba(255,255,255,0.16);
       border-radius: 14px;
@@ -81,7 +81,6 @@
       flex-direction: column;
       touch-action: none;
     }
-
     #panelHeader {
       padding: 8px 10px;
       font-size: 12px;
@@ -92,13 +91,11 @@
       cursor: grab;
     }
     #panelHeader:active { cursor: grabbing; }
-
     #panelBody {
       padding: 8px 10px;
       overflow: auto;
       font-size: 11px;
     }
-
     .btnRow {
       display: flex;
       gap: 6px;
@@ -115,7 +112,6 @@
       cursor: pointer;
     }
     button:active { transform: scale(0.98); }
-
     #togglePanelBtn {
       position: fixed;
       right: 8px;
@@ -232,7 +228,7 @@
       inset: 0;
       background: rgba(0,0,0,0.82);
       z-index: 999;
-      display: flex;
+      display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
@@ -259,11 +255,11 @@
       margin-bottom: 8px;
     }
 
-    /* Login Overlay */
-    #loginOverlay {
+    /* 註冊+登入系統 */
+    #authOverlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.93);
+      background: rgba(0,0,0,0.95);
       z-index: 9999;
       display: flex;
       flex-direction: column;
@@ -272,44 +268,78 @@
       color: #fff;
       padding: 20px;
     }
-    .loginBox {
+    .authBox {
       width: min(360px, 90vw);
       background: rgba(20,25,40,0.9);
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 16px;
       padding: 24px;
     }
-    .loginBox h2 {
+    .authBox h2 {
       text-align: center;
-      margin-bottom: 16px;
-      font-size: 16px;
+      margin-bottom: 20px;
+      font-size: 18px;
     }
-    .loginBox input {
+    .authTab {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.05);
+    }
+    .authTabBtn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 0;
+    }
+    .authTabBtn.active {
+      background: #4a6cf7;
+    }
+    .authForm {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .authForm.active {
+      display: flex;
+    }
+    .authForm input {
       width: 100%;
       box-sizing: border-box;
-      padding: 10px 12px;
-      margin-bottom: 10px;
+      padding: 12px;
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.15);
       background: rgba(0,0,0,0.4);
       color: #fff;
       font-size: 14px;
     }
-    .loginBox button {
+    .authForm button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       border-radius: 10px;
       background: #4a6cf7;
       color: #fff;
       border: none;
       font-size: 14px;
       font-weight: bold;
+      margin-top: 8px;
     }
     .devNote {
       text-align: center;
-      margin-top: 10px;
+      margin-top: 16px;
       font-size: 11px;
       opacity: 0.7;
+    }
+    .authTip {
+      font-size: 11px;
+      opacity: 0.8;
+      text-align: center;
     }
 
     /* tiny helper */
@@ -320,155 +350,320 @@
 </head>
 
 <body>
+<!-- 註冊+登入界面（強制校驗，唯一帳號） -->
+<div id="authOverlay">
+  <div class="authBox">
+    <h2>🔐 AENO 星球文明</h2>
+    <div class="authTab">
+      <button class="authTabBtn active" data-tab="register">首次註冊</button>
+      <button class="authTabBtn" data-tab="login">已有帳號登入</button>
+    </div>
 
-<!-- 登入界面（強制密碼校驗） -->
-<div id="loginOverlay">
-  <div class="loginBox">
-    <h2>🔐 AENO 登入</h2>
-    <input type="text" id="loginID" placeholder="輸入你的帳號">
-    <input type="password" id="loginPwd" placeholder="輸入密碼">
-    <button id="loginBtn">進入遊戲</button>
-    <div class="devNote">開發者：阿勒頓</div>
+    <!-- 註冊表單 -->
+    <div class="authForm active" id="registerForm">
+      <input type="text" id="registerID" placeholder="請設定你的帳號ID" autocomplete="off">
+      <input type="password" id="registerPwd" placeholder="請設定密碼" autocomplete="new-password">
+      <input type="password" id="registerPwdConfirm" placeholder="請再次確認密碼" autocomplete="new-password">
+      <button id="registerBtn">完成註冊</button>
+      <div class="authTip">每個帳號ID唯一，註冊後不可修改，請妥善保管密碼</div>
+    </div>
+
+    <!-- 登入表單 -->
+    <div class="authForm" id="loginForm">
+      <input type="text" id="loginID" placeholder="請輸入你的帳號ID" autocomplete="off">
+      <input type="password" id="loginPwd" placeholder="請輸入密碼" autocomplete="current-password">
+      <button id="loginBtn">登入遊戲</button>
+      <div class="authTip">未註冊請先點擊「首次註冊」</div>
+    </div>
+
+    <div class="devNote">開發者：阿勒頓 | 未來將開放指紋認證</div>
   </div>
 </div>
 
-  <canvas id="game"></canvas>
+<canvas id="game"></canvas>
 
-  <div id="hudTop">
-    <div class="hudBox" id="hudLeft">
-      <div class="hudRow">
-        <span class="pill">🌍 <span id="planetName">?</span></span>
-        <span class="pill">⏱️ <span id="gameYear">0</span> 年</span>
-        <span class="pill">👥 <span id="popCount">0</span></span>
-      </div>
-      <div class="hudRow" style="margin-top:4px;">
-        <span class="pill">🪙 金幣: <span id="coins">0</span></span>
-        <span class="pill">🟡 AENO: <span id="aeno">0.0000</span></span>
-      </div>
+<div id="hudTop">
+  <div class="hudBox" id="hudLeft">
+    <div class="hudRow">
+      <span class="pill">🌍 <span id="planetName">?</span></span>
+      <span class="pill">⏱️ <span id="gameYear">0</span> 年</span>
+      <span class="pill">👥 <span id="popCount">0</span></span>
     </div>
-
-    <div class="hudBox" id="hudRight">
-      <div class="hudRow">
-        <span class="pill">🪵 木: <span id="wood">0</span></span>
-        <span class="pill">🪨 石: <span id="stone">0</span></span>
-        <span class="pill">⛏️ 鐵: <span id="iron">0</span></span>
-        <span class="pill">🌾 糧: <span id="food">0</span></span>
-      </div>
-      <div class="hudRow" style="margin-top:4px;">
-        <span class="pill">⚙️ 工廠: <span id="factoryCount">0</span></span>
-        <span class="pill">🤖 機器人: <span id="robotCount">0</span></span>
-      </div>
+    <div class="hudRow" style="margin-top:4px;">
+      <span class="pill">🪙 金幣: <span id="coins">0</span></span>
+      <span class="pill">🟡 AENO: <span id="aeno">0.0000</span></span>
     </div>
   </div>
-
-  <button id="togglePanelBtn">📌 面板</button>
-
-  <div id="panel">
-    <div id="panelHeader">
-      <span>📌 控制中心</span>
-      <span>
-        <button id="btnSave">保存</button>
-        <button id="btnHidePanel">收起</button>
-      </span>
+  <div class="hudBox" id="hudRight">
+    <div class="hudRow">
+      <span class="pill">🪵 木: <span id="wood">0</span></span>
+      <span class="pill">🪨 石: <span id="stone">0</span></span>
+      <span class="pill">⛏️ 鐵: <span id="iron">0</span></span>
+      <span class="pill">🌾 糧: <span id="food">0</span></span>
     </div>
-    <div id="panelBody">
-      <div><b>提示：</b>點你領土空地可以建築。</div>
-      <div class="muted">Zoom: 雙指縮放 / 滾輪。拖地圖：一指拖。</div>
+    <div class="hudRow" style="margin-top:4px;">
+      <span class="pill">⚙️ 工廠: <span id="factoryCount">0</span></span>
+      <span class="pill">🤖 機器人: <span id="robotCount">0</span></span>
+    </div>
+  </div>
+</div>
 
+<button id="togglePanelBtn">📌 面板</button>
+
+<div id="panel">
+  <div id="panelHeader">
+    <span>📌 控制中心</span>
+    <span>
+      <button id="btnSave">保存</button>
+      <button id="btnHidePanel">收起</button>
+    </span>
+  </div>
+  <div id="panelBody">
+    <div><b>提示：</b>點領土空地可以建築房屋</div>
+    <div class="muted">Zoom: 雙指縮放 / 滾輪 | 拖地圖：一指拖動</div>
+
+    <div class="btnRow">
+      <button id="btnBuildMode">🏗️ 建築模式</button>
+      <button id="btnUpgradeMode">⬆️ 升級模式</button>
+      <button id="btnAuto">🤖 自動建造: <span id="autoState">ON</span></button>
+    </div>
+
+    <div class="btnRow">
+      <button id="btnAdSong">🎵 播放廣告歌</button>
+      <button id="btnLoopSong">🔁 Loop: <span id="loopState">ON</span></button>
+    </div>
+
+    <div class="btnRow">
+      <button id="btnRobotSend">🚀 派機器人探索</button>
+      <button id="btnExchange">🏦 交易所</button>
+      <button id="btnTech">🧬 科技樹</button>
+    </div>
+
+    <div style="margin-top:10px;">
+      <b>AI助手優先順序：</b>
       <div class="btnRow">
-        <button id="btnBuildMode">🏗️ 建築模式</button>
-        <button id="btnUpgradeMode">⬆️ 升級模式</button>
-        <button id="btnAuto">🤖 自動建造: <span id="autoState">ON</span></button>
+        <button class="prioBtn" data-prio="house">🏠 房屋</button>
+        <button class="prioBtn" data-prio="lumber">🪵 伐木</button>
+        <button class="prioBtn" data-prio="quarry">🪨 採石</button>
+        <button class="prioBtn" data-prio="mine">⛏️ 礦場</button>
+        <button class="prioBtn" data-prio="farm">🌾 農田</button>
       </div>
+      <div class="muted">AI會自動平衡資源，優先補充不足的資源</div>
+    </div>
 
-      <div class="btnRow">
-        <button id="btnAdSong">🎵 播放廣告歌</button>
-        <button id="btnLoopSong">🔁 Loop: <span id="loopState">ON</span></button>
-      </div>
-
-      <div class="btnRow">
-        <button id="btnRobotSend">🚀 派機器人探索</button>
-        <button id="btnExchange">🏦 交易所</button>
-        <button id="btnTech">🧬 科技樹</button>
-      </div>
-
-      <div style="margin-top:10px;">
-        <b>AI助手優先順序：</b>
-        <div class="btnRow">
-          <button class="prioBtn" data-prio="house">🏠 房屋</button>
-          <button class="prioBtn" data-prio="lumber">🪵 伐木</button>
-          <button class="prioBtn" data-prio="mine">⛏️ 礦場</button>
-          <button class="prioBtn" data-prio="farm">🌾 農田</button>
-          <button class="prioBtn" data-prio="market">🏪 市場</button>
-        </div>
-        <div class="muted">目前優先：<span id="prioNow">🏠 房屋</span></div>
-      </div>
-
-      <div style="margin-top:10px;">
-        <b>系統訊息：</b>
-        <div id="logBox" style="margin-top:6px; max-height: 8vh; overflow:auto; font-size: 11px; opacity:0.92;"></div>
-      </div>
+    <div style="margin-top:10px;">
+      <b>系統訊息：</b>
+      <div id="logBox" style="margin-top:6px; max-height: 8vh; overflow:auto; font-size: 11px; opacity:0.92;"></div>
     </div>
   </div>
+</div>
 
-  <div id="buildMenu">
-    <div id="buildMenuHeader">
-      <span>🏗️ 建築選單</span>
-      <button id="closeBuildMenu">關閉</button>
-    </div>
-    <div id="buildMenuBody"></div>
+<div id="buildMenu">
+  <div id="buildMenuHeader">
+    <span>🏗️ 建築選單</span>
+    <button id="closeBuildMenu">關閉</button>
+  </div>
+  <div id="buildMenuBody"></div>
+</div>
+
+<div id="assistantChat">
+  <div id="assistantChatHeader">
+    <span>🐾 AENO AI 助手</span>
+    <button id="closeChat">收起</button>
+  </div>
+  <div id="assistantChatBody"></div>
+  <div id="assistantChatInputRow">
+    <input id="assistantInput" placeholder="輸入指令：巡邏 / 收集 / 建造 / 升級..." />
+    <button id="sendAssistant">送出</button>
+  </div>
+</div>
+
+<div id="planetSelect">
+  <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">🌌 選擇你的星球</div>
+
+  <div class="planetCard">
+    <div class="planetTitle">🟩 Planet-01 綠原星</div>
+    <div class="planetDesc">森林茂密，木材產出高，適合新手入門</div>
+    <button class="planetBtn" data-planet="Planet-01" data-seed="forest">進入星球</button>
   </div>
 
-  <div id="assistantChat">
-    <div id="assistantChatHeader">
-      <span>🐾 AENO AI 助手</span>
-      <button id="closeChat">收起</button>
-    </div>
-    <div id="assistantChatBody"></div>
-    <div id="assistantChatInputRow">
-      <input id="assistantInput" placeholder="輸入指令：巡邏 / 收集 / 建造 / 升級..." />
-      <button id="sendAssistant">送出</button>
-    </div>
+  <div class="planetCard">
+    <div class="planetTitle">🟫 Planet-02 岩石星</div>
+    <div class="planetDesc">石礦豐富，建築升級更快，地形崎嶇</div>
+    <button class="planetBtn" data-planet="Planet-02" data-seed="rock">進入星球</button>
   </div>
 
-  <div id="planetSelect">
-    <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">🌌 AENO V3 選擇星球</div>
-
-    <div class="planetCard">
-      <div class="planetTitle">🟩 Planet-01 綠原星</div>
-      <div class="planetDesc">森林多，適合新手。木材產出高。</div>
-      <button class="planetBtn" data-planet="Planet-01" data-seed="forest">進入</button>
-    </div>
-
-    <div class="planetCard">
-      <div class="planetTitle">🟫 Planet-02 岩石星</div>
-      <div class="planetDesc">石頭多，建築更快，地形崎嶇。</div>
-      <button class="planetBtn" data-planet="Planet-02" data-seed="rock">進入</button>
-    </div>
-
-    <div class="planetCard">
-      <div class="planetTitle">⚙️ Planet-03 工業星</div>
-      <div class="planetDesc">鐵礦多，適合機器人與工廠文明。</div>
-      <button class="planetBtn" data-planet="Planet-03" data-seed="iron">進入</button>
-    </div>
-
-    <div class="planetCard">
-      <div class="planetTitle">🌾 Planet-04 農牧星</div>
-      <div class="planetDesc">糧食豐富，人口成長快。</div>
-      <button class="planetBtn" data-planet="Planet-04" data-seed="farm">進入</button>
-    </div>
-
-    <div class="planetCard" id="devBlackHoleCard" style="border-color: rgba(255,255,255,0.3); background: rgba(80,0,120,0.22); display:none;">
-      <div class="planetTitle">🕳️ 黑洞孤島（Developer Island）</div>
-      <div class="planetDesc">特殊星域。未來移民系統、申請制度會由此開始。</div>
-      <button class="planetBtn" data-planet="BlackHole-Island" data-seed="blackhole">進入</button>
-    </div>
-
-    <div class="muted" style="margin-top:10px; text-align:center;">
-      ⚠️ 遊戲會自動保存。更新版本後仍可保留進度。<br/>
-      音樂需手動點擊播放（手機限制）。
-    </div>
+  <div class="planetCard">
+    <div class="planetTitle">⚙️ Planet-03 工業星</div>
+    <div class="planetDesc">鐵礦儲量高，適合發展工廠與機器人文明</div>
+    <button class="planetBtn" data-planet="Planet-03" data-seed="iron">進入星球</button>
   </div>
+
+  <div class="planetCard">
+    <div class="planetTitle">🌾 Planet-04 農牧星</div>
+    <div class="planetDesc">土地肥沃，糧食產出高，人口成長速度快</div>
+    <button class="planetBtn" data-planet="Planet-04" data-seed="farm">進入星球</button>
+  </div>
+
+  <div class="planetCard" id="devBlackHoleCard" style="border-color: rgba(255,255,255,0.3); background: rgba(80,0,120,0.22); display:none;">
+    <div class="planetTitle">🕳️ 黑洞孤島（開發者專屬）</div>
+    <div class="planetDesc">特殊星域，未來移民系統、申請制度由此開放</div>
+    <button class="planetBtn" data-planet="BlackHole-Island" data-seed="blackhole">進入</button>
+  </div>
+
+  <div class="muted" style="margin-top:10px; text-align:center;">
+    ⚠️ 遊戲會自動保存，更新版本後仍可保留進度<br/>
+    音樂需手動點擊播放（手機瀏覽器限制）
+  </div>
+</div>
+
+<!-- 核心JS函數庫 -->
+<script>
+// 帳號系統常量
+const ACCOUNT_DB_KEY = "AENO_ACCOUNT_DATABASE";
+const CURRENT_ACCOUNT_KEY = "AENO_CURRENT_LOGIN_ACCOUNT";
+const AENO_MAP = ['A','E','N','O','a','e','n','o','0','1'];
+const MS_PER_DAY = 86400000;
+const GAME_SPEED_YEAR_PER_REALDAY = 10;
+
+// 全局狀態
+let currentPlayer = null;
+let isLoggedIn = false;
+let isGameStarted = false;
+let isDeveloper = false;
+
+// 帳號系統核心函數
+function getAccountDB() {
+  const raw = localStorage.getItem(ACCOUNT_DB_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+function saveAccountDB(db) {
+  localStorage.setItem(ACCOUNT_DB_KEY, JSON.stringify(db));
+}
+// 密碼簡易加密（為之後指紋認證鋪路）
+function encryptPwd(pwd) {
+  return btoa(pwd.split("").reverse().join("") + "AENO_SALT");
+}
+// 註冊帳號
+function registerAccount(username, password, confirmPwd) {
+  const db = getAccountDB();
+  username = username.trim();
+  // 校驗
+  if (!username || username.length < 2) {
+    alert("❌ 帳號長度至少2位");
+    return false;
+  }
+  if (!password || password.length < 4) {
+    alert("❌ 密碼長度至少4位");
+    return false;
+  }
+  if (password !== confirmPwd) {
+    alert("❌ 兩次輸入的密碼不一致");
+    return false;
+  }
+  if (db[username]) {
+    alert("❌ 此帳號ID已被註冊，請更換其他ID");
+    return false;
+  }
+  // 儲存帳號
+  db[username] = {
+    username: username,
+    password: encryptPwd(password),
+    registerTime: Date.now(),
+    lastLoginTime: null,
+    fingerprintBind: false, // 為之後指紋認證留位
+  };
+  saveAccountDB(db);
+  alert("✅ 註冊成功！請使用帳號登入");
+  // 切換到登入頁
+  switchAuthTab("login");
+  document.getElementById("loginID").value = username;
+  return true;
+}
+// 登入帳號
+function loginAccount(username, password) {
+  const db = getAccountDB();
+  username = username.trim();
+  // 校驗
+  if (!username || !password) {
+    alert("❌ 請輸入完整的帳號和密碼");
+    return false;
+  }
+  const account = db[username];
+  if (!account) {
+    alert("❌ 此帳號未註冊，請先完成註冊");
+    return false;
+  }
+  if (account.password !== encryptPwd(password)) {
+    alert("❌ 密碼錯誤，請重新輸入");
+    return false;
+  }
+  // 登入成功
+  account.lastLoginTime = Date.now();
+  saveAccountDB(db);
+  localStorage.setItem(CURRENT_ACCOUNT_KEY, username);
+  currentPlayer = username;
+  isLoggedIn = true;
+
+  // 開發者帳號
+  if (username === "阿勒頓") {
+    isDeveloper = true;
+    document.getElementById("devBlackHoleCard").style.display = "block";
+    console.log("👑 開發者帳號登入：阿勒頓");
+  }
+
+  // 隱藏登入頁，顯示星球選擇
+  document.getElementById("authOverlay").style.display = "none";
+  document.getElementById("planetSelect").style.display = "flex";
+  alert(`✅ 登入成功！歡迎回來，${username}`);
+  return true;
+}
+// 切換註冊/登入tab
+function switchAuthTab(tab) {
+  document.querySelectorAll(".authTabBtn").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".authForm").forEach(form => form.classList.remove("active"));
+  document.querySelector(`.authTabBtn[data-tab="${tab}"]`).classList.add("active");
+  document.getElementById(`${tab}Form`).classList.add("active");
+}
+
+// 頁面加載完成後綁定所有事件
+window.addEventListener("DOMContentLoaded", () => {
+  // 註冊/登入tab切換
+  document.querySelectorAll(".authTabBtn").forEach(btn => {
+    btn.onclick = () => switchAuthTab(btn.dataset.tab);
+  });
+  // 註冊按鈕
+  document.getElementById("registerBtn").onclick = () => {
+    const username = document.getElementById("registerID").value;
+    const pwd = document.getElementById("registerPwd").value;
+    const confirmPwd = document.getElementById("registerPwdConfirm").value;
+    registerAccount(username, pwd, confirmPwd);
+  };
+  // 登入按鈕
+  document.getElementById("loginBtn").onclick = () => {
+    const username = document.getElementById("loginID").value;
+    const pwd = document.getElementById("loginPwd").value;
+    loginAccount(username, pwd);
+  };
+  // 回車登入
+  document.getElementById("loginPwd").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const username = document.getElementById("loginID").value;
+      const pwd = document.getElementById("loginPwd").value;
+      loginAccount(username, pwd);
+    }
+  });
+  // 回車註冊
+  document.getElementById("registerPwdConfirm").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const username = document.getElementById("registerID").value;
+      const pwd = document.getElementById("registerPwd").value;
+      const confirmPwd = document.getElementById("registerPwdConfirm").value;
+      registerAccount(username, pwd, confirmPwd);
+    }
+  });
+});
+</script>
 
 <!-- 引入遊戲核心JS -->
 <script src="game.js"></script>
