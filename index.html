@@ -54,7 +54,8 @@ body { background:#111; color:#fff; overflow:hidden; user-select:none; }
 
 <!-- 遊戲畫布 -->
 <canvas id="gameCanvas"></canvas>
-
+<canvas id="threeCanvas" style="position: absolute; top: 0; left: 0; z-index: 5; width: 100%; height: 100%;"></canvas>
+  
 <!-- AI小動物 -->
 <canvas id="aiPet"></canvas>
 <div id="petAdHint">點擊播放廣告，AENO收益×2！</div>
@@ -160,7 +161,8 @@ body { background:#111; color:#fff; overflow:hidden; user-select:none; }
     <button class="btn gray" id="chatClose">關閉</button>
   </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  
 <script>
 (() => {
 "use strict";
