@@ -3,8 +3,8 @@
 (function (window) {
   // 基础配置，你之后要改参数直接改呢度就得
   const CONFIG = {
-    // 阿啰币logo路径，一定要同你放图片嘅路径一致
-    logoPath: 'assets/textures/aen-logo.png',
+    // 用示例图，之后你可以换成自己的logo Base64或路径
+    logoPath: 'https://picsum.photos/id/237/256/256',
     // 闪烁速度，数字越大闪得越快
     blinkSpeed: 2,
     //  logo默认大小
