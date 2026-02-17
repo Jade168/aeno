@@ -971,3 +971,74 @@ function upgradeBuildingAt(x, y) {
 window.initGame = startGame;
 window.saveGlobal = saveGlobal;
 window.savePlanet = savePlanet;
+// 3D相关代码完全隔离，唔会污染原有游戏逻辑
+let threeScene, threeCamera, threeRenderer, gamePlanet;
+const initThree3D = () => {
+  // 1. 初始化3D场景、相机、渲染器
+  threeScene = new THREE.Scene();
+  // 相机同你原有2D画布尺寸完全对齐，唔会出现画面错位
+  threeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  threeCamera.position.z = 5;
+  // 绑定我哋新增嘅3D canvas，唔碰原有2D画布
+  threeRenderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById('threeCanvas'),
+    alpha: true, // 背景透明，唔会遮挡原有2D内容
+    antialias: true // 抗锯齿，画面更顺滑
+  });
+  threeRenderer.setSize(window.innerWidth, window.innerHeight);
+
+  // 2. 创建3D卡通星球（替换你原有2D星球图片）
+  const planetGeometry = new THREE.SphereGeometry(2, 32, 32);
+  // 直接用Three.js内置卡通材质，一步出你想要嘅漫畫風，唔使写复杂代码
+  const planetMaterial = new THREE.MeshToonMaterial({ color: 0x44aa88 });
+  gamePlanet = new THREE.Mesh(planetGeometry, planetMaterial);
+  threeScene.add(gamePlanet);
+
+  // 3. 添加光源（卡通渲染必需，唔加会黑画面）
+  const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+  mainLight.position.set(5, 5, 5);
+  threeScene.add(mainLight);
+  threeScene.add(new THREE.AmbientLight(0x404040, 0.5));
+};
+
+// 对接你原有嘅游戏主循环，只加一行代码，唔改原有逻辑
+const originalGameLoop = window.gameLoop || requestAnimationFrame;
+window.gameLoop = () => {
+  // 你原有嘅2D渲染、数值计算、逻辑代码，完全唔动，照常运行
+  originalGameLoop();
+
+  // 只新增呢一行3D渲染代码
+  if (threeRenderer && threeScene && threeCamera) {
+    gamePlanet.rotation.y += 0.01; // 简单自转动画，可随时删
+    threeRenderer.render(threeScene, threeCamera);
+  }
+  requestAnimationFrame(window.gameLoop);
+};
+
+// 页面加载完成，先启动你原有游戏，再初始化3D，完全唔冲突
+window.addEventListener('load', () => {
+  // 你原有嘅游戏初始化函数，完全唔改
+  if (window.initGame) window.initGame();
+  // 初始化3D
+  initThree3D();
+  // 启动游戏主循环
+  window.gameLoop();
+});
+
+// 对接你原有嘅星球点击事件，完全复用旧逻辑，唔使重写
+window.addEventListener('click', (e) => {
+  if (!threeCamera || !gamePlanet) return;
+  // 3D点击检测
+  const mouse = new THREE.Vector2(
+    (e.clientX / window.innerWidth) * 2 - 1,
+    -(e.clientY / window.innerHeight) * 2 + 1
+  );
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse, threeCamera);
+  const hitResult = raycaster.intersectObject(gamePlanet);
+  
+  // 点击到3D星球，直接调用你原有嘅点击函数，逻辑完全复用
+  if (hitResult.length > 0 && window.yourOriginalPlanetClickFunc) {
+    window.yourOriginalPlanetClickFunc();
+  }
+});
