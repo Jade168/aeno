@@ -1,1794 +1,403 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 
-  <title>AENO - Planet Colony</title>
+  <title>AENO - 星球文明育成</title>
 
-  <!-- 強制更新 (防cache) -->
+  <!-- 防 cache (GitHub Pages 特別易卡舊版) -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <style>
-    :root{
-      --bg:#eaf6ff;
-      --card:#ffffffcc;
-      --stroke:#bfe6ff;
-      --shadow:0 14px 30px rgba(0,0,0,.15);
-      --round:18px;
-      --txt:#0f172a;
-      --accent:#38bdf8;
-      --accent2:#fbbf24;
-      --good:#22c55e;
-      --danger:#ef4444;
-      --muted:#64748b;
-    }
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0ea5e9">
 
-    html,body{
-      margin:0;
-      padding:0;
-      height:100%;
-      overflow:hidden;
-      background:linear-gradient(#eaf6ff,#f0f9ff);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans TC,Arial;
-      color:var(--txt);
-      touch-action:none;
-    }
+  <link rel="stylesheet" href="style.css" />
 
-    canvas{
-      position:absolute;
-      left:0;
-      top:0;
-      width:100vw;
-      height:100vh;
-      display:block;
-      background:linear-gradient(#eaf6ff,#f0f9ff);
-    }
-
-    #uiRoot{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      z-index:50;
-    }
-
-    button, input, select{
-      pointer-events:auto;
-      font-size:14px;
-      border:none;
-      outline:none;
-    }
-
-    .hidden{ display:none !important; }
-
-    /* Boot */
-    #bootScreen{
-      position:absolute;
-      inset:0;
-      z-index:9999;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      background:linear-gradient(#dbeafe,#f0f9ff);
-    }
-
-    .bootCard{
-      width:320px;
-      background:var(--card);
-      border:2px solid var(--stroke);
-      border-radius:26px;
-      padding:18px;
-      box-shadow:var(--shadow);
-      text-align:center;
-    }
-
-    .logo{
-      font-size:40px;
-      font-weight:1000;
-      letter-spacing:3px;
-      color:#0284c7;
-    }
-
-    .bootText{
-      margin-top:8px;
-      font-size:15px;
-      font-weight:900;
-    }
-
-    .bootHint{
-      margin-top:10px;
-      font-size:12px;
-      opacity:.75;
-    }
-
-    /* Login Screen */
-    #loginScreen{
-      position:absolute;
-      inset:0;
-      z-index:9000;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      background:linear-gradient(#dbeafe,#f0f9ff);
-    }
-
-    .loginCard{
-      width:340px;
-      background:var(--card);
-      border:2px solid var(--stroke);
-      border-radius:26px;
-      padding:18px;
-      box-shadow:var(--shadow);
-      text-align:center;
-    }
-
-    .loginTitle{
-      font-size:20px;
-      font-weight:1000;
-      margin-bottom:10px;
-      color:#0284c7;
-    }
-
-    .loginRow{
-      display:flex;
-      gap:8px;
-      margin-top:10px;
-    }
-
-    .loginRow input{
-      flex:1;
-      padding:12px 12px;
-      border-radius:16px;
-      border:2px solid var(--stroke);
-      background:#fff;
-      font-weight:800;
-    }
-
-    .loginBtns{
-      display:flex;
-      gap:10px;
-      margin-top:12px;
-    }
-
-    .loginBtns button{
-      flex:1;
-      border-radius:18px;
-      padding:12px;
-      font-weight:1000;
-      cursor:pointer;
-      box-shadow:0 8px 16px rgba(0,0,0,.08);
-    }
-
-    #btnLogin{ background:var(--accent); color:#fff; }
-    #btnGuest{ background:var(--good); color:#fff; }
-
-    .smallHint{
-      margin-top:10px;
-      font-size:12px;
-      opacity:.75;
-      line-height:1.4;
-    }
-
-    /* Planet select */
-    #planetScreen{
-      position:absolute;
-      inset:0;
-      z-index:8500;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      background:linear-gradient(#dbeafe,#f0f9ff);
-    }
-
-    .planetCard{
-      width:360px;
-      max-height:78vh;
-      overflow:auto;
-      background:var(--card);
-      border:2px solid var(--stroke);
-      border-radius:26px;
-      padding:16px;
-      box-shadow:var(--shadow);
-    }
-
-    .planetHeader{
-      font-weight:1000;
-      font-size:16px;
-      color:#0284c7;
-      margin-bottom:10px;
-      text-align:center;
-    }
-
-    .planetGrid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px;
-    }
-
-    .planetBtn{
-      border-radius:18px;
-      padding:12px 10px;
-      font-weight:1000;
-      cursor:pointer;
-      background:#fff;
-      border:2px solid var(--stroke);
-    }
-
-    .planetBtn.locked{
-      opacity:.45;
-      cursor:not-allowed;
-    }
-
-    .planetBtn.blackhole{
-      background:#0f172a;
-      color:#fff;
-      border:2px solid #334155;
-    }
-
-    /* HUD Top */
-    #hudTop{
-      position:absolute;
-      left:10px;
-      top:10px;
-      right:10px;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      pointer-events:none;
-      z-index:70;
-    }
-
-    .hudBox{
-      pointer-events:auto;
-      background:var(--card);
-      border:2px solid var(--stroke);
-      border-radius:18px;
-      padding:8px 10px;
-      box-shadow:var(--shadow);
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      max-width:49%;
-    }
-
-    .hudRow{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-    }
-
-    .pill{
-      background:#ffffffaa;
-      border:1px solid var(--stroke);
-      border-radius:999px;
-      padding:4px 8px;
-      font-weight:900;
-      font-size:12px;
-      white-space:nowrap;
-    }
-
-    /* Assistant (Animal) */
-    #assistant{
-      position:absolute;
-      left:10px;
-      bottom:160px;
-      width:140px;
-      height:170px;
-      z-index:80;
-      pointer-events:auto;
-      user-select:none;
-    }
-
-    #assistant .adFlag{
-      position:absolute;
-      right:-10px;
-      top:-10px;
-      background:var(--accent2);
-      border-radius:14px;
-      padding:5px 8px;
-      font-weight:1000;
-      font-size:12px;
-      border:2px solid #fff;
-      box-shadow:0 8px 16px rgba(0,0,0,.12);
-    }
-
-    #assistantCanvas{
-      width:140px;
-      height:170px;
-      border-radius:20px;
-      background:transparent;
-    }
-
-    #assistantName{
-      position:absolute;
-      left:0;
-      right:0;
-      bottom:-22px;
-      text-align:center;
-      font-weight:1000;
-      font-size:12px;
-      color:#0f172a;
-      text-shadow:0 1px 0 rgba(255,255,255,.8);
-    }
-
-    /* Chat */
-    #chatBox{
-      position:absolute;
-      left:10px;
-      bottom:10px;
-      width:320px;
-      height:230px;
-      background:var(--card);
-      border:2px solid var(--stroke);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-      z-index:90;
-      pointer-events:auto;
-    }
-
-    .chatHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:10px 12px;
-      background:#dbeafe;
-      font-weight:1000;
-    }
-
-    #chatClose{
-      border-radius:12px;
-      padding:6px 10px;
-      background:var(--danger);
-      color:#fff;
-      font-weight:1000;
-      cursor:pointer;
-    }
-
-    #chatLog{
-      flex:1;
-      padding:10px;
-      overflow:auto;
-      font-size:12px;
-      line-height:1.5;
-      background:#ffffffaa;
-    }
-
-    .chatInputRow{
-      display:flex;
-      gap:6px;
-      padding:10px;
-      border-top:2px solid var(--stroke);
-      background:#ffffffcc;
-    }
-
-    #chatInput{
-      flex:1;
-      border-radius:14px;
-      border:2px solid var(--stroke);
-      padding:8px 10px;
-      font-weight:800;
-    }
-
-    #chatSend{
-      border-radius:14px;
-      padding:8px 12px;
-      background:var(--good);
-      color:#fff;
-      font-weight:1000;
-      cursor:pointer;
-    }
-
-    /* Main Panel */
-    #mainPanel{
-      position:absolute;
-      right:10px;
-      top:90px;
-      width:320px;
-      height:420px;
-      background:var(--card);
-      border:2px solid var(--stroke);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      z-index:85;
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-      pointer-events:auto;
-      touch-action:none;
-    }
-
-    #panelHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:10px 12px;
-      background:#dbeafe;
-      font-weight:1000;
-      cursor:grab;
-    }
-
-    #panelHeader:active{
-      cursor:grabbing;
-    }
-
-    .panelBtns{
-      display:flex;
-      gap:6px;
-    }
-
-    #panelMinBtn,#panelHideBtn{
-      border-radius:12px;
-      padding:6px 10px;
-      font-weight:1000;
-      cursor:pointer;
-    }
-
-    #panelMinBtn{ background:var(--accent); color:#fff; }
-    #panelHideBtn{ background:#64748b; color:#fff; }
-
-    #panelBody{
-      flex:1;
-      overflow:auto;
-      padding:10px;
-    }
-
-    .grid2{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px;
-    }
-
-    .statCard{
-      background:#ffffffaa;
-      border:2px solid var(--stroke);
-      border-radius:16px;
-      padding:8px 10px;
-    }
-
-    .statCard .k{
-      font-size:12px;
-      font-weight:1000;
-      opacity:.75;
-    }
-
-    .statCard .v{
-      margin-top:3px;
-      font-size:15px;
-      font-weight:1000;
-      color:#0284c7;
-    }
-
-    .btnRow{
-      display:flex;
-      gap:8px;
-      margin-top:8px;
-    }
-
-    .btnRow button{
-      flex:1;
-      border-radius:16px;
-      padding:10px 8px;
-      font-weight:1000;
-      cursor:pointer;
-      background:var(--accent);
-      color:#fff;
-    }
-
-    .btnRow button:nth-child(2){
-      background:var(--good);
-    }
-
-    .buildList{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px;
-      margin-top:8px;
-    }
-
-    .buildBtn{
-      border-radius:16px;
-      padding:10px 8px;
-      font-weight:1000;
-      background:var(--accent2);
-      cursor:pointer;
-    }
-
-    .hint{
-      margin-top:8px;
-      background:#ffffffaa;
-      border:2px dashed #93c5fd;
-      border-radius:16px;
-      padding:10px;
-      font-size:12px;
-      line-height:1.4;
-    }
-
-    #sysLog{
-      margin-top:8px;
-      background:#ffffffaa;
-      border:2px solid var(--stroke);
-      border-radius:16px;
-      padding:10px;
-      height:120px;
-      overflow:auto;
-      font-size:11px;
-      line-height:1.4;
-    }
-
-    #panelRestoreBtn{
-      position:absolute;
-      right:12px;
-      top:90px;
-      z-index:86;
-      border-radius:18px;
-      padding:12px 14px;
-      font-weight:1000;
-      background:var(--accent);
-      color:#fff;
-      box-shadow:var(--shadow);
-      pointer-events:auto;
-      display:none;
-    }
-
-    /* Mobile adjustments */
-    @media(max-width:420px){
-      #mainPanel{
-        width:300px;
-        height:380px;
-      }
-      #chatBox{
-        width:290px;
-      }
-    }
-  </style>
 </head>
 
 <body>
-  <canvas id="game"></canvas>
 
-  <!-- Boot -->
+  <!-- CANVAS -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- BOOT SCREEN -->
   <div id="bootScreen">
     <div class="bootCard">
       <div class="logo">AENO</div>
-      <div class="bootText">Loading World Engine...</div>
-      <div class="bootHint">離線計算 / 星球生成 / 交易系統準備中</div>
+      <div class="bootText">文明育成 · 星球殖民</div>
+      <div class="bootHint">Loading...</div>
     </div>
   </div>
 
-  <!-- Login -->
-  <div id="loginScreen" class="hidden">
-    <div class="loginCard">
-      <div class="loginTitle">🌍 AENO 星際殖民系統</div>
-      <div class="smallHint">
-        註冊後玩家只能選擇一次星球。<br>
-        之後永久鎖定（黑洞孤島只有你可進）。
-      </div>
-
-      <div class="loginRow">
-        <input id="userNameInput" placeholder="輸入玩家名稱" maxlength="18">
-      </div>
-
-      <div class="loginBtns">
-        <button id="btnLogin">登入 / 註冊</button>
-        <button id="btnGuest">游客模式</button>
-      </div>
-
-      <div class="smallHint">
-        AENO 挖礦 = 注意力 + 語言學習 + 廣告歌曲。<br>
-        （不是用電力）
-      </div>
-    </div>
-  </div>
-
-  <!-- Planet Select -->
-  <div id="planetScreen" class="hidden">
-    <div class="planetCard">
-      <div class="planetHeader">🪐 選擇你的星球（只能一次）</div>
-      <div id="planetGrid" class="planetGrid"></div>
-      <div class="smallHint" style="text-align:center;margin-top:10px;">
-        🤖 機器人可隨機去 20 星球探索資源。<br>
-        玩家本人只可永久駐守一顆星球。
-      </div>
-    </div>
-  </div>
-
+  <!-- UI ROOT -->
   <div id="uiRoot">
-    <!-- HUD -->
-    <div id="hudTop" class="hidden">
-      <div class="hudBox">
-        <div class="hudRow">
-          <span class="pill">🌍 <span id="planetName">?</span></span>
-          <span class="pill">⏱️ <span id="gameYear">0</span> 年</span>
-          <span class="pill">👥 <span id="popCount">0</span></span>
-        </div>
-        <div class="hudRow">
-          <span class="pill">🪙 金幣: <span id="coins">0</span></span>
-          <span class="pill">🟡 AENO: <span id="aeno">0.0000</span></span>
-        </div>
-      </div>
 
-      <div class="hudBox">
-        <div class="hudRow">
-          <span class="pill">🪵 木: <span id="wood">0</span></span>
-          <span class="pill">🪨 石: <span id="stone">0</span></span>
-          <span class="pill">⛏️ 鐵: <span id="iron">0</span></span>
-          <span class="pill">🌾 糧: <span id="food">0</span></span>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="hidden" style="
+      position:absolute; inset:0;
+      display:flex; justify-content:center; align-items:center;
+      z-index:9998;
+      background:linear-gradient(#dbeafe,#f0f9ff);
+      pointer-events:auto;
+    ">
+      <div style="
+        width:320px;
+        background:rgba(255,255,255,.85);
+        border:2px solid #bfe6ff;
+        border-radius:26px;
+        padding:18px;
+        box-shadow:0 14px 30px rgba(0,0,0,.15);
+        text-align:center;
+      ">
+        <div style="font-size:34px;font-weight:900;color:#0284c7;letter-spacing:3px;">AENO</div>
+        <div style="margin-top:8px;font-weight:800;">登入 / 註冊</div>
+        <div style="margin-top:12px;opacity:.8;font-size:12px;">
+          首次登入會自動註冊。<br>
+          未來會加入「四組金鑰 + 指紋」系統。
         </div>
-        <div class="hudRow">
-          <span class="pill">🏠 房屋: <span id="houseCount">0</span></span>
-          <span class="pill">🤖 機器人: <span id="robotCount">0</span></span>
+
+        <div style="margin-top:14px;text-align:left;font-weight:900;font-size:13px;">玩家名字</div>
+        <input id="loginName" type="text" placeholder="例如：Peter" style="
+          width:100%;
+          box-sizing:border-box;
+          margin-top:6px;
+          padding:12px 12px;
+          border-radius:16px;
+          border:2px solid #bfe6ff;
+          outline:none;
+          font-size:14px;
+        ">
+
+        <div style="margin-top:12px;text-align:left;font-weight:900;font-size:13px;">密碼</div>
+        <input id="loginPass" type="password" placeholder="最少 4 字" style="
+          width:100%;
+          box-sizing:border-box;
+          margin-top:6px;
+          padding:12px 12px;
+          border-radius:16px;
+          border:2px solid #bfe6ff;
+          outline:none;
+          font-size:14px;
+        ">
+
+        <button id="btnLogin" style="
+          margin-top:14px;
+          width:100%;
+          border:none;
+          border-radius:16px;
+          padding:12px 12px;
+          background:#0ea5e9;
+          color:white;
+          font-weight:900;
+          cursor:pointer;
+          font-size:15px;
+        ">進入宇宙</button>
+
+        <button id="btnGuest" style="
+          margin-top:10px;
+          width:100%;
+          border:none;
+          border-radius:16px;
+          padding:12px 12px;
+          background:#22c55e;
+          color:white;
+          font-weight:900;
+          cursor:pointer;
+          font-size:15px;
+        ">訪客模式（測試）</button>
+
+        <div id="loginMsg" style="margin-top:12px;font-size:12px;font-weight:900;color:#ef4444;"></div>
+      </div>
+    </div>
+
+
+    <!-- PLANET SELECT SCREEN -->
+    <div id="planetScreen" class="hidden" style="
+      position:absolute; inset:0;
+      display:flex; justify-content:center; align-items:center;
+      z-index:9997;
+      background:linear-gradient(#0b1220,#020617);
+      pointer-events:auto;
+      color:white;
+    ">
+      <div style="
+        width:360px;
+        background:rgba(255,255,255,.08);
+        border:2px solid rgba(255,255,255,.15);
+        border-radius:26px;
+        padding:18px;
+        box-shadow:0 14px 30px rgba(0,0,0,.35);
+        text-align:center;
+        backdrop-filter: blur(10px);
+      ">
+        <div style="font-size:20px;font-weight:900;">🌍 選擇你的星球</div>
+        <div style="margin-top:8px;font-size:12px;opacity:.8;">
+          玩家只能永久選 1 個星球。<br>
+          機器人可隨機探索 20 個星球。
+        </div>
+
+        <div id="planetList" style="
+          margin-top:12px;
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:10px;
+        "></div>
+
+        <div style="margin-top:12px;font-size:12px;opacity:.8;">
+          黑洞孤島：只限開發者進入（你）。
         </div>
       </div>
     </div>
 
-    <!-- Assistant -->
+
+    <!-- ASSISTANT -->
     <div id="assistant" class="hidden">
-      <div class="adFlag">AD</div>
-      <canvas id="assistantCanvas" width="140" height="170"></canvas>
-      <div id="assistantName">AENO助手</div>
+      <div class="assistantAdFlag">AD</div>
+      <div class="assistantFace">🐾</div>
+      <div class="assistantName">AENO<br>助手</div>
+      <button id="assistantTalkBtn">對話</button>
     </div>
 
-    <!-- Chat -->
+
+    <!-- CHAT BOX -->
     <div id="chatBox" class="hidden">
       <div class="chatHeader">
-        <span>🐾 AI助手</span>
-        <button id="chatClose">收起</button>
+        <span>🧠 AI助手</span>
+        <button id="chatClose">X</button>
       </div>
       <div id="chatLog"></div>
       <div class="chatInputRow">
-        <input id="chatInput" placeholder="輸入指令：巡邏 / 收集 / 建造 / 升級">
+        <input id="chatInput" type="text" placeholder="例如：我想起房屋" />
         <button id="chatSend">送出</button>
       </div>
     </div>
 
-    <!-- Panel -->
-    <button id="panelRestoreBtn">📌 面板</button>
 
+    <!-- MAIN PANEL -->
     <div id="mainPanel" class="hidden">
+
       <div id="panelHeader">
-        <span>📌 控制中心</span>
+        <div class="panelTitle">📌 控制中心</div>
         <div class="panelBtns">
-          <button id="panelMinBtn">縮小</button>
-          <button id="panelHideBtn">收起</button>
+          <button id="panelMinBtn">收起</button>
+          <button id="panelHideBtn">隱藏</button>
         </div>
+      </div>
+
+      <div id="panelTabs">
+        <button class="tabBtn active" data-tab="tabStatus">狀態</button>
+        <button class="tabBtn" data-tab="tabBuild">建築</button>
+        <button class="tabBtn" data-tab="tabTech">科技</button>
+        <button class="tabBtn" data-tab="tabRobot">機器人</button>
+        <button class="tabBtn" data-tab="tabAds">廣告</button>
       </div>
 
       <div id="panelBody">
-        <div class="grid2">
-          <div class="statCard">
-            <div class="k">自動建造</div>
-            <div class="v" id="autoState">ON</div>
+
+        <!-- STATUS TAB -->
+        <div class="tabPage active" id="tabStatus">
+
+          <div class="grid2">
+            <div class="statCard">
+              <div class="k">星球</div>
+              <div class="v" id="uiPlanetName">?</div>
+            </div>
+            <div class="statCard">
+              <div class="k">年份</div>
+              <div class="v"><span id="uiYear">0</span></div>
+            </div>
+            <div class="statCard">
+              <div class="k">人口</div>
+              <div class="v"><span id="uiPop">0</span></div>
+            </div>
+            <div class="statCard">
+              <div class="k">工人</div>
+              <div class="v"><span id="uiWorkers">0</span></div>
+            </div>
           </div>
-          <div class="statCard">
-            <div class="k">離線上限</div>
-            <div class="v">24h</div>
+
+          <div class="grid2 mt10">
+            <div class="statCard">
+              <div class="k">金幣</div>
+              <div class="v">🪙 <span id="uiCoins">0</span></div>
+            </div>
+            <div class="statCard">
+              <div class="k">AENO</div>
+              <div class="v">🟡 <span id="uiAeno">0.0000</span></div>
+            </div>
+          </div>
+
+          <div class="grid2 mt10">
+            <div class="statCard">
+              <div class="k">木</div>
+              <div class="v">🪵 <span id="uiWood">0</span></div>
+            </div>
+            <div class="statCard">
+              <div class="k">石</div>
+              <div class="v">🪨 <span id="uiStone">0</span></div>
+            </div>
+          </div>
+
+          <div class="grid2 mt10">
+            <div class="statCard">
+              <div class="k">鐵</div>
+              <div class="v">⛏️ <span id="uiIron">0</span></div>
+            </div>
+            <div class="statCard">
+              <div class="k">糧食</div>
+              <div class="v">🌾 <span id="uiFood">0</span></div>
+            </div>
+          </div>
+
+          <div class="hint mt10">
+            ✅ 點擊你領土空地即可建築。<br>
+            📌 面板可拖動。<br>
+            🔍 手機雙指縮放 / 桌面滾輪縮放。<br>
+            ⚠️ 玩家離線資源最多只計 24 小時。
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnSaveGame">保存</button>
+            <button id="btnLoadGame">讀取</button>
+          </div>
+
+          <div id="sysLog"></div>
+        </div>
+
+
+        <!-- BUILD TAB -->
+        <div class="tabPage" id="tabBuild">
+          <div class="hint">
+            🏗️ 建築模式：點領土空地建造。<br>
+            ⬆️ 升級模式：點建築升級（無上限）。
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnBuildMode">建築模式</button>
+            <button id="btnUpgradeMode">升級模式</button>
+          </div>
+
+          <div class="buildList mt10">
+            <button class="buildBtn" data-build="house">🏠 房屋</button>
+            <button class="buildBtn" data-build="farm">🌾 農田</button>
+            <button class="buildBtn" data-build="lumber">🪵 伐木場</button>
+            <button class="buildBtn" data-build="quarry">🪨 採石場</button>
+            <button class="buildBtn" data-build="mine">⛏️ 鐵礦</button>
+            <button class="buildBtn" data-build="market">🏦 市場</button>
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnAutoBuild">🤖 AI自動建造</button>
+            <button id="btnStopAuto">🛑 停止</button>
+          </div>
+
+          <div class="hint mt10">
+            AI助手會按「優先順序」建造，唔會亂用晒資源。
           </div>
         </div>
 
-        <div class="btnRow">
-          <button id="btnAuto">🤖 自動</button>
-          <button id="btnSave">💾 保存</button>
+
+        <!-- TECH TAB -->
+        <div class="tabPage" id="tabTech">
+          <div class="hint">
+            🧬 科技樹（簡化版）<br>
+            未來會加入 DNA / 野獸潮 / 黑洞移民。
+          </div>
+
+          <div class="techList mt10">
+            <button class="techBtn" data-tech="tool">🔧 工具</button>
+            <button class="techBtn" data-tech="agri">🌾 農業</button>
+            <button class="techBtn" data-tech="metal">⛏️ 冶金</button>
+            <button class="techBtn" data-tech="robot">🤖 機器人</button>
+          </div>
+
+          <div class="hint mt10">
+            科技提升產量、解鎖新建築、提高 AENO 掉落率。
+          </div>
         </div>
 
-        <div class="btnRow">
-          <button id="btnZoomIn">➕ Zoom</button>
-          <button id="btnZoomOut">➖ Zoom</button>
+
+        <!-- ROBOT TAB -->
+        <div class="tabPage" id="tabRobot">
+          <div class="hint">
+            🚀 機器人探索 20 個星球。<br>
+            玩家不能自由轉星球（只可永久 1 個）。<br>
+            離線最多只計 24 小時。
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnSendRobot">派機器人</button>
+            <button id="btnRobotReport">報告</button>
+          </div>
+
+          <div class="hint mt10">
+            探索有機率帶回資源、碎片、AENO。
+          </div>
         </div>
 
-        <div class="btnRow">
-          <button id="btnAdSong">🎵 廣告歌</button>
-          <button id="btnLoopSong">🔁 Loop: ON</button>
+
+        <!-- ADS TAB -->
+        <div class="tabPage" id="tabAds">
+          <div class="hint">
+            🎵 廣告歌曲：可循環播放。<br>
+            播放會獲得少量金幣 / AENO 機率。<br>
+            未來可加入 AdMob。
+          </div>
+
+          <div class="btnRow mt10">
+            <button id="btnPlaySong">播放</button>
+            <button id="btnLoopSong">Loop ON</button>
+          </div>
+
+          <div class="hint mt10">
+            你已放入 3 首免版稅歌，game.js 會讀取並播放。
+          </div>
+
+          <div class="hint mt10">
+            📌 廣告商 ID：未來先加，現階段唔需要你提供。
+          </div>
         </div>
 
-        <div class="btnRow">
-          <button id="btnPronounce">🗣️ 學外語</button>
-          <button id="btnRobotSend">🚀 派機器人</button>
-        </div>
-
-        <div class="hint">
-          📌 建築方法：點你領土內空地，會彈出建築選單。<br>
-          📌 升級方法：點建築物本身。<br>
-          📌 非領土會有黑影覆蓋。<br>
-        </div>
-
-        <div style="margin-top:10px;font-weight:1000;">🏗️ 建築</div>
-        <div class="buildList">
-          <button class="buildBtn" data-build="house">🏠 房屋</button>
-          <button class="buildBtn" data-build="lumber">🪓 伐木場</button>
-          <button class="buildBtn" data-build="farm">🌾 農田</button>
-          <button class="buildBtn" data-build="mine">⛏️ 礦場</button>
-        </div>
-
-        <div style="margin-top:10px;font-weight:1000;">⚙️ 系統記錄</div>
-        <div id="sysLog"></div>
       </div>
     </div>
+
+
+    <!-- PANEL RESTORE BUTTON -->
+    <button id="panelRestoreBtn" class="hidden">📌</button>
+
   </div>
 
-<script>
-(() => {
-"use strict";
 
-/* ============================
-   版本號（每次更新改呢個）
-============================ */
-const GAME_VERSION = "AENO_2026_02_18_V1";
-
-/* ============================
-   Canvas Setup
-============================ */
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-let dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-
-function resizeCanvas(){
-  canvas.width = Math.floor(window.innerWidth * dpr);
-  canvas.height = Math.floor(window.innerHeight * dpr);
-  canvas.style.width = window.innerWidth + "px";
-  canvas.style.height = window.innerHeight + "px";
-
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.scale(dpr, dpr);
-}
-window.addEventListener("resize", resizeCanvas);
-
-/* ============================
-   UI Elements
-============================ */
-const bootScreen = document.getElementById("bootScreen");
-const loginScreen = document.getElementById("loginScreen");
-const planetScreen = document.getElementById("planetScreen");
-const planetGrid = document.getElementById("planetGrid");
-
-const hudTop = document.getElementById("hudTop");
-const mainPanel = document.getElementById("mainPanel");
-const panelRestoreBtn = document.getElementById("panelRestoreBtn");
-
-const panelHeader = document.getElementById("panelHeader");
-const panelBody = document.getElementById("panelBody");
-const panelMinBtn = document.getElementById("panelMinBtn");
-const panelHideBtn = document.getElementById("panelHideBtn");
-
-const assistant = document.getElementById("assistant");
-const assistantCanvas = document.getElementById("assistantCanvas");
-const petCtx = assistantCanvas.getContext("2d");
-const assistantName = document.getElementById("assistantName");
-
-const chatBox = document.getElementById("chatBox");
-const chatLog = document.getElementById("chatLog");
-const chatClose = document.getElementById("chatClose");
-const chatInput = document.getElementById("chatInput");
-const chatSend = document.getElementById("chatSend");
-
-const userNameInput = document.getElementById("userNameInput");
-const btnLogin = document.getElementById("btnLogin");
-const btnGuest = document.getElementById("btnGuest");
-
-const ui = {
-  planetName: document.getElementById("planetName"),
-  gameYear: document.getElementById("gameYear"),
-  popCount: document.getElementById("popCount"),
-  coins: document.getElementById("coins"),
-  aeno: document.getElementById("aeno"),
-  wood: document.getElementById("wood"),
-  stone: document.getElementById("stone"),
-  iron: document.getElementById("iron"),
-  food: document.getElementById("food"),
-  houseCount: document.getElementById("houseCount"),
-  robotCount: document.getElementById("robotCount"),
-  autoState: document.getElementById("autoState"),
-  sysLog: document.getElementById("sysLog")
-};
-
-const btnAuto = document.getElementById("btnAuto");
-const btnSave = document.getElementById("btnSave");
-const btnZoomIn = document.getElementById("btnZoomIn");
-const btnZoomOut = document.getElementById("btnZoomOut");
-const btnAdSong = document.getElementById("btnAdSong");
-const btnLoopSong = document.getElementById("btnLoopSong");
-const btnPronounce = document.getElementById("btnPronounce");
-const btnRobotSend = document.getElementById("btnRobotSend");
-
-/* ============================
-   Audio (Ad Songs)
-============================ */
-let audioUnlocked = false;
-let loopSong = true;
-
-const audio = new Audio();
-audio.loop = true;
-audio.volume = 0.8;
-
-// 你可以換成你 repo 裡面歌曲檔案
-const AD_SONG_LIST = [
-  "assets/music/ad_song_1.mp3",
-  "assets/music/ad_song_2.mp3",
-  "assets/music/ad_song_3.mp3"
-];
-
-function unlockAudio(){
-  if(audioUnlocked) return;
-  audioUnlocked = true;
-  audio.play().then(()=>audio.pause()).catch(()=>{});
-}
-
-function playAdSong(){
-  unlockAudio();
-  const pick = AD_SONG_LIST[Math.floor(Math.random()*AD_SONG_LIST.length)];
-  audio.src = pick;
-  audio.loop = loopSong;
-  audio.play().then(()=>{
-    log("🎵 播放廣告歌: " + pick);
-    // 聽歌會增加少量AENO機率
-    rewardAttentionMining(0.02);
-  }).catch(()=>{
-    log("⚠️ 無法播放音樂（手機需用戶點擊解鎖音訊）");
-  });
-}
-
-/* ============================
-   Logging
-============================ */
-function log(msg){
-  const t = new Date().toLocaleTimeString();
-  ui.sysLog.innerHTML = `<div>⏱️ ${t} - ${msg}</div>` + ui.sysLog.innerHTML;
-}
-
-/* ============================
-   World Config
-============================ */
-const MAP_W = 90;
-const MAP_H = 70;
-const TILE = 32;
-
-const PLANETS = [];
-for(let i=1;i<=20;i++){
-  PLANETS.push({
-    id:"P"+i,
-    name:"星球 "+i,
-    biome:["森林","沙漠","雪原","火山","海洋","草原"][i%6],
-    seed: 10000 + i*999
-  });
-}
-PLANETS.push({
-  id:"BH",
-  name:"黑洞 · 孤島",
-  biome:"黑洞",
-  seed: 99999999,
-  blackhole:true
-});
-
-/* ============================
-   Save System
-============================ */
-const SAVE_KEY_USER = "AENO_USER_V3";
-const SAVE_KEY_GAME = "AENO_GAME_V3";
-
-let USER = null;
-let GAME = null;
-
-function saveUser(){
-  localStorage.setItem(SAVE_KEY_USER, JSON.stringify(USER));
-}
-
-function loadUser(){
-  try{
-    const x = localStorage.getItem(SAVE_KEY_USER);
-    if(!x) return null;
-    return JSON.parse(x);
-  }catch(e){ return null; }
-}
-
-function saveGame(){
-  if(!GAME) return;
-  GAME.lastSave = Date.now();
-  localStorage.setItem(SAVE_KEY_GAME, JSON.stringify(GAME));
-  log("💾 已保存世界");
-}
-
-function loadGame(){
-  try{
-    const x = localStorage.getItem(SAVE_KEY_GAME);
-    if(!x) return null;
-    return JSON.parse(x);
-  }catch(e){ return null; }
-}
-
-/* ============================
-   Default New Game
-============================ */
-function createNewGame(){
-  return {
-    version: GAME_VERSION,
-    createdAt: Date.now(),
-    lastSave: Date.now(),
-    lastTick: Date.now(),
-
-    // time speed: 1 day = 10 years
-    // => 1 real second = 10 years / 86400 = 0.00011574 years
-    // but for gameplay, we scale faster:
-    yearsPerRealSecond: (10 / 86400) * 5,
-
-    planetId: null,
-    territoryChosen: false,
-    territoryCenter: {x:45,y:35},
-    territoryRadius: 7,
-
-    year: 0,
-
-    coins: 2000,
-    aeno: 0,
-
-    wood: 800,
-    stone: 800,
-    iron: 800,
-    food: 800,
-
-    population: 4,
-    robots: 0,
-
-    autoBuild: true,
-    autoPriority: "house",
-
-    buildings: [],
-
-    // map generated after planet selection
-    mapSeed: 0,
-    map: null,
-
-    // offline system
-    offlineAccumulatedSeconds: 0,
-    offlineMaxSeconds: 24 * 3600
-  };
-}
-
-/* ============================
-   Offline Progress
-============================ */
-function applyOfflineProgress(){
-  const now = Date.now();
-  const last = GAME.lastTick || now;
-  let dt = (now - last) / 1000;
-  if(dt <= 0) return;
-
-  const allowed = Math.max(0, GAME.offlineMaxSeconds - GAME.offlineAccumulatedSeconds);
-  const used = Math.min(dt, allowed);
-
-  if(used > 0){
-    simulateTicks(used, false);
-    GAME.offlineAccumulatedSeconds += used;
-    log("🕒 離線計算: +" + Math.floor(used/60) + " 分鐘");
-  }
-
-  GAME.lastTick = now;
-}
-
-/* ============================
-   Map Generation
-============================ */
-function mulberry32(seed){
-  return function(){
-    let t = seed += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-function generateMap(){
-  const planet = PLANETS.find(p=>p.id===GAME.planetId);
-  const rand = mulberry32(planet.seed + GAME.mapSeed);
-
-  const map = [];
-  for(let y=0;y<MAP_H;y++){
-    const row = [];
-    for(let x=0;x<MAP_W;x++){
-      const r = rand();
-
-      let t="grass";
-      if(r < 0.08) t="water";
-      else if(r < 0.18) t="forest";
-      else if(r < 0.23) t="mountain";
-      else if(r < 0.27) t="stone";
-      else if(r < 0.30) t="iron";
-      else if(r < 0.33) t="animal";
-      else t="grass";
-
-      if(planet.blackhole){
-        // 黑洞孤島更荒涼
-        if(r < 0.12) t="void";
-        else if(r < 0.20) t="water";
-        else if(r < 0.28) t="mountain";
-        else if(r < 0.34) t="iron";
-        else if(r < 0.40) t="stone";
-        else t="grass";
-      }
-
-      row.push(t);
-    }
-    map.push(row);
-  }
-  GAME.map = map;
-}
-
-/* ============================
-   Territory Check
-============================ */
-function isInTerritory(x,y){
-  const dx = x - GAME.territoryCenter.x;
-  const dy = y - GAME.territoryCenter.y;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  return dist <= GAME.territoryRadius;
-}
-
-/* ============================
-   Buildings
-============================ */
-const BUILD_COST = {
-  house: { wood:80, stone:40, coins:200 },
-  lumber: { wood:60, stone:30, coins:180 },
-  farm: { wood:50, stone:30, coins:150 },
-  mine: { wood:80, stone:80, coins:300 }
-};
-
-function countBuildings(type){
-  return GAME.buildings.filter(b=>b.type===type).length;
-}
-
-function placeBuilding(type, tx, ty){
-  if(!isInTerritory(tx,ty)){
-    log("🚫 不是領土，不能建築");
-    return false;
-  }
-
-  if(GAME.buildings.some(b=>b.x===tx && b.y===ty)){
-    log("🚫 此地已有建築");
-    return false;
-  }
-
-  const cost = BUILD_COST[type];
-  if(!cost){
-    log("🚫 未知建築");
-    return false;
-  }
-
-  if(GAME.wood < cost.wood || GAME.stone < cost.stone || GAME.coins < cost.coins){
-    log("🚫 資源不足（木/石/金幣）");
-    return false;
-  }
-
-  GAME.wood -= cost.wood;
-  GAME.stone -= cost.stone;
-  GAME.coins -= cost.coins;
-
-  GAME.buildings.push({
-    id: "B_" + Date.now() + "_" + Math.floor(Math.random()*99999),
-    type,
-    level: 1,
-    x: tx,
-    y: ty
-  });
-
-  log("🏗️ 建造完成: " + type + " Lv1");
-  return true;
-}
-
-function upgradeBuilding(building){
-  if(!building) return false;
-  const maxLevel = 10;
-
-  if(building.level >= maxLevel){
-    log("⬆️ 已達最高等級 Lv" + maxLevel);
-    return false;
-  }
-
-  // 升級成本（越高越貴）
-  const base = BUILD_COST[building.type];
-  const mul = 1 + building.level * 0.65;
-
-  const needWood = Math.floor(base.wood * mul);
-  const needStone = Math.floor(base.stone * mul);
-  const needCoins = Math.floor(base.coins * mul);
-
-  if(GAME.wood < needWood || GAME.stone < needStone || GAME.coins < needCoins){
-    log("🚫 升級資源不足");
-    return false;
-  }
-
-  GAME.wood -= needWood;
-  GAME.stone -= needStone;
-  GAME.coins -= needCoins;
-
-  building.level += 1;
-  log("⬆️ 升級成功: " + building.type + " Lv" + building.level);
-  return true;
-}
-
-/* ============================
-   Economy / Production
-============================ */
-function simulateTicks(seconds, online){
-  // time flow
-  GAME.year += seconds * GAME.yearsPerRealSecond;
-
-  // base production
-  let house = countBuildings("house");
-  let lumber = countBuildings("lumber");
-  let farm = countBuildings("farm");
-  let mine = countBuildings("mine");
-
-  // population growth from houses
-  if(house > 0){
-    const popGrow = (house * 0.002) * seconds;
-    GAME.population += popGrow;
-  }
-
-  // resources
-  GAME.wood += lumber * seconds * 0.6;
-  GAME.food += farm * seconds * 0.5;
-
-  // mine produces stone + iron
-  GAME.stone += mine * seconds * 0.25;
-  GAME.iron += mine * seconds * 0.12;
-
-  // coins from population economy
-  GAME.coins += (GAME.population * 0.03) * seconds;
-
-  // small passive aeno (very slow)
-  GAME.aeno += (GAME.population * 0.0000003) * seconds;
-
-  // auto build assistant (only if online OR offline allowed)
-  if(GAME.autoBuild){
-    assistantAutoBuild(seconds);
-  }
-
-  // clamp
-  GAME.population = Math.max(0, GAME.population);
-}
-
-function assistantAutoBuild(seconds){
-  // 每 10 秒檢查一次
-  if(!assistantAutoBuild._t) assistantAutoBuild._t = 0;
-  assistantAutoBuild._t += seconds;
-  if(assistantAutoBuild._t < 10) return;
-  assistantAutoBuild._t = 0;
-
-  // 不會亂起：保留金幣最低500
-  if(GAME.coins < 500) return;
-
-  // 預設策略：先確保有房屋2間
-  const houseCount = countBuildings("house");
-
-  let target = GAME.autoPriority || "house";
-  if(houseCount < 2) target = "house";
-
-  // 找領土內空地
-  for(let i=0;i<40;i++){
-    const tx = GAME.territoryCenter.x + Math.floor((Math.random()*2-1)*GAME.territoryRadius);
-    const ty = GAME.territoryCenter.y + Math.floor((Math.random()*2-1)*GAME.territoryRadius);
-
-    if(tx<0||ty<0||tx>=MAP_W||ty>=MAP_H) continue;
-    if(!isInTerritory(tx,ty)) continue;
-    if(GAME.buildings.some(b=>b.x===tx && b.y===ty)) continue;
-
-    if(placeBuilding(target, tx, ty)){
-      break;
-    }
-  }
-}
-
-/* ============================
-   Pronunciation Mining
-============================ */
-const WORDS = [
-  { type:"資源", word:"Wood", zh:"木材" },
-  { type:"資源", word:"Stone", zh:"石頭" },
-  { type:"資源", word:"Iron", zh:"鐵" },
-  { type:"植物", word:"Oak", zh:"橡樹" },
-  { type:"植物", word:"Pine", zh:"松樹" },
-  { type:"野獸", word:"Wolf", zh:"狼" },
-  { type:"野獸", word:"Bear", zh:"熊" }
-];
-
-// 保密算法：不直接顯示AENO公式
-function rewardAttentionMining(base){
-  // 這裡用隱藏權重，不明顯顯示
-  const k1 = 0.017;
-  const k2 = 0.004;
-  const noise = (Math.sin(Date.now()*0.0001)+1)*0.5;
-
-  const reward = base * (k1 + noise*k2);
-  GAME.aeno += reward;
-}
-
-function doPronunciationMiniGame(){
-  const pick = WORDS[Math.floor(Math.random()*WORDS.length)];
-  const score = Math.floor(20 + Math.random()*80); // 模擬評分 20-100
-
-  log("🗣️ 請跟讀: " + pick.word + " ("+pick.zh+")");
-  log("📊 評分: " + score + "%");
-
-  if(score < 40){
-    log("❌ 未合格（需 ≥40%）");
-    return;
-  }
-
-  // 碎片
-  const shards = Math.floor(1 + score/20);
-  GAME.iron += shards;
-  GAME.stone += shards;
-
-  // AENO 機率掉落
-  const chance = score / 100;
-  if(Math.random() < chance * 0.18){
-    rewardAttentionMining(0.25 + chance*0.3);
-    log("🟡 AENO 掉落成功！（注意力挖礦）");
-  }else{
-    log("✨ 得到碎片，但未掉落 AENO");
-  }
-}
-
-/* ============================
-   Robot Explore
-============================ */
-function sendRobotExplore(){
-  if(GAME.robots <= 0){
-    log("🚫 你未有機器人");
-    return;
-  }
-
-  const planet = PLANETS[Math.floor(Math.random()*20)];
-  const rewardWood = Math.floor(30 + Math.random()*90);
-  const rewardStone = Math.floor(20 + Math.random()*80);
-  const rewardIron = Math.floor(10 + Math.random()*60);
-
-  GAME.wood += rewardWood;
-  GAME.stone += rewardStone;
-  GAME.iron += rewardIron;
-
-  log("🚀 機器人探索: " + planet.name);
-  log("📦 帶回資源: 木+"+rewardWood+" 石+"rewardStone+" 鐵+"rewardIron);
-}
-
-/* ============================
-   Drawing (Map)
-============================ */
-let cameraX = 0;
-let cameraY = 0;
-let zoom = 0.55;
-
-function worldToScreen(wx, wy){
-  return {
-    x: wx*zoom + cameraX,
-    y: wy*zoom + cameraY
-  };
-}
-
-function screenToWorld(sx, sy){
-  return {
-    x: (sx - cameraX) / zoom,
-    y: (sy - cameraY) / zoom
-  };
-}
-
-function drawTile(x,y,type){
-  const px = x*TILE;
-  const py = y*TILE;
-
-  let color = "#86efac"; // grass
-  if(type==="water") color="#60a5fa";
-  if(type==="forest") color="#16a34a";
-  if(type==="mountain") color="#94a3b8";
-  if(type==="stone") color="#cbd5e1";
-  if(type==="iron") color="#f97316";
-  if(type==="animal") color="#fca5a5";
-  if(type==="void") color="#0b1220";
-
-  ctx.fillStyle = color;
-  ctx.fillRect(px, py, TILE, TILE);
-
-  // grid border subtle
-  ctx.strokeStyle = "rgba(0,0,0,0.06)";
-  ctx.strokeRect(px, py, TILE, TILE);
-
-  // non-territory shadow
-  if(!isInTerritory(x,y)){
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(px, py, TILE, TILE);
-  }
-}
-
-function drawBuilding(b){
-  const px = b.x*TILE;
-  const py = b.y*TILE;
-
-  let c="#fbbf24";
-  if(b.type==="house") c="#fde047";
-  if(b.type==="lumber") c="#fb7185";
-  if(b.type==="farm") c="#4ade80";
-  if(b.type==="mine") c="#a78bfa";
-
-  ctx.fillStyle = c;
-  ctx.fillRect(px+4, py+4, TILE-8, TILE-8);
-
-  ctx.strokeStyle = "rgba(0,0,0,0.25)";
-  ctx.strokeRect(px+4, py+4, TILE-8, TILE-8);
-
-  ctx.fillStyle = "#0f172a";
-  ctx.font = "bold 12px system-ui";
-  ctx.fillText("Lv"+b.level, px+6, py+16);
-}
-
-function drawWorld(){
-  if(!GAME || !GAME.map) return;
-
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.scale(dpr, dpr);
-
-  ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-
-  ctx.save();
-  ctx.translate(cameraX, cameraY);
-  ctx.scale(zoom, zoom);
-
-  for(let y=0;y<MAP_H;y++){
-    for(let x=0;x<MAP_W;x++){
-      drawTile(x,y,GAME.map[y][x]);
-    }
-  }
-
-  GAME.buildings.forEach(drawBuilding);
-
-  ctx.restore();
-}
-
-/* ============================
-   Assistant Animal Drawing
-============================ */
-function drawAiPet(){
-  petCtx.setTransform(1,0,0,1,0,0);
-  petCtx.clearRect(0,0,assistantCanvas.width,assistantCanvas.height);
-
-  // body
-  petCtx.fillStyle = "#fbbf24";
-  petCtx.beginPath();
-  petCtx.ellipse(70, 100, 40, 55, 0, 0, Math.PI*2);
-  petCtx.fill();
-
-  // head
-  petCtx.fillStyle = "#fde68a";
-  petCtx.beginPath();
-  petCtx.ellipse(70, 55, 35, 32, 0, 0, Math.PI*2);
-  petCtx.fill();
-
-  // ears
-  petCtx.fillStyle = "#f59e0b";
-  petCtx.beginPath();
-  petCtx.moveTo(45, 35);
-  petCtx.lineTo(35, 10);
-  petCtx.lineTo(55, 25);
-  petCtx.fill();
-
-  petCtx.beginPath();
-  petCtx.moveTo(95, 35);
-  petCtx.lineTo(105, 10);
-  petCtx.lineTo(85, 25);
-  petCtx.fill();
-
-  // eyes
-  petCtx.fillStyle = "#0f172a";
-  petCtx.beginPath();
-  petCtx.arc(58, 55, 4, 0, Math.PI*2);
-  petCtx.arc(82, 55, 4, 0, Math.PI*2);
-  petCtx.fill();
-
-  // mouth
-  petCtx.strokeStyle = "#0f172a";
-  petCtx.lineWidth = 2;
-  petCtx.beginPath();
-  petCtx.arc(70, 65, 8, 0, Math.PI);
-  petCtx.stroke();
-
-  // arms
-  petCtx.strokeStyle = "#f59e0b";
-  petCtx.lineWidth = 6;
-  petCtx.beginPath();
-  petCtx.moveTo(40, 100);
-  petCtx.lineTo(20, 120);
-  petCtx.stroke();
-
-  petCtx.beginPath();
-  petCtx.moveTo(100, 100);
-  petCtx.lineTo(120, 120);
-  petCtx.stroke();
-
-  // legs
-  petCtx.strokeStyle = "#f59e0b";
-  petCtx.lineWidth = 7;
-  petCtx.beginPath();
-  petCtx.moveTo(55, 150);
-  petCtx.lineTo(50, 168);
-  petCtx.stroke();
-
-  petCtx.beginPath();
-  petCtx.moveTo(85, 150);
-  petCtx.lineTo(90, 168);
-  petCtx.stroke();
-}
-
-/* ============================
-   UI Update
-============================ */
-function updateUI(){
-  if(!GAME) return;
-  const planet = PLANETS.find(p=>p.id===GAME.planetId);
-
-  ui.planetName.textContent = planet ? planet.name : "?";
-  ui.gameYear.textContent = Math.floor(GAME.year);
-  ui.popCount.textContent = Math.floor(GAME.population);
-
-  ui.coins.textContent = Math.floor(GAME.coins);
-  ui.aeno.textContent = GAME.aeno.toFixed(4);
-
-  ui.wood.textContent = Math.floor(GAME.wood);
-  ui.stone.textContent = Math.floor(GAME.stone);
-  ui.iron.textContent = Math.floor(GAME.iron);
-  ui.food.textContent = Math.floor(GAME.food);
-
-  ui.houseCount.textContent = countBuildings("house");
-  ui.robotCount.textContent = GAME.robots;
-
-  ui.autoState.textContent = GAME.autoBuild ? "ON" : "OFF";
-}
-
-/* ============================
-   Game Loop
-============================ */
-let lastTime = performance.now();
-function loop(now){
-  if(!GAME) return;
-  const dt = Math.min(0.05, (now - lastTime)/1000);
-  lastTime = now;
-
-  simulateTicks(dt, true);
-  drawWorld();
-  updateUI();
-
-  requestAnimationFrame(loop);
-}
-
-/* ============================
-   Input (Map Drag / Zoom)
-============================ */
-let dragging = false;
-let lastTouch = null;
-
-canvas.addEventListener("pointerdown", (e)=>{
-  unlockAudio();
-  dragging = true;
-  lastTouch = {x:e.clientX, y:e.clientY};
-});
-
-canvas.addEventListener("pointermove", (e)=>{
-  if(!dragging || !lastTouch) return;
-  const dx = e.clientX - lastTouch.x;
-  const dy = e.clientY - lastTouch.y;
-  lastTouch = {x:e.clientX, y:e.clientY};
-  cameraX += dx;
-  cameraY += dy;
-});
-
-canvas.addEventListener("pointerup", (e)=>{
-  dragging = false;
-  lastTouch = null;
-});
-
-canvas.addEventListener("click", (e)=>{
-  if(!GAME || !GAME.map) return;
-
-  // 點地圖建築/升級
-  const w = screenToWorld(e.clientX, e.clientY);
-  const tx = Math.floor(w.x / TILE);
-  const ty = Math.floor(w.y / TILE);
-
-  if(tx<0||ty<0||tx>=MAP_W||ty>=MAP_H) return;
-
-  // 點建築 -> 升級
-  const b = GAME.buildings.find(bb=>bb.x===tx && bb.y===ty);
-  if(b){
-    upgradeBuilding(b);
-    return;
-  }
-
-  // 點空地 -> 彈出選擇（簡化版）
-  if(!isInTerritory(tx,ty)){
-    log("🚫 不是領土，不能建築");
-    return;
-  }
-
-  const type = prompt("建築類型: house / lumber / farm / mine");
-  if(!type) return;
-  placeBuilding(type.trim(), tx, ty);
-});
-
-/* ============================
-   Panel Drag
-============================ */
-let panelDrag = false;
-let panelStart = null;
-panelHeader.addEventListener("pointerdown", (e)=>{
-  panelDrag = true;
-  panelStart = {
-    x: e.clientX,
-    y: e.clientY,
-    left: mainPanel.offsetLeft,
-    top: mainPanel.offsetTop
-  };
-});
-
-window.addEventListener("pointermove", (e)=>{
-  if(!panelDrag || !panelStart) return;
-  const dx = e.clientX - panelStart.x;
-  const dy = e.clientY - panelStart.y;
-  mainPanel.style.left = (panelStart.left + dx) + "px";
-  mainPanel.style.top = (panelStart.top + dy) + "px";
-  mainPanel.style.right = "auto";
-});
-
-window.addEventListener("pointerup", ()=>{
-  panelDrag = false;
-  panelStart = null;
-});
-
-/* ============================
-   Buttons
-============================ */
-btnAuto.onclick = ()=>{
-  GAME.autoBuild = !GAME.autoBuild;
-  log("🤖 自動建造: " + (GAME.autoBuild ? "ON" : "OFF"));
-};
-
-btnSave.onclick = ()=>{
-  saveGame();
-};
-
-btnZoomIn.onclick = ()=>{
-  zoom = Math.min(1.2, zoom + 0.08);
-};
-
-btnZoomOut.onclick = ()=>{
-  zoom = Math.max(0.25, zoom - 0.08);
-};
-
-btnAdSong.onclick = ()=>{
-  playAdSong();
-};
-
-btnLoopSong.onclick = ()=>{
-  loopSong = !loopSong;
-  audio.loop = loopSong;
-  btnLoopSong.textContent = "🔁 Loop: " + (loopSong ? "ON" : "OFF");
-};
-
-btnPronounce.onclick = ()=>{
-  doPronunciationMiniGame();
-};
-
-btnRobotSend.onclick = ()=>{
-  sendRobotExplore();
-};
-
-panelHideBtn.onclick = ()=>{
-  mainPanel.classList.add("hidden");
-  panelRestoreBtn.style.display = "block";
-};
-
-panelRestoreBtn.onclick = ()=>{
-  mainPanel.classList.remove("hidden");
-  panelRestoreBtn.style.display = "none";
-};
-
-panelMinBtn.onclick = ()=>{
-  if(panelBody.style.display === "none"){
-    panelBody.style.display = "block";
-    panelMinBtn.textContent = "縮小";
-  }else{
-    panelBody.style.display = "none";
-    panelMinBtn.textContent = "展開";
-  }
-};
-
-/* ============================
-   Chat Toggle
-============================ */
-assistant.addEventListener("click", ()=>{
-  chatBox.classList.toggle("hidden");
-});
-
-chatClose.onclick = ()=>{
-  chatBox.classList.add("hidden");
-};
-
-chatSend.onclick = ()=>{
-  const cmd = (chatInput.value || "").trim();
-  if(!cmd) return;
-
-  chatLog.innerHTML = `<div><b>你：</b> ${cmd}</div>` + chatLog.innerHTML;
-
-  if(cmd.includes("巡邏")){
-    chatLog.innerHTML = `<div><b>助手：</b> 已派工人巡邏領土。</div>` + chatLog.innerHTML;
-    log("🛡️ 工人巡邏領土");
-  }else if(cmd.includes("收集")){
-    GAME.wood += 20;
-    GAME.stone += 10;
-    log("🪵 自動收集資源完成");
-    chatLog.innerHTML = `<div><b>助手：</b> 已收集木材+20 石+10。</div>` + chatLog.innerHTML;
-  }else if(cmd.includes("建造")){
-    GAME.autoPriority = "house";
-    log("🏗️ AI 優先建造：房屋");
-    chatLog.innerHTML = `<div><b>助手：</b> 好！我會優先建造房屋。</div>` + chatLog.innerHTML;
-  }else if(cmd.includes("升級")){
-    log("⬆️ AI 將優先升級建築");
-    chatLog.innerHTML = `<div><b>助手：</b> 好！我會盡量升級現有建築。</div>` + chatLog.innerHTML;
-  }else{
-    chatLog.innerHTML = `<div><b>助手：</b> 我收到指令，但需要更明確。（巡邏/收集/建造/升級）</div>` + chatLog.innerHTML;
-  }
-
-  chatInput.value = "";
-};
-
-/* ============================
-   Planet Selection UI
-============================ */
-function buildPlanetUI(){
-  planetGrid.innerHTML = "";
-  PLANETS.forEach(p=>{
-    const btn = document.createElement("button");
-    btn.className = "planetBtn";
-    if(p.blackhole) btn.classList.add("blackhole");
-
-    btn.textContent = (p.blackhole ? "🕳️ " : "🪐 ") + p.name + " ("+p.biome+")";
-
-    // 玩家已鎖定星球，其他不可選
-    if(USER && USER.lockedPlanet && USER.lockedPlanet !== p.id){
-      btn.classList.add("locked");
-      btn.disabled = true;
+  <!-- SCRIPTS -->
+  <script>
+    // 防止 boot 永遠卡死：如果 game.js 有 error，至少顯示登入畫面
+    window.addEventListener("error", (e) => {
+      console.error("Global Error:", e.error || e.message);
+      const boot = document.getElementById("bootScreen");
+      const login = document.getElementById("loginScreen");
+      if (boot) boot.classList.add("hidden");
+      if (login) login.classList.remove("hidden");
+      const msg = document.getElementById("loginMsg");
+      if (msg) msg.innerText = "⚠️ 系統載入錯誤，已切換到安全登入模式。";
+    });
+
+    // 初始化 boot -> login
+    function showLogin(){
+      document.getElementById("bootScreen").classList.add("hidden");
+      document.getElementById("loginScreen").classList.remove("hidden");
     }
 
-    btn.onclick = ()=>{
-      if(USER && USER.lockedPlanet && USER.lockedPlanet !== p.id) return;
+    // 1.2 秒後必定顯示登入，避免卡死
+    setTimeout(showLogin, 1200);
 
-      if(!USER.lockedPlanet){
-        USER.lockedPlanet = p.id;
-        saveUser();
-      }
+  </script>
 
-      GAME.planetId = p.id;
-      GAME.mapSeed = Math.floor(Math.random()*999999);
-      generateMap();
+  <!-- game.js 最後載入 -->
+  <script src="characters.js"></script>
+  <script src="game.js"></script>
 
-      planetScreen.classList.add("hidden");
-      startGameUI();
-      log("🪐 你選擇了星球: " + p.name);
-    };
-
-    planetGrid.appendChild(btn);
-  });
-}
-
-/* ============================
-   Start UI
-============================ */
-function startGameUI(){
-  hudTop.classList.remove("hidden");
-  mainPanel.classList.remove("hidden");
-  assistant.classList.remove("hidden");
-  chatBox.classList.add("hidden");
-  drawAiPet();
-}
-
-/* ============================
-   Login
-============================ */
-btnLogin.onclick = ()=>{
-  const name = (userNameInput.value || "").trim();
-  if(!name){
-    alert("請輸入玩家名稱");
-    return;
-  }
-
-  USER = {
-    id: "U_" + name,
-    name,
-    lockedPlanet: null
-  };
-  saveUser();
-
-  GAME = loadGame();
-  if(!GAME){
-    GAME = createNewGame();
-    GAME.buildings.push({ id:"H1", type:"house", level:1, x:45, y:35 });
-    GAME.buildings.push({ id:"H2", type:"house", level:1, x:46, y:35 });
-    saveGame();
-  }
-
-  loginScreen.classList.add("hidden");
-  planetScreen.classList.remove("hidden");
-  buildPlanetUI();
-};
-
-btnGuest.onclick = ()=>{
-  USER = {
-    id: "GUEST",
-    name: "游客",
-    lockedPlanet: "P1"
-  };
-  saveUser();
-
-  GAME = loadGame();
-  if(!GAME){
-    GAME = createNewGame();
-    GAME.planetId = "P1";
-    GAME.mapSeed = Math.floor(Math.random()*999999);
-    generateMap();
-    GAME.buildings.push({ id:"H1", type:"house", level:1, x:45, y:35 });
-    GAME.buildings.push({ id:"H2", type:"house", level:1, x:46, y:35 });
-    saveGame();
-  }
-
-  loginScreen.classList.add("hidden");
-  startGameUI();
-  requestAnimationFrame(loop);
-};
-
-/* ============================
-   Boot / Init
-============================ */
-function init(){
-  resizeCanvas();
-
-  bootScreen.classList.remove("hidden");
-  loginScreen.classList.add("hidden");
-  planetScreen.classList.add("hidden");
-
-  setTimeout(()=>{
-    USER = loadUser();
-    GAME = loadGame();
-
-    bootScreen.classList.add("hidden");
-
-    // 如果已有存檔
-    if(USER && GAME && GAME.version){
-      // 更新版本只更新 code，不刪存檔
-      GAME.version = GAME_VERSION;
-      applyOfflineProgress();
-      saveGame();
-
-      // 如果已有星球
-      if(GAME.planetId){
-        if(!GAME.map) generateMap();
-        startGameUI();
-        requestAnimationFrame(loop);
-        log("✅ 已載入存檔: " + USER.name);
-        return;
-      }
-    }
-
-    // 沒有存檔 -> 顯示登入
-    loginScreen.classList.remove("hidden");
-    log("🧠 系統啟動完成，等待登入...");
-  }, 900);
-}
-
-init();
-
-})();
-</script>
 </body>
 </html>
