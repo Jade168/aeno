@@ -1559,3 +1559,76 @@ function initThreeLogo() {
   threeScene = new THREE.Scene();
   threeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   threeRenderer = new THREE.WebGL
+Renderer();
+  threeRenderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('threejs-container').appendChild(threeRenderer.domElement);
+}
+
+// 遊戲初始化
+function initGame() {
+  game = {
+    resources: {
+      gold: 500,
+      aeno: 0,
+      wood: 300,
+      stone: 200,
+      iron: 100,
+      food: 200
+    },
+    buildings: {},
+    stats: {
+      population: 10,
+      territory: 1,
+      civil: 0
+    },
+    world: {
+      beastsKilled: 0
+    }
+  };
+  updateUI();
+  draw();
+  initThreeLogo();
+}
+
+// 頁面加載完成初始化
+document.addEventListener('DOMContentLoaded', function() {
+  // 登入按鈕事件
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    const username = document.getElementById('userNameInput').value.trim();
+    if (!username) {
+      alert('請輸入用戶名');
+      return;
+    }
+    USER_DATA = { id: Date.now().toString(), name: username };
+    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(USER_DATA));
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('bootScreen').classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('bootScreen').classList.add('hidden');
+      initGame();
+    }, 2000);
+  });
+
+  // 遊客登入按鈕事件
+  document.getElementById('guestBtn').addEventListener('click', function() {
+    USER_DATA = { id: Date.now().toString(), name: '遊客' };
+    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(USER_DATA));
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('bootScreen').classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('bootScreen').classList.add('hidden');
+      initGame();
+    }, 2000);
+  });
+
+  // 讀取用戶數據
+  const savedUser = localStorage.getItem(STORAGE_USER_KEY);
+  if (savedUser) {
+    USER_DATA = JSON.parse(savedUser);
+  }
+});
+
+})();
+</script>
+</body>
+</html>
