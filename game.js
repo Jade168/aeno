@@ -1089,7 +1089,16 @@
   function resize(){
     W = canvas.width = window.innerWidth * devicePixelRatio;
     H = canvas.height = window.innerHeight * devicePixelRatio;
+   if(threeRenderer){
+      threeRenderer.setSize(window.innerWidth, window.innerHeight);
+      if(threeCamera){
+        threeCamera.aspect = window.innerWidth / window.innerHeight;
+        threeCamera.updateProjectionMatrix();
+      }
+
+    }
   }
+  
   window.addEventListener("resize", resize);
 
   function worldToScreen(x,y){
