@@ -195,7 +195,11 @@ let beastList = [];
 let adPlaying = false;
 let adTimer = null;
 let threeScene, threeCamera, threeRenderer, aenoLogoMesh;
-
+// 地圖全局設定，解決黑屏渲染失敗問題
+const MAP_W = 50;
+const MAP_H = 50;
+let cameraX = 0, cameraY = 0, zoom = 16;
+  
 // =========================
 // 基本設定
 // =========================
