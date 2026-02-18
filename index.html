@@ -398,6 +398,62 @@
   <!-- game.js 最後載入 -->
   <script src="characters.js"></script>
   <script src="game.js"></script>
+<script>
+  // 強制保證登入按鈕有反應（即使 game.js 壞咗）
+  (function(){
+    const msg = document.getElementById("loginMsg");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnGuest = document.getElementById("btnGuest");
+    const inputName = document.getElementById("loginName");
+    const inputPass = document.getElementById("loginPass");
+
+    function safeStart(playerName){
+      // 保存玩家
+      localStorage.setItem("AENO_PLAYER_NAME", playerName);
+      localStorage.setItem("AENO_SESSION", "ok");
+
+      // 隱藏登入頁
+      document.getElementById("loginScreen").classList.add("hidden");
+
+      // 顯示主UI
+      document.getElementById("mainPanel").classList.remove("hidden");
+      document.getElementById("assistant").classList.remove("hidden");
+
+      // 如果 game.js 有 startGame，就叫佢
+      if (window.startGame) {
+        window.startGame(playerName);
+      } else {
+        console.warn("startGame() not found, fallback mode.");
+        if(msg) msg.innerText = "⚠️ game.js 未初始化，已進入安全模式（只顯示UI）。";
+      }
+    }
+
+    if(btnLogin){
+      btnLogin.onclick = ()=>{
+        const name = (inputName?.value || "").trim();
+        const pass = (inputPass?.value || "").trim();
+        if(!name || name.length < 2){
+          msg.innerText = "⚠️ 請輸入玩家名字（最少2字）";
+          return;
+        }
+        if(!pass || pass.length < 4){
+          msg.innerText = "⚠️ 密碼最少4字";
+          return;
+        }
+        msg.innerText = "";
+        safeStart(name);
+      };
+    }
+
+    if(btnGuest){
+      btnGuest.onclick = ()=>{
+        msg.innerText = "";
+        safeStart("訪客玩家");
+      };
+    }
+
+  })();
+</script>
 
 </body>
 </html>
