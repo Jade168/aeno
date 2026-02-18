@@ -447,7 +447,8 @@
     return d <= state.territoryRadius;
   }
 
-  function buildAt(type, x, y){
+  function buildAt(type, x, y){    if(use3D) buildThreeBuildings();
+                               
     const cost = getCost(type, 1);
     if(!canAfford(cost)){
       logSys(`⚠️ 資源不足，無法建造 ${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
@@ -471,7 +472,8 @@
     return true;
   }
 
-  function upgradeBuilding(b){
+  function upgradeBuilding(b){    if(use3D) buildThreeBuildings();
+
     const nextLv = b.level + 1;
     const cost = getCost(b.type, nextLv);
     if(!canAfford(cost)){
