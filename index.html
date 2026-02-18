@@ -176,15 +176,14 @@ body { background:#111; color:#fff; overflow:hidden; user-select:none; touch-act
 </div>
 
 <!-- Three.js CDN -->
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   
 <script>
 (() => {
 "use strict";
 
 // =========================
-// 全域變數
+// 全域變數 & 常量定義（修復重複聲明問題）
 // =========================
 let USER_DATA = { id: "", name: "游客" };
 const STORAGE_USER_KEY = "AENO_V3_USER";
@@ -195,10 +194,30 @@ let beastList = [];
 let adPlaying = false;
 let adTimer = null;
 let threeScene, threeCamera, threeRenderer, aenoLogoMesh;
-// 地圖全局設定，解決黑屏渲染失敗問題
-const MAP_W = 50;
-const MAP_H = 50;
-let cameraX = 0, cameraY = 0, zoom = 16;
+// 地圖全局設定，統一常量，避免重複定義
+const MAP_W = 80;
+const MAP_H = 80;
+const TILE = 128;
+const ISO_ANGLE = Math.PI / 6;
+const COS = Math.cos(ISO_ANGLE);
+const SIN = Math.sin(ISO_ANGLE);
+let cameraX = 0, cameraY = 0, zoom = 0.5;
+const ZOOM_MIN = 0.2;
+const ZOOM_MAX = 1.5;
+
+const TILE_TYPES = {
+  grass: 0,
+  forest: 1,
+  mountain: 2,
+  river: 3,
+  planet: 4,
+  blackHole: 5,
+  beast: 6
+};
+
+let map = [];
+const townCenter = { x: 40, y: 40 };
+const placedBuildings = [];
   
 // =========================
 // 基本設定
@@ -316,33 +335,6 @@ function clamp(v, a, b) {
 }
 
 // =========================
-// 地圖設定
-// =========================
-const MAP_W = 80;
-const MAP_H = 80;
-const TILE = 128;
-const ISO_ANGLE = Math.PI / 6;
-const COS = Math.cos(ISO_ANGLE);
-const SIN = Math.sin(ISO_ANGLE);
-let cameraX = 0;
-let cameraY = 0;
-let zoom = 0.5;
-const ZOOM_MIN = 0.2;
-const ZOOM_MAX = 1.5;
-
-const TILE_TYPES = {
-  grass: 0,
-  forest: 1,
-  mountain: 2,
-  river: 3,
-  planet: 4,
-  blackHole: 5,
-  beast: 6
-};
-
-let map = [];
-
-// =========================
 // 登入系統
 // =========================
 function loadUser() {
@@ -358,53 +350,6 @@ function loadUser() {
 function saveUser() {
   localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(USER_DATA));
 }
-loginBtn.addEventListener("click", () => {
-  const name = userNameInput.value.trim();
-  if (!name) {
-    alert("請輸入用戶名! ");
-    return;
-  }
-  USER_DATA = {
-    id: Date.now().toString(),
-    name: name
-  };
-  saveUser();
-  userNameDisplay.textContent = name;
-  loginScreen.style.display = "none";
-  bootScreen.style.display = "flex";
-  
-  // 加錯誤兜底，就算遊戲代碼出錯都唔會卡死
-  try {
-    initGame();
-  } catch (e) {
-    alert("遊戲出錯提示：" + e.message);
-    // 出錯自動返回登入頁，唔會一直卡住
-    loginScreen.style.display = "flex";
-    bootScreen.style.display = "none";
-  }
-});
-
-guestBtn.addEventListener("click", () => {
-  USER_DATA = {
-    id: "guest_" + Date.now().toString(),
-    name: "游客"
-  };
-  userNameDisplay.textContent = "游客";
-  loginScreen.style.display = "none";
-  bootScreen.style.display = "flex";
-  
-  // 加錯誤兜底，就算遊戲代碼出錯都唔會卡死
-  try {
-    initGame();
-  } catch (e) {
-    alert("遊戲出錯提示：" + e.message);
-    // 出錯自動返回登入頁，唔會一直卡住
-    loginScreen.style.display = "flex";
-    bootScreen.style.display = "none";
-  }
-});
-  
-
 
 // =========================
 // 遊戲初始數據
@@ -477,6 +422,7 @@ function log(msg) {
 // 存檔系統
 // =========================
 function saveGame() {
+  if(!game) return;
   game.lastTick = Date.now();
   localStorage.setItem(STORAGE_SAVE_KEY + USER_DATA.id, JSON.stringify(game));
   log("已保存遊戲");
@@ -561,8 +507,6 @@ function generateMap() {
   }
 
   // 起點資源
-  const townX = 40;
-  const townY = 40;
   for (let y = 35; y < 45; y++) {
     for (let x = 35; x < 45; x++) {
       if (Math.random() < 0.45) map[y][x] = TILE_TYPES.forest;
@@ -583,6 +527,7 @@ function generateMap() {
 // 獸潮系統
 // =========================
 function spawnBeast() {
+  if(!game) return;
   const rand = mulberry32(xmur3(game.seed + Date.now())());
   const x = Math.floor(rand() * (MAP_W - 20)) + 10;
   const y = Math.floor(rand() * (MAP_H - 20)) + 10;
@@ -594,6 +539,7 @@ function spawnBeast() {
 }
 
 function killBeast(x, y) {
+  if(!game) return;
   map[y][x] = TILE_TYPES.grass;
   const index = beastList.findIndex(b => b.x === x && b.y === y);
   if (index !== -1) {
@@ -627,10 +573,8 @@ setInterval(() => {
 // =========================
 // 建築位置
 // =========================
-const townCenter = { x: 40, y: 40 };
-const placedBuildings = [];
-
 function rebuildPlacedBuildings() {
+  if(!game) return;
   placedBuildings.length = 0;
   const add = (type, count) => {
     for (let i = 0; i < count; i++) {
@@ -1173,6 +1117,7 @@ document.querySelectorAll(".buildBtn").forEach((btn) => {
 });
 
 function upgradeAllBuildings(){
+  if(!game) return;
   const types = ["house","farm","lumber","quarry","mine","factory","wall","robot"];
   types.forEach(type=>{
     if(game.buildings[type]>0){
@@ -1200,6 +1145,7 @@ setInterval(() => {
 // =========================
 document.querySelectorAll(".techBtn").forEach((btn) => {
   btn.addEventListener("click", () => {
+    if(!game) return;
     const tech = btn.dataset.tech;
     const cost = 200 + game.tech[tech] * 250;
     if (game.resources.gold < cost) {
@@ -1216,6 +1162,7 @@ document.querySelectorAll(".techBtn").forEach((btn) => {
 // 交易所
 // =========================
 function updateMarketPrices() {
+  if(!game) return;
   const now = Date.now();
   if (now - game.market.lastUpdate < 60000) return;
   const seedFn = xmur3(game.seed + now);
@@ -1228,10 +1175,12 @@ function updateMarketPrices() {
   game.market.lastUpdate = now;
 }
 function refreshMarketHint() {
+  if(!game) return;
   marketPriceHint.textContent =
   `木:${game.market.wood} | 石:${game.market.stone} | 鐵:${game.market.iron} | 食:${game.market.food}`;
 }
 btnBuy.addEventListener("click", () => {
+  if(!game) return;
   const item = marketItem.value;
   const qty = Math.max(1, Math.floor(Number(marketQty.value || 1)));
   const price = game.market[item] * qty;
@@ -1244,6 +1193,7 @@ btnBuy.addEventListener("click", () => {
   log(`買入成功：${item} x${qty}`);
 });
 btnSell.addEventListener("click", () => {
+  if(!game) return;
   const item = marketItem.value;
   const qty = Math.max(1, Math.floor(Number(marketQty.value || 1)));
   if (game.resources[item] < qty) {
@@ -1271,7 +1221,7 @@ function startAd() {
   log("🎵 開始播放廣告，AENO收益×2！");
   if (adTimer) clearInterval(adTimer);
   adTimer = setInterval(() => {
-    game.ad.listeningSeconds += 1;
+    if(game) game.ad.listeningSeconds += 1;
   }, 1000);
 }
 function stopAd() {
@@ -1294,6 +1244,7 @@ btnZoomReset.addEventListener("click", () => {
   cameraY = 0;
 });
 btnExpand.addEventListener("click", () => {
+  if(!game) return;
   const cost = Math.floor(250 + game.stats.territory * 18);
   if (game.resources.gold < cost) {
     log("金幣不足，無法擴土");
@@ -1305,10 +1256,12 @@ btnExpand.addEventListener("click", () => {
   log(`🏞️ 手動擴大領土 +2，花費 ${cost} 金`);
 });
 btnAutoOn.addEventListener("click", () => {
+  if(!game) return;
   game.autoMode = true;
   log("自動模式 ON（外掛級）");
 });
 btnAutoOff.addEventListener("click", () => {
+  if(!game) return;
   game.autoMode = false;
   log("自動模式 OFF");
 });
@@ -1381,9 +1334,24 @@ canvas.addEventListener("pointerup", () => {
 });
 
 // =========================
+// 保存&重置按鈕事件
+// =========================
+btnSaveNow.addEventListener("click", saveGame);
+btnReset.addEventListener("click", () => {
+  if(confirm("確定要清除所有存檔嗎？此操作無法恢復！")){
+    localStorage.removeItem(STORAGE_SAVE_KEY + USER_DATA.id);
+    game = DEFAULT_SAVE();
+    generateMap();
+    rebuildPlacedBuildings();
+    log("已清除存檔，遊戲已重置");
+  }
+});
+
+// =========================
 // AENO 核心算法
 // =========================
 function secretAenoCore() {
+  if(!game) return 0;
   const now = Date.now();
   const mix = game.seed + "|" + game.ad.listeningSeconds + "|" + game.stats.population + "|" + game.stats.civil + "|" + now;
   const seedFn = xmur3(mix);
@@ -1402,6 +1370,7 @@ function secretAenoCore() {
 // 每秒遊戲邏輯
 // =========================
 function tickLogic(dtSec = 1, silent = false) {
+  if(!game) return;
   updateMarketPrices();
   const farmBoost = 1 + game.tech.agri * 0.08;
   game.resources.food += game.buildings.farm * 0.12 * farmBoost * dtSec * game.buildingLevels.farm;
@@ -1437,6 +1406,7 @@ function tickLogic(dtSec = 1, silent = false) {
 }
 
 function autoAssistantBuild(dtSec, silent) {
+  if(!game) return;
   if (game.buildings.farm < 1) {
     tryBuild("farm", silent);
     return;
@@ -1481,6 +1451,7 @@ function autoAssistantBuild(dtSec, silent) {
 }
 
 function tryBuild(type, silent) {
+  if(!game) return false;
   const cost = getBuildCost(type);
   if (
     game.resources.gold < cost.gold ||
@@ -1505,6 +1476,7 @@ function tryBuild(type, silent) {
 }
 
 function getBuildCost(type) {
+  if(!game) return { gold:0, wood:0, stone:0, iron:0, food:0 };
   const base = {
     house: { gold: 120, wood: 35, stone: 10, iron: 0, food: 10 },
     farm: { gold: 100, wood: 20, stone: 0, iron: 0, food: 0 },
@@ -1530,6 +1502,7 @@ function getBuildCost(type) {
 // UI 更新
 // =========================
 function updateUI() {
+  if(!game) return;
   statGold.textContent = Math.floor(game.resources.gold);
   statAeno.textContent = game.resources.aeno.toFixed(6);
   statWood.textContent = Math.floor(game.resources.wood);
@@ -1575,121 +1548,382 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
-// =========================
-// 3D AENO Logo
-// =========================
-function initThreeLogo() {
-  threeScene = new THREE.Scene();
-  threeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  threeRenderer = new THREE.WebGL
-Renderer();
-  threeRenderer.setSize(window.innerWidth, window.innerHeight);
-  document.getElementById('threejs-container').appendChild(threeRenderer.domElement);
-}
-
-// 遊戲初始化
-function initGame() {
-  // 強制初始化完整遊戲數據，絕對唔會再報資源錯誤
-  game = {
-    resources: {
-      gold: 2000,
-      aeno: 0,
-      wood: 800,
-      stone: 800,
-      iron: 800,
-      food: 800
-    },
-    buildings: {},
-    stats: {
-      population: 4,
-      territory: 9,
-      civil: 15,
-      wall: 0
-    },
-    world: {
-      beastsKilled: 0,
-      seed: "AENO-" + Math.floor(Math.random() * 99999999),
-      lastTick: Date.now(),
-      autoMode: true
+function init
+// ========================
+// 3D AENO Logo 修復
+// ========================
+function init() {
+    // 1. Canvas 上下文基礎初始化
+    canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        console.error('找不到遊戲Canvas元素，請檢查HTML對應標籤');
+        return;
     }
-  };
+    ctx = canvas.getContext('2d');
+    // 設定Canvas畫布尺寸，匹配頁面顯示尺寸，避免畫面拉伸
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
 
-  // 初始化空白地圖，避免地圖報錯
-  map = [];
-  const MAP_W = 50;
-  const MAP_H = 50;
-  for (let y = 0; y < MAP_H; y++) {
-    map[y] = [];
-    for (let x = 0; x < MAP_W; x++) {
-      map[y][x] = 0; // 默認草地
-    }
-  }
+    // 2. 全域遊戲核心物件初始化，對應你updateUI裡的所有屬性
+    game = {
+        resources: {
+            gold: 0,
+            aeno: 0,
+            wood: 0,
+            stone: 0,
+            iron: 0,
+            food: 0
+        },
+        stats: {
+            population: 0,
+            territory: 0,
+            civil: 0
+        },
+        world: {
+            beastsKilled: 0
+        }
+    };
 
-  // 初始化UI，刷新所有數據顯示，加錯誤保護
-  try {
+    // 3. 地圖參數與基礎地圖生成
+    MAP_W = 100; // 地圖寬度（格子數），可直接按你原有設定修改
+    MAP_H = 100; // 地圖高度（格子數），可直接按你原有設定修改
+    map = Array(MAP_H).fill().map(() => Array(MAP_W).fill(0)); // 初始化空地圖，0=默認空地
+    placedBuildings = []; // 已放置建築陣列初始化
+
+    // 4. 城鎮中心與相機參數初始化，對應你draw函數的繪製邏輯
+    townCenter = {
+        x: Math.floor(MAP_W / 2),
+        y: Math.floor(MAP_H / 2)
+    };
+    zoom = 1; // 初始縮放比例
+    // 相機初始居中城鎮中心，32為單格默認像素尺寸，可匹配你drawTile的設定調整
+    cameraX = -townCenter.x * 32 + canvas.width / 2;
+    cameraY = -townCenter.y * 32 + canvas.height / 2;
+
+    // 5. UI狀態DOM元素綁定，完全對應你updateUI裡的stat變數
+    statGold = document.getElementById('statGold');
+    statAeno = document.getElementById('statAeno');
+    statWood = document.getElementById('statWood');
+    statStone = document.getElementById('statStone');
+    statIron = document.getElementById('statIron');
+    statFood = document.getElementById('statFood');
+    statPop = document.getElementById('statPop');
+    statTerritory = document.getElementById('statTerritory');
+    statCivil = document.getElementById('statCivil');
+    statBeast = document.getElementById('statBeast');
+
+    // 6. 地圖操作輸入事件綁定（滑鼠拖拽、滾輪縮放）
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    // 滑鼠按下：開啟拖拽
+    canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+
+    // 滑鼠移動：執行地圖拖拽
+    canvas.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const deltaX = e.clientX - lastMouseX;
+        const deltaY = e.clientY - lastMouseY;
+        cameraX += deltaX;
+        cameraY += deltaY;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+
+    // 滑鼠鬆開/離開畫布：結束拖拽
+    canvas.addEventListener('mouseup', () => isDragging = false);
+    canvas.addEventListener('mouseleave', () => isDragging = false);
+
+    // 滾輪縮放，以滑鼠位置為中心縮放，體驗更順滑
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = 1.1;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // 記錄縮放前滑鼠對應的世界座標
+        const worldX = (mouseX - cameraX) / zoom;
+        const worldY = (mouseY - cameraY) / zoom;
+
+        // 調整縮放比例，限制最小/最大縮放範圍，避免過度縮放
+        if (e.deltaY < 0) {
+            zoom *= zoomFactor;
+        } else {
+            zoom /= zoomFactor;
+        }
+        zoom = Math.max(0.2, Math.min(zoom, 5));
+
+        // 校正相機位置，實現以滑鼠為中心縮放
+        cameraX = mouseX - worldX * zoom;
+        cameraY = mouseY - worldY * zoom;
+    });
+
+    // 視窗大小變化時，自動重設Canvas尺寸，避免畫面變形
+    window.addEventListener('resize', () => {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+    });
+
+    // 7. 啟動遊戲：首次UI更新 + 開啟繪製主循環
     updateUI();
-  } catch (e) {
-    console.log("UI刷新提示：", e);
-  }
+    requestAnimationFrame(draw);
 
-  // 啟動遊戲繪製循環，加錯誤保護
-  try {
-    draw();
-  } catch (e) {
-    console.log("繪製循環提示：", e);
-  }
-
-  // 3D代碼先註釋，避免報錯，之後想開再取消註釋
-  // try {
-  //   initThreeLogo();
-  // } catch (e) {
-  //   console.log("3D渲染提示：", e);
-  // }
-
-  // 隱藏載入界面，顯示遊戲
-  bootScreen.style.display = "none";
+    console.log('遊戲初始化完成，所有模組正常載入');
 }
-  
 
-// 頁面加載完成初始化
-document.addEventListener('DOMContentLoaded', function() {
-  // 登入按鈕事件
-  document.getElementById('loginBtn').addEventListener('click', function() {
-    const username = document.getElementById('userNameInput').value.trim();
-    if (!username) {
-      alert('請輸入用戶名');
-      return;
-    }
-    USER_DATA = { id: Date.now().toString(), name: username };
-    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(USER_DATA));
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('bootScreen').classList.remove('hidden');
-    setTimeout(() => {
-      document.getElementById('bootScreen').classList.add('hidden');
-      initGame();
-    }, 2000);
-  });
-
-  // 遊客登入按鈕事件
-  document.getElementById('guestBtn').addEventListener('click', function() {
-    USER_DATA = { id: Date.now().toString(), name: '遊客' };
-    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(USER_DATA));
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('bootScreen').classList.remove('hidden');
-    setTimeout(() => {
-      document.getElementById('bootScreen').classList.add('hidden');
-      initGame();
-    }, 2000);
-  });
-
-  // 讀取用戶數據
-  const savedUser = localStorage.getItem(STORAGE_USER_KEY);
-  if (savedUser) {
-    USER_DATA = JSON.parse(savedUser);
-  }
+// 頁面DOM加載完成後，自動執行初始化啟動遊戲
+window.addEventListener('DOMContentLoaded', () => {
+    init();
 });
 
-})();
+// 補全你原有代碼用到的輔助函數，避免變數/函數未定義報錯
+// 網格座標轉螢幕座標函數，對應你draw函數裡的gridToScreen
+function gridToScreen(gridX, gridY) {
+    return {
+        x: gridX * 32 * zoom + cameraX,
+        y: gridY * 32 * zoom + cameraY
+    };
+}
+
+// 刷新市場提示函數，對應你updateUI裡的refreshMarketHint
+function refreshMarketHint() {
+    const marketHint = document.getElementById('marketHint');
+    if (!marketHint) return;
+    // 這裡可以直接補充你原本的市場提示業務邏輯即可
+}
+
+// 繪製地圖格子函數，對應你draw函數裡的drawTile
+function drawTile(x, y, tileType) {
+    const tileSize = 32 * zoom;
+    const screenX = x * tileSize + cameraX;
+    const screenY = y * tileSize + cameraY;
+
+    // 超出畫布的格子不繪製，優化渲染性能
+    if (
+        screenX + tileSize < 0 || screenX > canvas.width ||
+        screenY + tileSize < 0 || screenY > canvas.height
+    ) {
+        return;
+    }
+
+    // 根據格子類型渲染對應樣式，可直接按你原有設定修改
+    switch(tileType) {
+        case 0: // 空地
+            ctx.fillStyle = '#c8e6c9';
+            break;
+        case 1: // 草地/資源地
+            ctx.fillStyle = '#81c784';
+            break;
+        case 2: // 山地/石材點
+            ctx.fillStyle = '#757575';
+            break;
+        case 3: // 水域
+            ctx.fillStyle = '#4fc3f7';
+            break;
+        default:
+            ctx.fillStyle = '#eeeeee';
+    }
+    ctx.fillRect(screenX, screenY, tileSize, tileSize);
+    
+    // 格子邊框
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+    ctx.strokeRect(screenX, screenY, tileSize, tileSize);
+}
+
+// 繪製建築函數，對應你draw函數裡的drawBuilding
+function drawBuilding(building) {
+    const tileSize = 32 * zoom;
+    const screenX = building.x * tileSize + cameraX;
+    const screenY = building.y * tileSize + cameraY;
+    const buildWidth = tileSize * (building.width || 1);
+    const buildHeight = tileSize * (building.height || 1);
+
+    // 建築基礎渲染，可直接按你原有設定修改樣式與邏輯
+    ctx.fillStyle = building.color || '#ffb74d';
+    ctx.fillRect(screenX, screenY, buildWidth, buildHeight);
+    
+    // 建築邊框
+    ctx.strokeStyle = '#e65100';
+    ctx.lineWidth = 2 * zoom;
+    ctx.strokeRect(screenX, screenY, buildWidth, buildHeight);
+    
+    // 建築名稱標註
+    if (building.name) {
+        ctx.fillStyle = '#000000';
+        ctx.font = `${12 * zoom}px system-ui`;
+        ctx.fillText(building.name, screenX + 5 * zoom, screenY + 20 * zoom);
+    }
+  }
+  // ========================
+// 登錄/載入邏輯（完全對應你HTML嘅登錄界面）
+// ========================
+// 頁面加載完成後，自動綁定登錄按鈕事件
+window.addEventListener('DOMContentLoaded', () => {
+    // 對應你HTML入面嘅登錄界面元素，完全匹配你寫嘅id
+    const loginScreen = document.getElementById('loginScreen');
+    const bootScreen = document.getElementById('bootScreen');
+    const loginBtn = document.getElementById('loginBtn');
+    const guestBtn = document.getElementById('guestBtn');
+    const userNameInput = document.getElementById('userName');
+
+    // 啟動遊戲核心邏輯
+    function startGame() {
+        // 隱藏登錄界面
+        loginScreen.style.display = 'none';
+        // 顯示載入界面
+        bootScreen.style.display = 'flex';
+        
+        // 模擬2秒載入動畫，之後執行你寫好嘅init初始化函數，正式啟動遊戲
+        setTimeout(() => {
+            bootScreen.style.display = 'none';
+            init();
+        }, 2000);
+    }
+
+    // 帳號登錄按鈕點擊事件
+    loginBtn.addEventListener('click', () => {
+        const userName = userNameInput.value.trim();
+        if (!userName) {
+            alert('請輸入用戶名先可以進入遊戲');
+            return;
+        }
+        startGame();
+    });
+
+    // 遊客登錄按鈕點擊事件
+    guestBtn.addEventListener('click', startGame);
+});
+// ========================
+// 全域變數聲明（必須加喺所有JS代碼最開頭，避免未定義報錯）
+// ========================
+let canvas, ctx, game;
+let MAP_W, MAP_H, map, placedBuildings;
+let townCenter, zoom, cameraX, cameraY;
+let statGold, statAeno, statWood, statStone, statIron, statFood, statPop, statTerritory, statCivil, statBeast;
+let isGameStarted = false;
+
+// ========================
+// UI 更新函數（核心函數，負責刷新遊戲數據顯示）
+// ========================
+function updateUI() {
+    if(!game) return;
+    statGold.textContent = Math.floor(game.resources.gold);
+    statAeno.textContent = game.resources.aeno.toFixed(6);
+    statWood.textContent = Math.floor(game.resources.wood);
+    statStone.textContent = Math.floor(game.resources.stone);
+    statIron.textContent = Math.floor(game.resources.iron);
+    statFood.textContent = Math.floor(game.resources.food);
+    statPop.textContent = game.stats.population;
+    statTerritory.textContent = game.stats.territory;
+    statCivil.textContent = Math.floor(game.stats.civil) + "%";
+    if (game.stats.civil >= 100) {
+        statBeast.textContent = `⚔️ 進行中 (擊殺:${game.world.beastsKilled}) `;
+    } else {
+        statBeast.textContent = `未啟動 (需100%文明) `;
+    }
+    refreshMarketHint();
+}
+
+// ========================
+// 遊戲繪製主循環（核心函數，負責渲染地圖同建築）
+// ========================
+function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#eaf6ff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.translate(cameraX, cameraY);
+
+    for (let y = 0; y < MAP_H; y++) {
+        for (let x = 0; x < MAP_W; x++) {
+            drawTile(x, y, map[y][x]);
+        }
+    }
+    placedBuildings.forEach(drawBuilding);
+
+    const p = gridToScreen(townCenter.x, townCenter.y);
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.font = `${16 * zoom}px system-ui`;
+    ctx.fillText("🏛 中央城鎮", p.x - 40 * zoom, p.y - 20 * zoom);
+
+    ctx.restore();
+    requestAnimationFrame(draw);
+}
+
+// ========================
+// 遊戲初始化函數（核心函數，負責啟動遊戲）
+// ========================
+function init() {
+    // 1. Canvas 上下文初始化
+    canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        console.error('找不到遊戲Canvas元素');
+        return;
+    }
+    ctx = canvas.getContext('2d');
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+
+    // 2. 遊戲核心數據初始化
+    game = {
+        resources: {
+            gold: 0,
+            aeno: 0,
+            wood: 0,
+            stone: 0,
+            iron: 0,
+            food: 0
+        },
+        stats: {
+            population: 0,
+            territory: 0,
+            civil: 0
+        },
+        world: {
+            beastsKilled: 0
+        }
+    };
+
+    // 3. 地圖初始化
+    MAP_W = 100;
+    MAP_H = 100;
+    map = Array(MAP_H).fill().map(() => Array(MAP_W).fill(0));
+    placedBuildings = [];
+
+    // 4. 相機與城鎮中心初始化
+    townCenter = {
+        x: Math.floor(MAP_W / 2),
+        y: Math.floor(MAP_H / 2)
+    };
+    zoom = 1;
+    cameraX = -townCenter.x * 32 + canvas.width / 2;
+    cameraY = -townCenter.y * 32 + canvas.height / 2;
+
+    // 5. UI元素綁定
+    statGold = document.getElementById('statGold');
+    statAeno = document.getElementById('statAeno');
+    statWood = document.getElementById('statWood');
+    statStone = document.getElementById('statStone');
+    statIron = document.getElementById('statIron');
+    statFood = document.getElementById('statFood');
+    statPop = document.getElementById('statPop');
+    statTerritory = document.getElementById('statTerritory');
+    statCivil = document.getElementById('statCivil');
+    statBeast = document.getElementById('statBeast');
+
+    // 6. 啟動遊戲
+    updateUI();
+    requestAnimationFrame(draw);
+    isGameStarted = true;
+
+    console.log('AENO V3 遊戲初始化完成');
+}
 </script>
-</body>
-</html>
