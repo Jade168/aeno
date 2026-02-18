@@ -1325,6 +1325,10 @@
   }
 
   function render(){
+        if(use3D){
+      renderThree();
+      return;
+        }
     drawTerrain();
     drawBuildings();
     drawAnimals();
