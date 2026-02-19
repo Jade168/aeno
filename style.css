@@ -1,363 +1,581 @@
-/* style.css */
-/* AENO Civilization - 3D Comic UI */
-
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  font-family: system-ui, Arial, sans-serif;
-  background: #0b1220;
-  color: #fff;
+:root{
+  --bg:#eaf6ff;
+  --card:#ffffffcc;
+  --stroke:#bfe6ff;
+  --shadow:0 14px 30px rgba(0,0,0,.15);
+  --round:18px;
+  --txt:#0f172a;
+  --accent:#38bdf8;
+  --accent2:#fbbf24;
 }
 
-#gameCanvas {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #0b1220;
-  z-index: 0;
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  background:var(--bg);
+  overflow:hidden;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans TC,Arial;
+  color:var(--txt);
 }
 
-/* Boot screen */
-#bootScreen, #planetSelect {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(180deg, #0b1220, #111a33);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
+#gameCanvas{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100vw;
+  height:100vh;
+  background:linear-gradient(#eaf6ff,#f0f9ff);
 }
 
-.bootBox {
-  width: 320px;
-  padding: 20px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  text-align: center;
+.hidden{ display:none !important; }
+
+#bootScreen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+  background:linear-gradient(#dbeafe,#f0f9ff);
 }
 
-.bootBox img {
-  width: 140px;
-  margin-bottom: 10px;
+.bootCard{
+  width:300px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:26px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  text-align:center;
 }
 
-.bootBox input {
-  width: 90%;
-  padding: 10px;
-  margin: 6px 0;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  background: rgba(255,255,255,0.14);
-  color: #fff;
+.logo{
+  font-size:42px;
+  font-weight:1000;
+  letter-spacing:4px;
+  color:#0284c7;
 }
 
-.bootBox button {
-  width: 92%;
-  padding: 10px;
-  margin-top: 8px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  background: #38bdf8;
-  color: #0b1220;
-  font-weight: bold;
+.bootText{
+  margin-top:10px;
+  font-size:15px;
+  font-weight:900;
 }
 
-.bootBox button:hover {
-  filter: brightness(1.1);
+.bootHint{
+  margin-top:8px;
+  opacity:.8;
+  font-size:12px;
 }
 
-#loginMsg {
-  margin-top: 10px;
-  font-size: 13px;
-  opacity: 0.9;
+.bootHint2{
+  margin-top:10px;
+  opacity:.85;
+  font-size:12px;
+  font-weight:800;
 }
 
-/* Main Panel */
-#mainPanel {
-  position: fixed;
-  right: 16px;
-  top: 16px;
-  width: 340px;
-  height: 520px;
-  border-radius: 16px;
-  background: rgba(15,23,42,0.82);
-  border: 1px solid rgba(255,255,255,0.14);
-  backdrop-filter: blur(8px);
-  z-index: 5;
-  overflow: hidden;
+.bootBar{
+  margin-top:12px;
+  width:100%;
+  height:14px;
+  border-radius:999px;
+  border:2px solid var(--stroke);
+  overflow:hidden;
+  background:#ffffffaa;
 }
 
-#panelHeader {
-  height: 46px;
-  background: rgba(56,189,248,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  cursor: grab;
+#bootBarFill{
+  width:0%;
+  height:100%;
+  background:linear-gradient(90deg,#38bdf8,#22c55e);
+  transition:width .2s ease;
 }
 
-#panelHeader b {
-  font-size: 14px;
+#loginScreen, #planetScreen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9000;
+  background:linear-gradient(#dbeafe,#f0f9ff);
 }
 
-.panelBtns button {
-  border: none;
-  background: rgba(255,255,255,0.12);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-left: 6px;
+.loginCard, .planetCard{
+  width:320px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:26px;
+  padding:18px;
+  box-shadow:var(--shadow);
 }
 
-.panelBtns button:hover {
-  filter: brightness(1.2);
+.loginTitle{
+  font-size:20px;
+  font-weight:1000;
+  color:#0284c7;
 }
 
-.hidden {
-  display: none !important;
+.loginSub{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:900;
+  opacity:.8;
 }
 
-/* Tabs */
-#tabs {
-  display: flex;
-  gap: 6px;
-  padding: 8px;
+.loginRow{
+  margin-top:10px;
 }
 
-.tabBtn {
-  flex: 1;
-  padding: 8px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  font-weight: bold;
+.loginRow input{
+  width:100%;
+  padding:12px 12px;
+  border-radius:16px;
+  border:2px solid var(--stroke);
+  outline:none;
+  font-size:14px;
+  background:#fff;
+  box-sizing:border-box;
 }
 
-.tabBtn.active {
-  background: rgba(56,189,248,0.8);
-  color: #0b1220;
+.loginNote{
+  margin-top:12px;
+  font-size:12px;
+  opacity:.8;
+  line-height:1.4;
 }
 
-.tabPage {
-  display: none;
-  padding: 10px;
-  height: 410px;
-  overflow-y: auto;
+#uiRoot{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
 }
 
-.tabPage.active {
-  display: block;
+button, input, select{
+  pointer-events:auto;
+  font-size:14px;
 }
 
-.statRow {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 14px;
+#assistant{
+  position:absolute;
+  left:14px;
+  bottom:170px;
+  width:120px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:22px;
+  padding:10px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  z-index:40;
+  user-select:none;
+  pointer-events:auto;
 }
 
-.actionBtn {
-  width: 100%;
-  margin-top: 6px;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  background: rgba(56,189,248,0.85);
-  color: #0b1220;
-  font-weight: bold;
+.assistantFace{
+  font-size:44px;
 }
 
-.actionBtn:hover {
-  filter: brightness(1.1);
+.assistantName{
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+  line-height:1.1;
 }
 
-.smallBtn {
-  width: 100%;
-  margin-top: 6px;
-  padding: 8px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  background: rgba(255,255,255,0.10);
-  color: #fff;
-  font-weight: bold;
+#assistantTalkBtn{
+  border:none;
+  border-radius:14px;
+  padding:8px 12px;
+  background:var(--accent);
+  color:white;
+  font-weight:900;
+  cursor:pointer;
 }
 
-.smallBtn:hover {
-  filter: brightness(1.2);
+.assistantAdFlag{
+  position:absolute;
+  right:-10px;
+  top:-10px;
+  background:var(--accent2);
+  border-radius:12px;
+  padding:4px 7px;
+  font-weight:1000;
+  font-size:12px;
+  border:2px solid #fff;
+  box-shadow:0 8px 16px rgba(0,0,0,.12);
 }
 
-.buildGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+#chatBox{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  width:330px;
+  height:240px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:60;
+  pointer-events:auto;
 }
 
-.buildBtn {
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  font-weight: bold;
+.chatHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  background:#dbeafe;
+  font-weight:1000;
 }
 
-.buildBtn:hover {
-  filter: brightness(1.2);
+#chatClose{
+  border:none;
+  background:#ef4444;
+  color:white;
+  border-radius:12px;
+  padding:6px 10px;
+  font-weight:1000;
+  cursor:pointer;
 }
 
-#sysLog {
-  font-size: 12px;
-  opacity: 0.9;
-  max-height: 170px;
-  overflow-y: auto;
-  background: rgba(0,0,0,0.15);
-  border-radius: 10px;
-  padding: 8px;
-  margin-top: 10px;
+#chatLog{
+  flex:1;
+  padding:10px;
+  overflow:auto;
+  font-size:13px;
 }
 
-/* Assistant */
-#assistant {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  width: 220px;
-  padding: 10px;
-  border-radius: 16px;
-  background: rgba(15,23,42,0.8);
-  border: 1px solid rgba(255,255,255,0.12);
-  z-index: 6;
-  display: flex;
-  gap: 10px;
-  align-items: center;
+.chatInputRow{
+  display:flex;
+  gap:6px;
+  padding:10px;
+  border-top:2px solid var(--stroke);
+  background:#ffffffaa;
 }
 
-#assistantEmoji {
-  font-size: 38px;
+#chatInput{
+  flex:1;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  padding:8px 10px;
+  outline:none;
 }
 
-#assistantName {
-  font-weight: bold;
-  font-size: 14px;
+#chatSend{
+  border:none;
+  border-radius:14px;
+  padding:8px 12px;
+  background:#22c55e;
+  color:white;
+  font-weight:1000;
+  cursor:pointer;
 }
 
-#assistantTalkBtn {
-  border: none;
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  background: rgba(56,189,248,0.85);
-  color: #0b1220;
-  font-weight: bold;
+#mainPanel{
+  position:absolute;
+  right:10px;
+  top:10px;
+  width:min(330px, 25vw);
+  height:560px;
+  background:var(--card);
+  border:2px solid var(--stroke);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  z-index:50;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  pointer-events:auto;
+  touch-action:none;
 }
 
-#assistantTalkBtn:hover {
-  filter: brightness(1.1);
+#panelHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  background:#dbeafe;
+  font-weight:1000;
+  cursor:grab;
+  user-select:none;
 }
 
-/* Chat */
-#chatBox {
-  position: fixed;
-  left: 16px;
-  bottom: 100px;
-  width: 320px;
-  height: 340px;
-  border-radius: 16px;
-  background: rgba(15,23,42,0.88);
-  border: 1px solid rgba(255,255,255,0.14);
-  z-index: 7;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.panelTitle{
+  font-size:14px;
 }
 
-#chatHeader {
-  padding: 10px;
-  background: rgba(56,189,248,0.14);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.panelBtns{
+  display:flex;
+  gap:6px;
 }
 
-#chatHeader b {
-  font-size: 13px;
+#panelMinBtn,#panelHideBtn{
+  border:none;
+  border-radius:12px;
+  padding:6px 10px;
+  font-weight:1000;
+  cursor:pointer;
 }
 
-#chatClose {
-  cursor: pointer;
-  font-weight: bold;
-  opacity: 0.8;
+#panelMinBtn{ background:#38bdf8; color:white; }
+#panelHideBtn{ background:#64748b; color:white; }
+
+#panelTabs{
+  display:flex;
+  gap:6px;
+  padding:8px;
+  overflow:auto;
+  border-bottom:2px solid var(--stroke);
 }
 
-#chatLog {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  font-size: 13px;
+.tabBtn{
+  border:none;
+  padding:8px 10px;
+  border-radius:14px;
+  background:#e2e8f0;
+  font-weight:900;
+  cursor:pointer;
+  white-space:nowrap;
 }
 
-#chatInputRow {
-  display: flex;
-  gap: 6px;
-  padding: 10px;
-  background: rgba(0,0,0,0.15);
+.tabBtn.active{
+  background:#38bdf8;
+  color:white;
 }
 
-#chatInput {
-  flex: 1;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  background: rgba(255,255,255,0.10);
-  color: #fff;
+#panelBody{
+  flex:1;
+  overflow:auto;
+  padding:10px;
 }
 
-#chatSend {
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  background: rgba(56,189,248,0.85);
-  color: #0b1220;
-  font-weight: bold;
+.tabPage{ display:none; }
+.tabPage.active{ display:block; }
+
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
 }
 
-/* 3D button */
-#threeToggle {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  width: 140px;
-  height: 48px;
-  border-radius: 16px;
-  background: rgba(15,23,42,0.85);
-  border: 1px solid rgba(255,255,255,0.14);
-  z-index: 8;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-  font-weight: bold;
+.statCard{
+  background:#ffffffaa;
+  border:2px solid var(--stroke);
+  border-radius:16px;
+  padding:8px 10px;
 }
 
-#threeToggle:hover {
-  filter: brightness(1.2);
+.statCard .k{
+  font-size:12px;
+  font-weight:1000;
+  opacity:.8;
+}
+
+.statCard .v{
+  margin-top:3px;
+  font-size:16px;
+  font-weight:1000;
+  color:#0284c7;
+}
+
+.mt10{ margin-top:10px; }
+
+.btnRow{
+  display:flex;
+  gap:8px;
+}
+
+.btnRow button{
+  flex:1;
+  border:none;
+  border-radius:16px;
+  padding:10px 10px;
+  font-weight:1000;
+  cursor:pointer;
+  background:#38bdf8;
+  color:white;
+}
+
+.btnRow button:nth-child(2){
+  background:#22c55e;
+}
+
+.buildList{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.buildList button{
+  border:none;
+  border-radius:16px;
+  padding:12px 10px;
+  font-weight:1000;
+  background:#fbbf24;
+  cursor:pointer;
+}
+
+.techList{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.techList button{
+  border:none;
+  border-radius:16px;
+  padding:12px 10px;
+  font-weight:1000;
+  background:#a7f3d0;
+  cursor:pointer;
+}
+
+.marketRow{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.marketRow select, .marketRow input{
+  flex:1;
+  border-radius:14px;
+  border:2px solid var(--stroke);
+  padding:10px;
+}
+
+.hint{
+  background:#ffffffaa;
+  border:2px dashed #93c5fd;
+  border-radius:16px;
+  padding:10px;
+  font-size:13px;
+  line-height:1.4;
+}
+
+#sysLog{
+  margin-top:10px;
+  background:#ffffffaa;
+  border:2px solid var(--stroke);
+  border-radius:16px;
+  padding:10px;
+  height:380px;
+  overflow:auto;
+  font-size:12px;
+  line-height:1.35;
+}
+
+#panelRestoreBtn{
+  position:absolute;
+  right:12px;
+  top:12px;
+  z-index:55;
+  border:none;
+  border-radius:18px;
+  padding:12px 14px;
+  font-weight:1000;
+  background:#38bdf8;
+  color:white;
+  box-shadow:var(--shadow);
+  pointer-events:auto;
+}
+
+#bottomHud{
+  position:absolute;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+  display:flex;
+  gap:6px;
+  z-index:70;
+  pointer-events:none;
+}
+
+.pill{
+  background:rgba(255,255,255,.85);
+  border:2px solid var(--stroke);
+  border-radius:999px;
+  padding:8px 10px;
+  font-weight:1000;
+  box-shadow:0 10px 18px rgba(0,0,0,.12);
+}
+
+#mini3dBox{
+  position:absolute;
+  right:10px;
+  bottom:10px;
+  z-index:80;
+  pointer-events:auto;
+}
+
+#mini3dBox button{
+  border:none;
+  border-radius:16px;
+  padding:12px 14px;
+  font-weight:1000;
+  background:#111827;
+  color:white;
+  box-shadow:0 10px 18px rgba(0,0,0,.18);
+  cursor:pointer;
+}
+
+.planetTitle{
+  font-size:16px;
+  font-weight:1000;
+  color:#0284c7;
+}
+
+.planetHint{
+  margin-top:8px;
+  font-size:12px;
+  opacity:.85;
+  line-height:1.4;
+}
+
+.planetHint2{
+  margin-top:12px;
+  font-size:12px;
+  opacity:.8;
+  font-weight:900;
+}
+
+.planetList{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.planetBtn{
+  border:none;
+  border-radius:16px;
+  padding:12px 10px;
+  font-weight:1000;
+  background:#e2e8f0;
+  cursor:pointer;
+}
+
+.planetBtn:hover{
+  background:#bae6fd;
+}
+
+@media(max-width:420px){
+  #mainPanel{
+    width:310px;
+    height:540px;
+  }
+  #chatBox{
+    width:300px;
+  }
+  .planetCard{
+    width:320px;
+  }
 }
