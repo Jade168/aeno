@@ -1,8 +1,45 @@
 {
-  "defaultVolume": 0.7,
-  "tracks": [
-    { "title": "AENO Theme 01", "file": "./music/song1.mp3" },
-    { "title": "AENO Theme 02", "file": "./music/song2.mp3" },
-    { "title": "AENO Theme 03", "file": "./music/song3.mp3" }
+  "songs": [
+    {
+      "id": "song1",
+      "title": "AENO 星界之歌",
+      "file": "assets/song1.mp3",
+      "rewardCoins": 50,
+      "rewardShard": 3
+    },
+    {
+      "id": "song2",
+      "title": "機器人探險曲",
+      "file": "assets/song2.mp3",
+      "rewardCoins": 70,
+      "rewardShard": 4
+    },
+    {
+      "id": "song3",
+      "title": "黑洞封印回響",
+      "file": "assets/song3.mp3",
+      "rewardCoins": 90,
+      "rewardShard": 5
+    }
+  ],
+  "ads": [
+    {
+      "id": "ad1",
+      "title": "🧃 能量飲料廣告",
+      "rewardCoins": 120,
+      "rewardShard": 8
+    },
+    {
+      "id": "ad2",
+      "title": "📱 手機品牌廣告",
+      "rewardCoins": 160,
+      "rewardShard": 10
+    },
+    {
+      "id": "ad3",
+      "title": "🍜 拉麵店廣告",
+      "rewardCoins": 100,
+      "rewardShard": 7
+    }
   ]
 }
