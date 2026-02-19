@@ -1,0 +1,28 @@
+{
+  "planets": [
+    { "id": "earth", "name": "英國星球", "language": "English", "locale": "en-GB", "flag": "🇬🇧" },
+    { "id": "mars", "name": "日本星球", "language": "Japanese", "locale": "ja-JP", "flag": "🇯🇵" },
+    { "id": "ocean", "name": "法國星球", "language": "French", "locale": "fr-FR", "flag": "🇫🇷" },
+    { "id": "jungle", "name": "西班牙星球", "language": "Spanish", "locale": "es-ES", "flag": "🇪🇸" },
+
+    { "id": "planet05", "name": "德國星球", "language": "German", "locale": "de-DE", "flag": "🇩🇪" },
+    { "id": "planet06", "name": "意大利星球", "language": "Italian", "locale": "it-IT", "flag": "🇮🇹" },
+    { "id": "planet07", "name": "俄羅斯星球", "language": "Russian", "locale": "ru-RU", "flag": "🇷🇺" },
+    { "id": "planet08", "name": "韓國星球", "language": "Korean", "locale": "ko-KR", "flag": "🇰🇷" },
+
+    { "id": "planet09", "name": "泰國星球", "language": "Thai", "locale": "th-TH", "flag": "🇹🇭" },
+    { "id": "planet10", "name": "越南星球", "language": "Vietnamese", "locale": "vi-VN", "flag": "🇻🇳" },
+    { "id": "planet11", "name": "印度星球", "language": "Hindi", "locale": "hi-IN", "flag": "🇮🇳" },
+    { "id": "planet12", "name": "阿拉伯星球", "language": "Arabic", "locale": "ar-SA", "flag": "🇸🇦" },
+
+    { "id": "planet13", "name": "巴西星球", "language": "Portuguese", "locale": "pt-BR", "flag": "🇧🇷" },
+    { "id": "planet14", "name": "墨西哥星球", "language": "Spanish (MX)", "locale": "es-MX", "flag": "🇲🇽" },
+    { "id": "planet15", "name": "希臘星球", "language": "Greek", "locale": "el-GR", "flag": "🇬🇷" },
+    { "id": "planet16", "name": "土耳其星球", "language": "Turkish", "locale": "tr-TR", "flag": "🇹🇷" },
+
+    { "id": "planet17", "name": "北歐星球", "language": "Swedish", "locale": "sv-SE", "flag": "🇸🇪" },
+    { "id": "planet18", "name": "澳洲星球", "language": "English (AU)", "locale": "en-AU", "flag": "🇦🇺" },
+    { "id": "planet19", "name": "非洲星球", "language": "Swahili", "locale": "sw-KE", "flag": "🇰🇪" },
+    { "id": "planet20", "name": "中原星球", "language": "Cantonese", "locale": "zh-HK", "flag": "🇭🇰" }
+  ]
+}
