@@ -1,47 +1,8 @@
 {
-  "version": "2026-02-16",
   "defaultVolume": 0.7,
-  "playlistMode": "loop",
   "tracks": [
-    {
-      "id": "track001",
-      "title": "AENO Ad Song 01",
-      "artist": "Public Domain",
-      "file": "assets/ad_song_01.mp3",
-      "lengthHintSec": 90,
-      "rewardWeight": 1.0
-    },
-    {
-      "id": "track002",
-      "title": "AENO Ad Song 02",
-      "artist": "Public Domain",
-      "file": "assets/ad_song_02.mp3",
-      "lengthHintSec": 120,
-      "rewardWeight": 1.2
-    },
-    {
-      "id": "track003",
-      "title": "致愛麗絲 Für Elise",
-      "artist": "Beethoven (Public Domain)",
-      "file": "https://archive.org/download/beethoven_fur_elise/beethoven_fur_elise.mp3",
-      "lengthHintSec": 180,
-      "rewardWeight": 1.5
-    },
-    {
-      "id": "track004",
-      "title": "歡樂頌 Ode to Joy",
-      "artist": "Beethoven (Public Domain)",
-      "file": "https://archive.org/download/ode-to-joy_202401/Ode%20to%20Joy.mp3",
-      "lengthHintSec": 240,
-      "rewardWeight": 1.8
-    },
-    {
-      "id": "track005",
-      "title": "D大調卡農 Canon in D",
-      "artist": "Pachelbel (Public Domain)",
-      "file": "https://archive.org/download/canon-in-d-major-pachelbel/Canon%20in%20D%20Major.mp3",
-      "lengthHintSec": 300,
-      "rewardWeight": 2.0
-    }
+    { "title": "AENO Theme 01", "file": "./music/song1.mp3" },
+    { "title": "AENO Theme 02", "file": "./music/song2.mp3" },
+    { "title": "AENO Theme 03", "file": "./music/song3.mp3" }
   ]
 }
