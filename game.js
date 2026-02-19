@@ -1,7 +1,7 @@
 // game.js
-// AENO Civilization - Full Version
-// Version: 2026-02-15
-// Important: Do NOT delete features unless user approved.
+// AENO Civilization - 3D Comic Full Version
+// Version: 2026-02-19
+// IMPORTANT: Do NOT delete features unless user approved.
 
 (() => {
   "use strict";
@@ -17,8 +17,11 @@
 
   const btnRegister = document.getElementById("btnRegister");
   const btnLogin = document.getElementById("btnLogin");
+  const btnGuest = document.getElementById("btnGuest");
+
   const btnConfirmPlanet = document.getElementById("btnConfirmPlanet");
   const planetPicker = document.getElementById("planetPicker");
+
   const loginUser = document.getElementById("loginUser");
   const loginPass = document.getElementById("loginPass");
   const loginMsg = document.getElementById("loginMsg");
@@ -57,13 +60,6 @@
   const tabBtns = Array.from(document.querySelectorAll(".tabBtn"));
   const tabPages = Array.from(document.querySelectorAll(".tabPage"));
 
-  const uiWood = document.getElementById("uiWood");
-  const uiStone = document.getElementById("uiStone");
-  const uiIron = document.getElementById("uiIron");
-  const uiFood = document.getElementById("uiFood");
-  const uiCoins = document.getElementById("uiCoins");
-  const uiAeno = document.getElementById("uiAeno");
-
   const sysLog = document.getElementById("sysLog");
 
   const btnBuildMode = document.getElementById("btnBuildMode");
@@ -73,6 +69,7 @@
 
   const btnRobotSend = document.getElementById("btnRobotSend");
   const btnRobotRecall = document.getElementById("btnRobotRecall");
+  const btnPronTest = document.getElementById("btnPronTest");
 
   const marketItem = document.getElementById("marketItem");
   const marketAmount = document.getElementById("marketAmount");
@@ -88,8 +85,10 @@
   const btnSaveGame = document.getElementById("btnSaveGame");
   const btnResetGame = document.getElementById("btnResetGame");
 
+  const threeToggle = document.getElementById("threeToggle");
+
   // ============================
-  // Service Worker register
+  // Service Worker
   // ============================
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js").catch(()=>{});
@@ -98,32 +97,35 @@
   // ============================
   // Constants
   // ============================
-  const VERSION = "2026-02-15";
+  const VERSION = "2026-02-19";
 
-  // Game time: 1 real day = 10 in-game years
-  // 1 day = 86400 sec -> 10 years -> 10*365 = 3650 days in game
-  // We'll store gameYear as floating
-  const YEARS_PER_REAL_SECOND = 10 / 86400; // years per second
+  // Real 1 day = game 10 years
+  const YEARS_PER_REAL_SECOND = 10 / 86400;
 
-  const OFFLINE_CAP_SECONDS = 24 * 3600; // 24 hours offline max
+  const OFFLINE_CAP_SECONDS = 24 * 3600;
 
-  // Camera / zoom
+  const WORLD_SIZE = 2200;
+
+  // ============================
+  // Screen
+  // ============================
   let W = 1, H = 1;
   let camX = 0, camY = 0;
   let zoom = 1;
 
+  function resize(){
+    W = canvas.width = window.innerWidth * devicePixelRatio;
+    H = canvas.height = window.innerHeight * devicePixelRatio;
+  }
+  window.addEventListener("resize", resize);
+
   // ============================
-  // Utilities
+  // Utils
   // ============================
   const rand = (a,b)=> a + Math.random()*(b-a);
   const randi = (a,b)=> Math.floor(rand(a,b+1));
   const clamp = (v,a,b)=> Math.max(a,Math.min(b,v));
   const nowSec = ()=> Math.floor(Date.now()/1000);
-
-  function logSys(msg){
-    const t = new Date().toLocaleTimeString();
-    sysLog.innerHTML = `<div><b>[${t}]</b> ${msg}</div>` + sysLog.innerHTML;
-  }
 
   function fmt(n){
     if(n>=1e9) return (n/1e9).toFixed(2)+"B";
@@ -132,17 +134,24 @@
     return Math.floor(n).toString();
   }
 
+  function logSys(msg){
+    if(!sysLog) return;
+    const t = new Date().toLocaleTimeString();
+    sysLog.innerHTML = `<div><b>[${t}]</b> ${msg}</div>` + sysLog.innerHTML;
+  }
+
   // ============================
-  // Data Storage
+  // Local Storage
   // ============================
-  const LS_USERS = "aeno_users_v1";
-  const LS_SESSION = "aeno_session_v1";
+  const LS_USERS = "aeno_users_v2";
+  const LS_SESSION = "aeno_session_v2";
 
   function loadUsers(){
     try{
       return JSON.parse(localStorage.getItem(LS_USERS)||"{}");
     }catch(e){ return {}; }
   }
+
   function saveUsers(obj){
     localStorage.setItem(LS_USERS, JSON.stringify(obj));
   }
@@ -152,22 +161,35 @@
       return JSON.parse(localStorage.getItem(LS_SESSION)||"null");
     }catch(e){ return null; }
   }
+
   function setSession(sess){
     localStorage.setItem(LS_SESSION, JSON.stringify(sess));
   }
 
   // ============================
-  // Game World Generation
+  // Planet Translation Pack
   // ============================
-  const WORLD_SIZE = 2200; // map size
-  const TILE = 50;
+  let PLANETS = [];
 
-  function genWorldSeed(username, planet){
-    // stable seed string
-    return `${username}::${planet}::AENO::${VERSION}`;
+  async function loadPlanets(){
+    try{
+      const res = await fetch("./planets.json?ts="+Date.now());
+      const data = await res.json();
+      PLANETS = data.planets || [];
+    }catch(e){
+      PLANETS = [];
+    }
   }
 
-  // pseudo hash
+  function getPlanetInfo(id){
+    return PLANETS.find(p=>p.id===id) || {id, name:id, language:"Unknown", locale:"en-US", flag:"🌍"};
+  }
+
+  // ============================
+  // AI Brain (DNA Mutation)
+  // ============================
+  // DNA mutation every 100 game years.
+  // (This is AI Brain logic core)
   function hashStr(s){
     let h = 2166136261;
     for(let i=0;i<s.length;i++){
@@ -187,66 +209,81 @@
     };
   }
 
-  function genTerrain(username, planet){
-    const seed = hashStr(genWorldSeed(username, planet));
+  function genWorldSeed(username, planet){
+    return `${username}::${planet}::AENO::${VERSION}`;
+  }
+
+  function genTerrain(username, planet, dnaEpoch){
+    const seed = hashStr(genWorldSeed(username, planet) + "::DNA::" + dnaEpoch);
     const R = seededRand(seed);
+
+    function sr(a,b){ return a + R()*(b-a); }
+    function sri(a,b){ return Math.floor(sr(a,b+1)); }
+
+    const animalEmojis = ["🦌","🐗","🐺","🦊","🐍","🦖","🦕","🦁","🐘","🦝","🐼","🐲"];
 
     const features = {
       forests: [],
-      rivers: [],
       mountains: [],
       mines: [],
-      animals: []
+      rivers: [],
+      animals: [],
+      palette: {
+        sky: `hsl(${sri(180,220)}, 80%, ${sri(85,94)}%)`,
+        forest: `hsl(${sri(90,140)}, 60%, ${sri(40,55)}%)`,
+        mountain: `hsl(${sri(200,240)}, 10%, ${sri(40,60)}%)`,
+        mine: `hsl(${sri(20,60)}, 90%, ${sri(45,60)}%)`,
+        river: `hsl(${sri(190,210)}, 85%, ${sri(45,60)}%)`
+      }
     };
 
     // forests
     for(let i=0;i<18;i++){
       features.forests.push({
-        x: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        y: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        r: rand(140, 260)
+        x: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        y: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        r: sr(120, 260)
       });
     }
 
     // mountains
     for(let i=0;i<14;i++){
       features.mountains.push({
-        x: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        y: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        r: rand(160, 280)
+        x: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        y: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        r: sr(150, 290)
       });
     }
 
     // mines
     for(let i=0;i<12;i++){
       features.mines.push({
-        x: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        y: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        r: rand(90, 150)
+        x: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        y: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        r: sr(80, 150)
       });
     }
 
-    // river path
+    // rivers
     for(let i=0;i<3;i++){
       const points = [];
-      let px = rand(-WORLD_SIZE/2, WORLD_SIZE/2);
-      let py = rand(-WORLD_SIZE/2, WORLD_SIZE/2);
+      let px = sr(-WORLD_SIZE/2, WORLD_SIZE/2);
+      let py = sr(-WORLD_SIZE/2, WORLD_SIZE/2);
       for(let k=0;k<12;k++){
         points.push({x:px,y:py});
-        px += rand(-240,240);
-        py += rand(-240,240);
+        px += sr(-240,240);
+        py += sr(-240,240);
       }
       features.rivers.push(points);
     }
 
     // animals
-    const animalEmojis = ["🦌","🐗","🐺","🦊","🐍","🦖","🦕","🦁","🐘"];
     for(let i=0;i<22;i++){
       features.animals.push({
-        x: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        y: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
-        emoji: animalEmojis[randi(0, animalEmojis.length-1)],
-        hp: randi(60,140)
+        x: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        y: sr(-WORLD_SIZE/2, WORLD_SIZE/2),
+        emoji: animalEmojis[sri(0, animalEmojis.length-1)],
+        hp: sri(60,140)
       });
     }
 
@@ -273,6 +310,9 @@
 
       // time
       gameYear: 0,
+
+      // dna epoch (AI brain)
+      dnaEpoch: 0,
 
       // economy
       coins: 2000,
@@ -301,43 +341,37 @@
       robots: 1,
       robotMissions: [],
 
-      // wall integrity for beast tide trigger
-      wallIntegrity: 0, // 0-100
+      // beast tide
+      wallIntegrity: 0,
       beastLoot: 0,
-
-      // auto build addon
-      autoBuild: true,
-      autoPriorities: {
-        house:true,
-        lumber:true,
-        quarry:true,
-        mine:true,
-        farm:true,
-        market:true,
-        wall:true,
-        lab:false
-      },
-
-      // build modes
-      buildMode: false,
-      upgradeMode: false,
 
       // ad song
       adSongPlaying: false,
       adLoop: true,
       adSecondsListening: 0,
 
-      // pronunciation
+      // pronunciation learning
       pronScore: 0,
       pronQualified: false,
+      translationPacks: {},
 
-      // ui
+      // auto build
+      autoBuild: true,
+
+      // modes
+      buildMode: false,
+      upgradeMode: false,
       selectedBuildType: null,
       pendingBuildConfirm: null,
 
-      // debug
-      flags: {
-        firstBootDone: false
+      // blackhole story flags
+      blackholeUnlocked: false,
+
+      // key system placeholder (future)
+      keySystem: {
+        enabled: false,
+        playerKeys: [],
+        motherKeyHidden: true
       }
     };
   }
@@ -346,70 +380,24 @@
     if(!state || !currentUser) return;
     state.lastSaveAt = nowSec();
     const users = loadUsers();
+    if(!users[currentUser]) return;
     users[currentUser].save = state;
     saveUsers(users);
-    logSys("💾 已保存遊戲紀錄");
-  }
-
-  function loadGame(username){
-    const users = loadUsers();
-    if(!users[username]) return null;
-    return users[username].save || null;
+    logSys("💾 已保存遊戲");
   }
 
   // ============================
-  // Build / Upgrade System
+  // Build System
   // ============================
   const BUILD_INFO = {
-    house: {
-      name:"房屋",
-      emoji:"🏠",
-      baseCost:{wood:50,stone:20,iron:0,food:10,coins:80},
-      produces:{coins:2},
-      popAdd:2
-    },
-    lumber: {
-      name:"伐木場",
-      emoji:"🪓",
-      baseCost:{wood:30,stone:30,iron:10,food:0,coins:120},
-      produces:{wood:6}
-    },
-    quarry: {
-      name:"採石場",
-      emoji:"🪨",
-      baseCost:{wood:20,stone:40,iron:10,food:0,coins:140},
-      produces:{stone:5}
-    },
-    mine: {
-      name:"礦場",
-      emoji:"⛏️",
-      baseCost:{wood:20,stone:60,iron:0,food:0,coins:160},
-      produces:{iron:4}
-    },
-    farm: {
-      name:"農田",
-      emoji:"🌾",
-      baseCost:{wood:40,stone:20,iron:0,food:0,coins:110},
-      produces:{food:6}
-    },
-    market: {
-      name:"市集",
-      emoji:"🏦",
-      baseCost:{wood:60,stone:50,iron:20,food:0,coins:200},
-      produces:{coins:6}
-    },
-    wall: {
-      name:"城牆",
-      emoji:"🛡️",
-      baseCost:{wood:80,stone:120,iron:30,food:0,coins:250},
-      produces:{defense:5}
-    },
-    lab: {
-      name:"研究所",
-      emoji:"🧬",
-      baseCost:{wood:120,stone:80,iron:60,food:0,coins:350},
-      produces:{tech:1}
-    }
+    house: { name:"房屋", emoji:"🏠", baseCost:{wood:50,stone:20,iron:0,food:10,coins:80} },
+    lumber:{ name:"伐木場", emoji:"🪓", baseCost:{wood:30,stone:30,iron:10,food:0,coins:120} },
+    quarry:{ name:"採石場", emoji:"🪨", baseCost:{wood:20,stone:40,iron:10,food:0,coins:140} },
+    mine:  { name:"礦場", emoji:"⛏️", baseCost:{wood:20,stone:60,iron:0,food:0,coins:160} },
+    farm:  { name:"農田", emoji:"🌾", baseCost:{wood:40,stone:20,iron:0,food:0,coins:110} },
+    market:{ name:"市集", emoji:"🏦", baseCost:{wood:60,stone:50,iron:20,food:0,coins:200} },
+    wall:  { name:"城牆", emoji:"🛡️", baseCost:{wood:80,stone:120,iron:30,food:0,coins:250} },
+    lab:   { name:"研究所", emoji:"🧬", baseCost:{wood:120,stone:80,iron:60,food:0,coins:350} }
   };
 
   function getCost(type, level){
@@ -442,21 +430,22 @@
     state.coins -= cost.coins;
   }
 
-  function isInTerritory(x,y){
-    const d = Math.hypot(x, y);
-    return d <= state.territoryRadius;
+  function countBuildings(type){
+    return state.buildings.filter(b=>b.type===type).length;
   }
 
-  function buildAt(type, x, y){    if(use3D) buildThreeBuildings();
-                               
+  function isInTerritory(x,y){
+    return Math.hypot(x,y) <= state.territoryRadius;
+  }
+
+  function buildAt(type, x, y){
     const cost = getCost(type, 1);
     if(!canAfford(cost)){
-      logSys(`⚠️ 資源不足，無法建造 ${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
+      logSys("⚠️ 資源不足，無法建造");
       return false;
     }
-
     if(!isInTerritory(x,y)){
-      logSys("⚠️ 不是領土範圍，不能建築");
+      logSys("⚠️ 超出領土，不能建築");
       return false;
     }
 
@@ -464,16 +453,19 @@
     state.buildings.push({type, level:1, x, y});
 
     if(type==="house"){
-      state.population += BUILD_INFO.house.popAdd;
+      state.population += 2;
       state.workers += 1;
+    }
+
+    if(type==="wall"){
+      state.wallIntegrity = clamp(state.wallIntegrity + 12, 0, 100);
     }
 
     logSys(`🏗️ 建造成功：${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
     return true;
   }
 
-  function upgradeBuilding(b){    if(use3D) buildThreeBuildings();
-
+  function upgradeBuilding(b){
     const nextLv = b.level + 1;
     const cost = getCost(b.type, nextLv);
     if(!canAfford(cost)){
@@ -496,59 +488,60 @@
     return true;
   }
 
-  function countBuildings(type){
-    return state.buildings.filter(b=>b.type===type).length;
+  // ============================
+  // Pronunciation Proof (Mock now)
+  // ============================
+  function doPronunciationMock(){
+    const score = randi(10, 98);
+    state.pronScore = score;
+    state.pronQualified = score >= 40;
+
+    const planetInfo = getPlanetInfo(state.planet);
+    if(!state.translationPacks[state.planet]) state.translationPacks[state.planet] = 0;
+
+    if(state.pronQualified){
+      const packGain = randi(1, 3);
+      state.translationPacks[state.planet] += packGain;
+      logSys(`📢 發音測試：${score}% ✅ 合格 +翻譯包${packGain} (${planetInfo.language})`);
+
+      // reward fragments
+      const frag = randi(1, 4);
+      state.beastLoot += frag;
+      logSys(`🎁 你獲得碎片 +${frag}`);
+    }else{
+      logSys(`📢 發音測試：${score}% ❌ 未達40%（再試一次）`);
+    }
   }
 
   // ============================
-  // AENO Hidden Mining Algorithm
+  // AENO Mining (Hidden Definition)
+  // "attention + learning behavior + ads"
   // ============================
-  // IMPORTANT: user要求保密，不可直接顯示公式
-  // 這裡使用字母映射混淆（不顯示實際數字）
   function hiddenAenoChance(){
-    // Inputs:
-    // - adSecondsListening
-    // - pronScore
-    // - buildings count
-    // - workers
-    // - online time tick
+    let base = 0.00002;
 
-    // Obfuscation mapping
-    // K->1, L->0 style (not obvious)
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const map = {};
-    for(let i=0;i<alphabet.length;i++){
-      map[alphabet[i]] = (i % 10);
-    }
+    // ad listening boosts
+    const adBoost = Math.min(1.8, 1 + (state.adSecondsListening/60)*0.02);
 
-    const A = map["K"]; // 0-9
-    const B = map["L"];
-    const C = map["M"];
-    const D = map["N"];
-    const E = map["O"];
+    // pronunciation boosts
+    const pronBoost = 1 + (state.pronScore/100)*0.8;
 
-    const base = 0.00002 + (A*0.000001);
-    const adBoost = Math.min(1.6, 1 + (state.adSecondsListening/60)*0.015 + (B*0.001));
-    const pronBoost = 1 + (state.pronScore/100)*0.7 + (C*0.001);
+    // infra boosts
+    const infraBoost = 1 + countBuildings("market")*0.08 + countBuildings("lab")*0.05;
 
-    const infra = 1 + (countBuildings("market")*0.08) + (countBuildings("lab")*0.05) + (D*0.0005);
-    const workerBoost = 1 + (state.workers*0.01) + (E*0.0002);
+    // worker boosts
+    const workerBoost = 1 + state.workers*0.01;
 
-    let chance = base * adBoost * pronBoost * infra * workerBoost;
-
-    // cap to avoid too fast
+    let chance = base * adBoost * pronBoost * infraBoost * workerBoost;
     chance = Math.min(chance, 0.00035);
 
     return chance;
   }
 
   function tryMintAeno(dtSec){
-    // dtSec is seconds elapsed in simulation
     const rolls = Math.max(1, Math.floor(dtSec / 3));
     for(let i=0;i<rolls;i++){
-      const chance = hiddenAenoChance();
-      if(Math.random() < chance){
-        // small mint
+      if(Math.random() < hiddenAenoChance()){
         const gain = 0.0008 + Math.random()*0.0014;
         state.aeno += gain;
       }
@@ -556,31 +549,11 @@
   }
 
   // ============================
-  // Pronunciation (Mock)
+  // Robot System (20 planets random)
   // ============================
-  function doPronunciationMock(){
-    // simulate a pronunciation score 0-100
-    const score = randi(10, 95);
-    state.pronScore = score;
-    state.pronQualified = score >= 40;
-
-    if(state.pronQualified){
-      logSys(`📢 發音測試：${score}% ✅ 合格（AENO 掉落機率提升）`);
-    }else{
-      logSys(`📢 發音測試：${score}% ❌ 未達40%（請再試）`);
-    }
+  function getPlanetPool(){
+    return PLANETS.map(p=>p.id).filter(id=>id!=="blackhole");
   }
-
-  // ============================
-  // Robot Exploration System
-  // ============================
-  const PLANET_POOL = [
-    "earth","mars","ocean","jungle",
-    "planet05","planet06","planet07","planet08",
-    "planet09","planet10","planet11","planet12",
-    "planet13","planet14","planet15","planet16",
-    "planet17","planet18","planet19","planet20"
-  ];
 
   function sendRobot(){
     if(state.robots <= state.robotMissions.length){
@@ -588,8 +561,10 @@
       return;
     }
 
-    const dest = PLANET_POOL[randi(0, PLANET_POOL.length-1)];
-    const duration = randi(40, 120); // seconds
+    const pool = getPlanetPool();
+    const dest = pool[randi(0, pool.length-1)];
+
+    const duration = randi(40, 120);
     const endAt = nowSec() + duration;
 
     state.robotMissions.push({
@@ -599,7 +574,8 @@
       done:false
     });
 
-    logSys(`🚀 機器人已出發探索：${dest}（約 ${duration}s）`);
+    const info = getPlanetInfo(dest);
+    logSys(`🚀 機器人出發：${info.flag} ${info.name}（約 ${duration}s）`);
   }
 
   function recallRobots(){
@@ -609,6 +585,7 @@
 
   function processRobotMissions(){
     const t = nowSec();
+
     for(const m of state.robotMissions){
       if(!m.done && t >= m.endAt){
         m.done = true;
@@ -623,19 +600,17 @@
         state.iron += lootIron;
         state.food += lootFood;
 
-        // fragments & coins
         const coins = randi(40, 180);
         state.coins += coins;
 
-        // beast fragments
         const frag = randi(0, 4);
         state.beastLoot += frag;
 
-        logSys(`🤖 探索完成：${m.dest} +木${lootWood} 石${lootStone} 鐵${lootIron} 糧${lootFood} +金${coins} +碎片${frag}`);
+        const info = getPlanetInfo(m.dest);
+        logSys(`🤖 探索完成：${info.flag}${info.name} +木${lootWood} 石${lootStone} 鐵${lootIron} 糧${lootFood} +金${coins} +碎片${frag}`);
       }
     }
 
-    // cleanup old missions
     state.robotMissions = state.robotMissions.filter(m=>!(m.done && nowSec()-m.endAt>60));
   }
 
@@ -645,85 +620,31 @@
   let beastTimer = 0;
 
   function beastTick(dt){
-    // Only if wall is 100%
-    if(state.wallIntegrity < 100) return;
-
     beastTimer += dt;
+
     if(beastTimer >= 60){
       beastTimer = 0;
 
-      // chance
-      if(Math.random() < 0.35){
-        const lootCoins = randi(60, 220);
-        const lootFrag = randi(1, 6);
+      const baseChance = 0.18 + (state.gameYear/2000)*0.10;
+      const chance = clamp(baseChance, 0.18, 0.55);
 
-        state.coins += lootCoins;
-        state.beastLoot += lootFrag;
+      if(Math.random() < chance){
+        const defended = state.wallIntegrity >= 60;
 
-        logSys(`🐺 獸潮來襲！你成功防守，獲得 +金${lootCoins} +碎片${lootFrag}`);
-      }
-    }
-  }
+        if(defended){
+          const lootCoins = randi(60, 220);
+          const lootFrag = randi(2, 6);
 
-  // ============================
-  // Auto Build Addon (AI)
-  // ============================
-  let autoTimer = 0;
+          state.coins += lootCoins;
+          state.beastLoot += lootFrag;
 
-  function aiAutoBuild(dt){
-    if(!state.autoBuild) return;
+          logSys(`🐺 獸潮來襲！你成功防守 +金${lootCoins} +碎片${lootFrag}`);
+        }else{
+          const lossFood = randi(30, 120);
+          state.food = Math.max(0, state.food - lossFood);
 
-    autoTimer += dt;
-    if(autoTimer < 8) return;
-    autoTimer = 0;
-
-    // Reserve resources (prevent AI ruin player)
-    const reserve = {wood:200,stone:200,iron:120,food:200,coins:300};
-
-    function safeAfford(cost){
-      return (
-        state.wood - cost.wood >= reserve.wood &&
-        state.stone - cost.stone >= reserve.stone &&
-        state.iron - cost.iron >= reserve.iron &&
-        state.food - cost.food >= reserve.food &&
-        state.coins - cost.coins >= reserve.coins
-      );
-    }
-
-    // build if low houses / low food / etc
-    const prios = Object.keys(state.autoPriorities).filter(k=>state.autoPriorities[k]);
-
-    for(const type of prios){
-      // Decide need
-      let need = false;
-
-      if(type==="house" && state.population < 20) need = true;
-      if(type==="farm" && state.food < 500) need = true;
-      if(type==="lumber" && state.wood < 500) need = true;
-      if(type==="quarry" && state.stone < 500) need = true;
-      if(type==="mine" && state.iron < 400) need = true;
-      if(type==="market" && state.coins < 1500) need = true;
-      if(type==="wall" && state.wallIntegrity < 100) need = true;
-      if(type==="lab" && state.aeno > 1.0) need = true;
-
-      if(!need) continue;
-
-      const cost = getCost(type, 1);
-      if(!safeAfford(cost)) continue;
-
-      // build near center random
-      const angle = rand(0, Math.PI*2);
-      const dist = rand(40, state.territoryRadius-60);
-      const x = Math.cos(angle)*dist;
-      const y = Math.sin(angle)*dist;
-
-      if(buildAt(type, x, y)){
-        // expand territory slightly with coins cost
-        if(state.coins > 400){
-          state.coins -= 60;
-          state.territoryRadius = clamp(state.territoryRadius + 8, 200, 900);
+          logSys(`🐺 獸潮襲擊！防禦不足，糧食損失 -${lossFood}`);
         }
-        break;
       }
     }
   }
@@ -732,7 +653,6 @@
   // Economy Tick
   // ============================
   function produceResources(dt){
-    // production per second from buildings
     let woodRate = 0;
     let stoneRate = 0;
     let ironRate = 0;
@@ -741,15 +661,15 @@
 
     for(const b of state.buildings){
       const lv = b.level;
+
       if(b.type==="lumber") woodRate += 0.35*lv;
       if(b.type==="quarry") stoneRate += 0.30*lv;
       if(b.type==="mine") ironRate += 0.22*lv;
       if(b.type==="farm") foodRate += 0.38*lv;
       if(b.type==="market") coinRate += 0.25*lv;
-      if(b.type==="house") coinRate += 0.10*lv; // tax
+      if(b.type==="house") coinRate += 0.10*lv;
     }
 
-    // workers boost
     const workerBoost = 1 + (state.workers*0.015);
 
     state.wood += woodRate * workerBoost * dt;
@@ -758,29 +678,21 @@
     state.food += foodRate * workerBoost * dt;
     state.coins += coinRate * workerBoost * dt;
 
-    // food consumption
     const foodNeed = state.population * 0.04 * dt;
     state.food -= foodNeed;
 
     if(state.food < 0){
       state.food = 0;
-      // starvation reduces growth
       if(Math.random() < 0.02){
         state.population = Math.max(1, state.population-1);
         state.workers = Math.max(1, state.workers-1);
         logSys("⚠️ 糧食不足，人口減少");
       }
     }
-
-    // passive territory expand by activity
-    if(state.coins > 300 && Math.random() < 0.015){
-      state.coins -= 20;
-      state.territoryRadius = clamp(state.territoryRadius + 3, 200, 900);
-    }
   }
 
   // ============================
-  // Ad Song System
+  // Ads Song System
   // ============================
   let adData = null;
   let audio = new Audio();
@@ -796,7 +708,7 @@
       }
       logSys("🎵 已載入廣告歌列表");
     }catch(e){
-      logSys("⚠️ ads.json 載入失敗（請檢查檔案）");
+      logSys("⚠️ ads.json 載入失敗");
     }
   }
 
@@ -814,7 +726,7 @@
       state.adSongPlaying = true;
       logSys(`🎵 播放中：${track.title}`);
     }).catch(()=>{
-      logSys("⚠️ 播放失敗：瀏覽器禁止自動播放（請再按一次播放）");
+      logSys("⚠️ 播放失敗：瀏覽器禁止自動播放（請再按一次）");
     });
   }
 
@@ -828,10 +740,11 @@
   });
 
   // ============================
-  // UI Update
+  // HUD Update
   // ============================
   function updateHUD(){
-    planetNameEl.textContent = state.planet;
+    const p = getPlanetInfo(state.planet);
+    planetNameEl.textContent = `${p.flag} ${p.name}`;
     gameYearEl.textContent = Math.floor(state.gameYear);
     popCountEl.textContent = state.population;
 
@@ -845,264 +758,11 @@
 
     houseCountEl.textContent = countBuildings("house");
     robotCountEl.textContent = state.robots;
-
-    uiWood.textContent = fmt(state.wood);
-    uiStone.textContent = fmt(state.stone);
-    uiIron.textContent = fmt(state.iron);
-    uiFood.textContent = fmt(state.food);
-    uiCoins.textContent = fmt(state.coins);
-    uiAeno.textContent = state.aeno.toFixed(4);
-  }
-  // ============================
-  // Three.js 3D Cartoon Engine (Addon)
-  // ============================
-  let use3D = false;
-  let threeRenderer = null;
-  let threeScene = null;
-  let threeCamera = null;
-  let threeLight = null;
-  let threeObjects = {
-    terrain: [],
-    buildings: []
-  };
-
-  function initThree(){
-    if(typeof THREE === "undefined"){
-      logSys("❌ THREE.js 未載入，請在 index.html 引入 three.min.js");
-      return false;
-    }
-
-    threeRenderer = new THREE.WebGLRenderer({
-      canvas: canvas,
-      antialias: true,
-      alpha: false
-    });
-
-    threeRenderer.setPixelRatio(devicePixelRatio);
-    threeRenderer.setSize(window.innerWidth, window.innerHeight);
-    threeRenderer.shadowMap.enabled = true;
-
-    threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color("#dbeafe");
-
-    threeCamera = new THREE.PerspectiveCamera(
-      60,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      8000
-    );
-
-    threeCamera.position.set(0, 650, 750);
-    threeCamera.lookAt(0, 0, 0);
-
-    // lights
-    threeLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    threeLight.position.set(300, 900, 500);
-    threeLight.castShadow = true;
-    threeScene.add(threeLight);
-
-    const amb = new THREE.AmbientLight(0xffffff, 0.55);
-    threeScene.add(amb);
-
-    // ground plane
-    const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE * 2, WORLD_SIZE * 2, 1, 1);
-    const groundMat = new THREE.MeshToonMaterial({ color: 0xe0f2fe });
-
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    threeScene.add(ground);
-
-    // helper grid
-    const grid = new THREE.GridHelper(WORLD_SIZE * 2, 80, 0x60a5fa, 0x93c5fd);
-    grid.material.opacity = 0.15;
-    grid.material.transparent = true;
-    threeScene.add(grid);
-
-    // generate terrain circles (forests, mountains, mines) as simple 3D meshes
-    buildThreeTerrain();
-    buildThreeBuildings();
-
-    logSys("🟣 Three.js 3D 漫畫模式初始化完成");
-    return true;
-  }
-
-  function buildThreeTerrain(){
-    // cleanup old
-    for(const obj of threeObjects.terrain){
-      threeScene.remove(obj);
-    }
-    threeObjects.terrain = [];
-
-    // forests
-    for(const f of terrain.forests){
-      const geo = new THREE.CylinderGeometry(f.r * 0.2, f.r * 0.25, 30, 10);
-      const mat = new THREE.MeshToonMaterial({ color: 0x22c55e });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(f.x, 15, f.y);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      threeScene.add(mesh);
-      threeObjects.terrain.push(mesh);
-    }
-
-    // mountains
-    for(const m of terrain.mountains){
-      const geo = new THREE.ConeGeometry(m.r * 0.18, 120, 10);
-      const mat = new THREE.MeshToonMaterial({ color: 0x64748b });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(m.x, 60, m.y);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      threeScene.add(mesh);
-      threeObjects.terrain.push(mesh);
-    }
-
-    // mines
-    for(const mi of terrain.mines){
-      const geo = new THREE.BoxGeometry(mi.r * 0.25, 50, mi.r * 0.25);
-      const mat = new THREE.MeshToonMaterial({ color: 0xf59e0b });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(mi.x, 25, mi.y);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      threeScene.add(mesh);
-      threeObjects.terrain.push(mesh);
-    }
-
-    // rivers (simple blue tubes)
-    for(const river of terrain.rivers){
-      const points = river.map(p => new THREE.Vector3(p.x, 3, p.y));
-      const curve = new THREE.CatmullRomCurve3(points);
-      const tubeGeo = new THREE.TubeGeometry(curve, 60, 12, 8, false);
-      const tubeMat = new THREE.MeshToonMaterial({ color: 0x0ea5e9 });
-      const tube = new THREE.Mesh(tubeGeo, tubeMat);
-      tube.receiveShadow = true;
-      threeScene.add(tube);
-      threeObjects.terrain.push(tube);
-    }
-  }
-
-  function buildThreeBuildings(){
-    for(const obj of threeObjects.buildings){
-      threeScene.remove(obj);
-    }
-    threeObjects.buildings = [];
-
-    for(const b of state.buildings){
-      const baseSize = 40 + b.level * 8;
-
-      let color = 0xffffff;
-      if(b.type === "house") color = 0xfef9c3;
-      if(b.type === "farm") color = 0xbbf7d0;
-      if(b.type === "mine") color = 0xfde68a;
-      if(b.type === "quarry") color = 0xe2e8f0;
-      if(b.type === "lumber") color = 0x86efac;
-      if(b.type === "market") color = 0xc7d2fe;
-      if(b.type === "wall") color = 0xfca5a5;
-      if(b.type === "lab") color = 0xf0abfc;
-
-      const geo = new THREE.BoxGeometry(baseSize, baseSize, baseSize);
-      const mat = new THREE.MeshToonMaterial({ color });
-      const mesh = new THREE.Mesh(geo, mat);
-
-      mesh.position.set(b.x, baseSize / 2, b.y);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-
-      threeScene.add(mesh);
-      threeObjects.buildings.push(mesh);
-    }
-  }
-
-  function syncThreeBuildings(){
-    // rebuild if count mismatch
-    if(!threeScene) return;
-    if(threeObjects.buildings.length !== state.buildings.length){
-      buildThreeBuildings();
-      return;
-    }
-
-    // update position / scale
-    for(let i=0;i<state.buildings.length;i++){
-      const b = state.buildings[i];
-      const mesh = threeObjects.buildings[i];
-      if(!mesh) continue;
-
-      const baseSize = 40 + b.level * 8;
-      mesh.scale.set(baseSize / 40, baseSize / 40, baseSize / 40);
-      mesh.position.set(b.x, baseSize / 2, b.y);
-    }
-  }
-
-  function renderThree(){
-    if(!threeRenderer || !threeScene || !threeCamera) return;
-
-    // camera follow camX camY
-    threeCamera.position.x = camX;
-    threeCamera.position.z = camY + 750;
-    threeCamera.position.y = 650;
-
-    threeCamera.lookAt(camX, 0, camY);
-
-    syncThreeBuildings();
-    threeRenderer.render(threeScene, threeCamera);
   }
 
   // ============================
-  // 3D Toggle Button (auto create)
+  // 2D Map Rendering (fallback / overlay)
   // ============================
-  const btn3D = document.createElement("button");
-  btn3D.textContent = "🟣 3D: OFF";
-  btn3D.style.position = "fixed";
-  btn3D.style.right = "14px";
-  btn3D.style.bottom = "14px";
-  btn3D.style.zIndex = "99999";
-  btn3D.style.padding = "10px 14px";
-  btn3D.style.borderRadius = "12px";
-  btn3D.style.border = "none";
-  btn3D.style.background = "#111827";
-  btn3D.style.color = "#fff";
-  btn3D.style.fontWeight = "700";
-  btn3D.style.boxShadow = "0 8px 22px rgba(0,0,0,0.35)";
-  document.body.appendChild(btn3D);
-
-  btn3D.addEventListener("click", ()=>{
-    use3D = !use3D;
-
-    if(use3D){
-      const ok = initThree();
-      if(!ok){
-        use3D = false;
-        btn3D.textContent = "🟣 3D: OFF";
-        return;
-      }
-      btn3D.textContent = "🟣 3D: ON";
-      logSys("🟣 已切換到 3D 漫畫模式");
-    }else{
-      btn3D.textContent = "🟣 3D: OFF";
-      logSys("🔵 已切換到 2D 模式");
-    }
-  });
-
-  // ============================
-  // Rendering
-  // ============================
-  function resize(){
-    W = canvas.width = window.innerWidth * devicePixelRatio;
-    H = canvas.height = window.innerHeight * devicePixelRatio;
-   if(threeRenderer){
-      threeRenderer.setSize(window.innerWidth, window.innerHeight);
-      if(threeCamera){
-        threeCamera.aspect = window.innerWidth / window.innerHeight;
-        threeCamera.updateProjectionMatrix();
-      }
-
-    }
-  }
-  
-  window.addEventListener("resize", resize);
-
   function worldToScreen(x,y){
     return {
       x: (x - camX) * zoom + W/2,
@@ -1117,39 +777,18 @@
     };
   }
 
-  function drawTerrain(){
-    // background
-    ctx.fillStyle = "#eaf6ff";
-    ctx.fillRect(0,0,W,H);
+  function drawTerrain2D(){
+    if(!terrain) return;
 
-    // grid faint
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    ctx.strokeStyle = "#93c5fd";
-    for(let gx=-WORLD_SIZE;gx<=WORLD_SIZE;gx+=TILE){
-      const p1 = worldToScreen(gx, -WORLD_SIZE);
-      const p2 = worldToScreen(gx, WORLD_SIZE);
-      ctx.beginPath();
-      ctx.moveTo(p1.x,p1.y);
-      ctx.lineTo(p2.x,p2.y);
-      ctx.stroke();
-    }
-    for(let gy=-WORLD_SIZE;gy<=WORLD_SIZE;gy+=TILE){
-      const p1 = worldToScreen(-WORLD_SIZE, gy);
-      const p2 = worldToScreen(WORLD_SIZE, gy);
-      ctx.beginPath();
-      ctx.moveTo(p1.x,p1.y);
-      ctx.lineTo(p2.x,p2.y);
-      ctx.stroke();
-    }
-    ctx.restore();
+    ctx.fillStyle = terrain.palette.sky;
+    ctx.fillRect(0,0,W,H);
 
     // forests
     for(const f of terrain.forests){
       const p = worldToScreen(f.x,f.y);
       ctx.save();
-      ctx.globalAlpha = 0.6;
-      ctx.fillStyle = "#22c55e";
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = terrain.palette.forest;
       ctx.beginPath();
       ctx.arc(p.x,p.y,f.r*zoom,0,Math.PI*2);
       ctx.fill();
@@ -1161,7 +800,7 @@
       const p = worldToScreen(m.x,m.y);
       ctx.save();
       ctx.globalAlpha = 0.65;
-      ctx.fillStyle = "#64748b";
+      ctx.fillStyle = terrain.palette.mountain;
       ctx.beginPath();
       ctx.arc(p.x,p.y,m.r*zoom,0,Math.PI*2);
       ctx.fill();
@@ -1172,8 +811,8 @@
     for(const mi of terrain.mines){
       const p = worldToScreen(mi.x,mi.y);
       ctx.save();
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = "#f59e0b";
+      ctx.globalAlpha = 0.75;
+      ctx.fillStyle = terrain.palette.mine;
       ctx.beginPath();
       ctx.arc(p.x,p.y,mi.r*zoom,0,Math.PI*2);
       ctx.fill();
@@ -1182,7 +821,7 @@
 
     // rivers
     ctx.save();
-    ctx.strokeStyle = "#0ea5e9";
+    ctx.strokeStyle = terrain.palette.river;
     ctx.lineWidth = 18*zoom;
     ctx.globalAlpha = 0.55;
     for(const river of terrain.rivers){
@@ -1196,9 +835,9 @@
     }
     ctx.restore();
 
-    // territory shading (outside is dark)
+    // territory shading
     ctx.save();
-    ctx.globalAlpha = 0.40;
+    ctx.globalAlpha = 0.45;
     ctx.fillStyle = "#000";
     ctx.fillRect(0,0,W,H);
 
@@ -1211,7 +850,7 @@
     ctx.globalCompositeOperation = "source-over";
     ctx.restore();
 
-    // territory border
+    // border
     ctx.save();
     ctx.strokeStyle = "#38bdf8";
     ctx.lineWidth = 4*zoom;
@@ -1222,7 +861,7 @@
     ctx.restore();
   }
 
-  function drawBuildings(){
+  function drawBuildings2D(){
     for(const b of state.buildings){
       const p = worldToScreen(b.x,b.y);
       const size = 36*zoom;
@@ -1249,7 +888,8 @@
     }
   }
 
-  function drawAnimals(){
+  function drawAnimals2D(){
+    if(!terrain) return;
     for(const a of terrain.animals){
       const p = worldToScreen(a.x,a.y);
       ctx.save();
@@ -1261,93 +901,170 @@
     }
   }
 
-  function drawAssistantBody(){
-    // assistant on map (not UI)
-    const x = 0;
-    const y = -100;
-    const p = worldToScreen(x,y);
-
-    ctx.save();
-
-    // body
-    ctx.fillStyle = "#fff";
-    ctx.globalAlpha = 0.95;
-    ctx.beginPath();
-    ctx.ellipse(p.x, p.y+25*zoom, 26*zoom, 32*zoom, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // head
-    ctx.beginPath();
-    ctx.ellipse(p.x, p.y-10*zoom, 28*zoom, 28*zoom, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // ears
-    ctx.fillStyle = "#e2e8f0";
-    ctx.beginPath();
-    ctx.ellipse(p.x-18*zoom, p.y-30*zoom, 10*zoom, 14*zoom, 0.3, 0, Math.PI*2);
-    ctx.ellipse(p.x+18*zoom, p.y-30*zoom, 10*zoom, 14*zoom, -0.3, 0, Math.PI*2);
-    ctx.fill();
-
-    // eyes
-    ctx.fillStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.arc(p.x-10*zoom, p.y-12*zoom, 3.5*zoom, 0, Math.PI*2);
-    ctx.arc(p.x+10*zoom, p.y-12*zoom, 3.5*zoom, 0, Math.PI*2);
-    ctx.fill();
-
-    // mouth
-    ctx.strokeStyle = "#0f172a";
-    ctx.lineWidth = 2*zoom;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y-3*zoom, 8*zoom, 0, Math.PI);
-    ctx.stroke();
-
-    // arms
-    ctx.strokeStyle = "#94a3b8";
-    ctx.lineWidth = 4*zoom;
-    ctx.beginPath();
-    ctx.moveTo(p.x-20*zoom, p.y+20*zoom);
-    ctx.lineTo(p.x-35*zoom, p.y+30*zoom);
-    ctx.moveTo(p.x+20*zoom, p.y+20*zoom);
-    ctx.lineTo(p.x+35*zoom, p.y+30*zoom);
-    ctx.stroke();
-
-    // legs
-    ctx.beginPath();
-    ctx.moveTo(p.x-10*zoom, p.y+50*zoom);
-    ctx.lineTo(p.x-15*zoom, p.y+70*zoom);
-    ctx.moveTo(p.x+10*zoom, p.y+50*zoom);
-    ctx.lineTo(p.x+15*zoom, p.y+70*zoom);
-    ctx.stroke();
-
-    // ad shirt slot (future)
-    ctx.fillStyle = "rgba(251,191,36,0.85)";
-    ctx.beginPath();
-    ctx.roundRect(p.x-18*zoom, p.y+15*zoom, 36*zoom, 20*zoom, 6*zoom);
-    ctx.fill();
-
-    ctx.fillStyle = "#0f172a";
-    ctx.font = `${9*zoom}px system-ui`;
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    ctx.fillText("AD", p.x, p.y+25*zoom);
-
-    ctx.restore();
-  }
-
-  function render(){
-        if(use3D){
-      renderThree();
-      return;
-        }
-    drawTerrain();
-    drawBuildings();
-    drawAnimals();
-    drawAssistantBody();
+  function render2D(){
+    drawTerrain2D();
+    drawBuildings2D();
+    drawAnimals2D();
   }
 
   // ============================
-  // Input / Touch
+  // Three.js 3D Comic Mode
+  // ============================
+  let threeEnabled = true;
+  let scene = null;
+  let camera = null;
+  let renderer = null;
+  let threeObjects = [];
+  let threeLastBuildCount = 0;
+
+  function initThree(){
+    if(!window.THREE){
+      logSys("⚠️ Three.js 未載入，使用2D模式");
+      threeEnabled = false;
+      return;
+    }
+
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      2000
+    );
+
+    camera.position.set(0, 180, 300);
+    camera.lookAt(0, 0, 0);
+
+    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(devicePixelRatio);
+
+    renderer.domElement.style.position = "fixed";
+    renderer.domElement.style.left = "0";
+    renderer.domElement.style.top = "0";
+    renderer.domElement.style.zIndex = "1";
+
+    document.body.appendChild(renderer.domElement);
+
+    // lights
+    const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    light.position.set(200, 300, 200);
+    scene.add(light);
+
+    const amb = new THREE.AmbientLight(0xffffff, 0.55);
+    scene.add(amb);
+
+    // ground
+    const groundGeo = new THREE.PlaneGeometry(3000, 3000);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x224466 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI/2;
+    ground.position.y = -2;
+    scene.add(ground);
+
+    // cute assistant 3D
+    const bodyGeo = new THREE.SphereGeometry(20, 20, 20);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.set(0, 22, 0);
+    scene.add(body);
+
+    const headGeo = new THREE.SphereGeometry(16, 20, 20);
+    const head = new THREE.Mesh(headGeo, bodyMat);
+    head.position.set(0, 50, 0);
+    scene.add(head);
+
+    const earGeo = new THREE.SphereGeometry(6, 16, 16);
+    const earMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+    const ear1 = new THREE.Mesh(earGeo, earMat);
+    ear1.position.set(-10, 65, 0);
+    scene.add(ear1);
+
+    const ear2 = new THREE.Mesh(earGeo, earMat);
+    ear2.position.set(10, 65, 0);
+    scene.add(ear2);
+
+    // eyes
+    const eyeGeo = new THREE.SphereGeometry(2.5, 10, 10);
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+    const eye1 = new THREE.Mesh(eyeGeo, eyeMat);
+    eye1.position.set(-5, 52, 14);
+    scene.add(eye1);
+
+    const eye2 = new THREE.Mesh(eyeGeo, eyeMat);
+    eye2.position.set(5, 52, 14);
+    scene.add(eye2);
+
+    logSys("✨ Three.js 3D 模式已啟動");
+  }
+
+  function clearThreeBuildings(){
+    for(const o of threeObjects){
+      scene.remove(o);
+    }
+    threeObjects = [];
+  }
+
+  function rebuildThreeBuildings(){
+    if(!scene || !state) return;
+
+    clearThreeBuildings();
+
+    for(const b of state.buildings){
+      const geo = new THREE.BoxGeometry(30, 30, 30);
+      const mat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const cube = new THREE.Mesh(geo, mat);
+
+      cube.position.set(b.x, 15, b.y);
+
+      // color per type (comic)
+      if(b.type==="house") cube.material.color.setHex(0xffddaa);
+      if(b.type==="farm") cube.material.color.setHex(0xaaffaa);
+      if(b.type==="mine") cube.material.color.setHex(0xcccccc);
+      if(b.type==="market") cube.material.color.setHex(0xaad4ff);
+      if(b.type==="wall") cube.material.color.setHex(0x999999);
+      if(b.type==="lab") cube.material.color.setHex(0xffaaff);
+
+      scene.add(cube);
+      threeObjects.push(cube);
+    }
+
+    threeLastBuildCount = state.buildings.length;
+  }
+
+  function renderThree(){
+    if(!renderer || !scene || !camera) return;
+
+    if(state && state.buildings.length !== threeLastBuildCount){
+      rebuildThreeBuildings();
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  function setThreeEnabled(on){
+    threeEnabled = on;
+
+    if(on){
+      if(!renderer){
+        initThree();
+        rebuildThreeBuildings();
+      }
+      if(renderer) renderer.domElement.style.display = "block";
+      threeToggle.textContent = "💡 3D: ON";
+    }else{
+      if(renderer) renderer.domElement.style.display = "none";
+      threeToggle.textContent = "💡 3D: OFF";
+    }
+  }
+
+  threeToggle.addEventListener("click", ()=>{
+    setThreeEnabled(!threeEnabled);
+  });
+
+  // ============================
+  // Input
   // ============================
   let dragging = false;
   let lastTouch = null;
@@ -1376,13 +1093,14 @@
     zoom = clamp(zoom + delta, 0.55, 2.2);
   }, {passive:true});
 
-  // click build / upgrade
+  // build / upgrade click
   canvas.addEventListener("click", (e)=>{
+    if(!state) return;
+
     const mx = e.clientX*devicePixelRatio;
     const my = e.clientY*devicePixelRatio;
     const w = screenToWorld(mx,my);
 
-    // upgrade mode
     if(state.upgradeMode){
       for(const b of state.buildings){
         if(Math.hypot(w.x-b.x, w.y-b.y) < 35){
@@ -1394,33 +1112,25 @@
       return;
     }
 
-    // build mode requires selection
     if(state.buildMode){
       if(!state.selectedBuildType){
-        logSys("⚠️ 先在建築面板選擇建築類型");
+        logSys("⚠️ 先選建築類型");
         return;
       }
 
       if(!isInTerritory(w.x,w.y)){
-        logSys("⚠️ 不是領土範圍，不能建築");
+        logSys("⚠️ 超出領土");
         return;
       }
 
       state.pendingBuildConfirm = {type:state.selectedBuildType, x:w.x, y:w.y};
-      logSys(`📌 已選擇位置，請再次點擊相同位置確認建造：${BUILD_INFO[state.selectedBuildType].emoji}${BUILD_INFO[state.selectedBuildType].name}`);
+      logSys("📌 已選位置，雙擊確認建造");
       return;
-    }
-
-    // normal mode quick build popup simulation
-    if(isInTerritory(w.x,w.y)){
-      logSys("📌 提示：你可以切換建築模式，然後點空地建築。");
-    }else{
-      logSys("⚠️ 非領土區域");
     }
   });
 
-  // confirm build if clicked twice
   canvas.addEventListener("dblclick", (e)=>{
+    if(!state) return;
     if(!state.buildMode) return;
     if(!state.pendingBuildConfirm) return;
 
@@ -1480,14 +1190,14 @@
   });
 
   // ============================
-  // Panel buttons
+  // Panel Buttons
   // ============================
   let panelMinimized = false;
 
   panelMinBtn.addEventListener("click", ()=>{
     panelMinimized = !panelMinimized;
     if(panelMinimized){
-      mainPanel.style.height = "180px";
+      mainPanel.style.height = "190px";
       logSys("📌 面板已縮小");
     }else{
       mainPanel.style.height = "";
@@ -1556,6 +1266,12 @@
       addChat("🧠 你可以切換升級模式，再點建築升級。");
     }else if(t.includes("發音") || t.includes("學習")){
       doPronunciationMock();
+    }else if(t.includes("黑洞")){
+      if(state.blackholeUnlocked){
+        addChat("🧠 黑洞之門已開啟，你已成為候選繼承者。");
+      }else{
+        addChat("🧠 黑洞仍被封印，需累積文明與碎片。");
+      }
     }else{
       addChat("🧠 指令收到！未來會加入更多命令。");
     }
@@ -1568,7 +1284,7 @@
     btn.addEventListener("click", ()=>{
       const type = btn.dataset.build;
       state.selectedBuildType = type;
-      logSys(`🏗️ 已選擇建築：${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}（請點領土空地）`);
+      logSys(`🏗️ 已選擇建築：${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
     });
   });
 
@@ -1596,10 +1312,13 @@
   });
 
   // ============================
-  // Robots
+  // Robots Buttons
   // ============================
   btnRobotSend.addEventListener("click", sendRobot);
   btnRobotRecall.addEventListener("click", recallRobots);
+
+  // pronunciation
+  btnPronTest.addEventListener("click", doPronunciationMock);
 
   // ============================
   // Market
@@ -1619,12 +1338,12 @@
     const cost = amt * rate;
 
     if(state.coins < cost){
-      logSys("⚠️ 金幣不足，無法買入");
+      logSys("⚠️ 金幣不足");
       return;
     }
     state.coins -= cost;
     state[item] += amt;
-    logSys(`🏦 買入成功：${item} +${amt}（花費金幣 ${cost}）`);
+    logSys(`🏦 買入成功：${item} +${amt}（花費${cost}）`);
   });
 
   btnSell.addEventListener("click", ()=>{
@@ -1634,25 +1353,23 @@
     const gain = Math.floor(amt * rate * 0.7);
 
     if(state[item] < amt){
-      logSys("⚠️ 資源不足，無法賣出");
+      logSys("⚠️ 資源不足");
       return;
     }
     state[item] -= amt;
     state.coins += gain;
-    logSys(`🏦 賣出成功：${item} -${amt}（獲得金幣 ${gain}）`);
+    logSys(`🏦 賣出成功：${item} -${amt}（獲得${gain}）`);
   });
 
   // ============================
-  // Ads Song
+  // Ads
   // ============================
-  btnPlayAd.addEventListener("click", ()=>{
-    playTrack();
-  });
+  btnPlayAd.addEventListener("click", playTrack);
 
   btnLoopAd.addEventListener("click", ()=>{
     state.adLoop = !state.adLoop;
     btnLoopAd.textContent = state.adLoop ? "🔁 Loop: ON" : "🔁 Loop: OFF";
-    logSys("🎵 Loop 設定：" + (state.adLoop ? "ON" : "OFF"));
+    logSys("🎵 Loop：" + (state.adLoop ? "ON" : "OFF"));
   });
 
   // ============================
@@ -1674,14 +1391,50 @@
     logSys("🛑 已停止自動建造");
   });
 
-  document.querySelectorAll(".prioBtn").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const key = btn.dataset.prio;
-      state.autoPriorities[key] = !state.autoPriorities[key];
-      btn.style.opacity = state.autoPriorities[key] ? "1" : "0.35";
-      logSys(`🤖 AI優先：${key} = ${state.autoPriorities[key] ? "ON" : "OFF"}`);
-    });
-  });
+  function aiAutoBuild(dt){
+    if(!state.autoBuild) return;
+    if(Math.random() > 0.03) return;
+
+    const reserve = {wood:200,stone:200,iron:120,food:200,coins:300};
+
+    function safeAfford(cost){
+      return (
+        state.wood - cost.wood >= reserve.wood &&
+        state.stone - cost.stone >= reserve.stone &&
+        state.iron - cost.iron >= reserve.iron &&
+        state.food - cost.food >= reserve.food &&
+        state.coins - cost.coins >= reserve.coins
+      );
+    }
+
+    const order = ["farm","lumber","quarry","mine","market","house","wall"];
+
+    for(const type of order){
+      let need = false;
+
+      if(type==="farm" && state.food < 500) need = true;
+      if(type==="lumber" && state.wood < 500) need = true;
+      if(type==="quarry" && state.stone < 500) need = true;
+      if(type==="mine" && state.iron < 400) need = true;
+      if(type==="market" && state.coins < 1500) need = true;
+      if(type==="house" && state.population < 20) need = true;
+      if(type==="wall" && state.wallIntegrity < 80) need = true;
+
+      if(!need) continue;
+
+      const cost = getCost(type, 1);
+      if(!safeAfford(cost)) continue;
+
+      const angle = rand(0, Math.PI*2);
+      const dist = rand(40, state.territoryRadius-60);
+      const x = Math.cos(angle)*dist;
+      const y = Math.sin(angle)*dist;
+
+      if(buildAt(type, x, y)){
+        break;
+      }
+    }
+  }
 
   // ============================
   // Save / Reset
@@ -1694,10 +1447,150 @@
       users[currentUser].save = makeNewState(currentUser, users[currentUser].planet);
       saveUsers(users);
       state = users[currentUser].save;
-      terrain = genTerrain(currentUser, state.planet);
-      logSys("🗑️ 已重置遊戲");
+      terrain = genTerrain(currentUser, state.planet, state.dnaEpoch);
+      rebuildThreeBuildings();
+      logSys("🗑️ 已重置玩家");
     }
   });
+
+  // ============================
+  // DNA Mutation Trigger
+  // ============================
+  function checkDNAMutation(){
+    const epoch = Math.floor(state.gameYear / 100);
+    if(epoch > state.dnaEpoch){
+      state.dnaEpoch = epoch;
+      terrain = genTerrain(currentUser, state.planet, state.dnaEpoch);
+      logSys(`🧬 DNA 變異觸發！世界進化到 Epoch ${state.dnaEpoch}`);
+
+      // reward for witnessing evolution
+      state.coins += 200;
+      state.beastLoot += 2;
+      logSys("🎁 AI大腦獎勵：金幣+200，碎片+2");
+    }
+  }
+
+  // ============================
+  // Blackhole Unlock Logic
+  // ============================
+  function checkBlackholeUnlock(){
+    if(state.blackholeUnlocked) return;
+
+    // unlock condition example
+    if(state.aeno >= 10 || state.beastLoot >= 80){
+      state.blackholeUnlocked = true;
+      logSys("🕳️ 黑洞封印開始崩解！你已成為候選繼承者。");
+    }
+  }
+
+  // ============================
+  // Simulation
+  // ============================
+  function simulate(dtSec){
+    if(dtSec <= 0) return;
+
+    state.gameYear += dtSec * YEARS_PER_REAL_SECOND;
+
+    if(state.adSongPlaying){
+      state.adSecondsListening += dtSec;
+    }
+
+    produceResources(dtSec);
+    processRobotMissions();
+    beastTick(dtSec);
+    tryMintAeno(dtSec);
+    aiAutoBuild(dtSec);
+
+    checkDNAMutation();
+    checkBlackholeUnlock();
+  }
+
+  // ============================
+  // Main Loop
+  // ============================
+  let last = performance.now();
+
+  function loop(ts){
+    const dt = (ts - last) / 1000;
+    last = ts;
+
+    if(state){
+      simulate(dt);
+      updateHUD();
+    }
+
+    // render
+    if(state){
+      render2D();
+      if(threeEnabled) renderThree();
+    }
+
+    // autosave
+    if(state && currentUser && Math.random() < 0.01){
+      saveGame();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // ============================
+  // Offline Progress
+  // ============================
+  function applyOfflineProgress(){
+    const t = nowSec();
+    let diff = t - state.lastTickAt;
+    if(diff < 0) diff = 0;
+
+    const capped = Math.min(diff, OFFLINE_CAP_SECONDS);
+
+    if(capped > 10){
+      logSys(`⏳ 離線收益已結算：${Math.floor(capped/60)} 分鐘（最多24小時）`);
+    }
+
+    simulate(capped);
+
+    state.lastTickAt = t;
+  }
+
+  // ============================
+  // Start Game
+  // ============================
+  function startGame(username){
+    const users = loadUsers();
+    const save = users[username].save;
+
+    if(save){
+      state = save;
+    }else{
+      state = makeNewState(username, users[username].planet);
+      users[username].save = state;
+      saveUsers(users);
+    }
+
+    terrain = genTerrain(username, state.planet, state.dnaEpoch);
+
+    const assistantData = window.getAssistantForPlanet(state.planet);
+    assistantName.textContent = assistantData.displayName;
+
+    if(assistantData.species==="cat") assistantEmoji.textContent="🐱";
+    else if(assistantData.species==="bear") assistantEmoji.textContent="🐻";
+    else if(assistantData.species==="dolphin") assistantEmoji.textContent="🐬";
+    else if(assistantData.species==="monkey") assistantEmoji.textContent="🐵";
+    else if(assistantData.species==="dragon") assistantEmoji.textContent="🐉";
+    else if(assistantData.species==="lion") assistantEmoji.textContent="🦁";
+    else assistantEmoji.textContent="🐺";
+
+    logSys("✅ 遊戲啟動成功（版本 " + VERSION + "）");
+
+    loadAds();
+    applyOfflineProgress();
+    updateAutoBtn();
+    updateHUD();
+
+    initThree();
+    rebuildThreeBuildings();
+    setThreeEnabled(true);
+  }
 
   // ============================
   // Login / Register
@@ -1705,6 +1598,7 @@
   function register(){
     const u = loginUser.value.trim();
     const p = loginPass.value.trim();
+
     if(!u || !p){
       loginMsg.textContent = "⚠️ 請輸入用戶名和密碼";
       return;
@@ -1721,14 +1615,15 @@
       planet: null,
       save: null
     };
-    saveUsers(users);
 
+    saveUsers(users);
     loginMsg.textContent = "✅ 註冊成功，請登入";
   }
 
   function login(){
     const u = loginUser.value.trim();
     const p = loginPass.value.trim();
+
     const users = loadUsers();
 
     if(!users[u] || users[u].password !== p){
@@ -1738,6 +1633,7 @@
 
     currentUser = u;
     setSession({username:u});
+
     bootScreen.classList.add("hidden");
 
     if(!users[u].planet){
@@ -1747,17 +1643,36 @@
     }
   }
 
+  function loginGuest(){
+    currentUser = "guest_" + Math.floor(Math.random()*99999);
+    setSession({username: currentUser});
+
+    const users = loadUsers();
+    users[currentUser] = {
+      password: "",
+      planet: null,
+      save: null
+    };
+    saveUsers(users);
+
+    bootScreen.classList.add("hidden");
+    planetSelect.classList.remove("hidden");
+  }
+
   btnRegister.addEventListener("click", register);
   btnLogin.addEventListener("click", login);
+  btnGuest.addEventListener("click", loginGuest);
 
   btnConfirmPlanet.addEventListener("click", ()=>{
     const planet = planetPicker.value;
     const users = loadUsers();
 
-    // blackhole restriction (only developer name allow)
-    if(planet==="blackhole" && currentUser.toLowerCase()!=="jade" && currentUser.toLowerCase()!=="peter"){
-      alert("黑洞孤島只限開發者使用。");
-      return;
+    if(planet==="blackhole"){
+      const name = currentUser.toLowerCase();
+      if(name!=="jade" && name!=="peter"){
+        alert("黑洞孤島只限開發者使用。");
+        return;
+      }
     }
 
     users[currentUser].planet = planet;
@@ -1769,115 +1684,27 @@
   });
 
   // ============================
-  // Start Game
+  // Boot
   // ============================
-  function applyOfflineProgress(){
-    const t = nowSec();
-    let diff = t - state.lastTickAt;
-    if(diff < 0) diff = 0;
-
-    const capped = Math.min(diff, OFFLINE_CAP_SECONDS);
-
-    if(capped > 10){
-      logSys(`⏳ 離線收益已結算：${Math.floor(capped/60)} 分鐘（最多24小時）`);
-    }
-
-    // simulate offline
-    simulate(capped);
-
-    state.lastTickAt = t;
-  }
-
-  function startGame(username){
-    const users = loadUsers();
-    const save = users[username].save;
-    if(save){
-      state = save;
-    }else{
-      state = makeNewState(username, users[username].planet);
-      users[username].save = state;
-      saveUsers(users);
-    }
-
-    terrain = genTerrain(username, state.planet);
-
-    // assistant UI
-    const assistantData = window.getAssistantForPlanet(state.planet);
-    assistantName.textContent = assistantData.displayName;
-
-    if(assistantData.species==="cat") assistantEmoji.textContent="🐱";
-    else if(assistantData.species==="bear") assistantEmoji.textContent="🐻";
-    else if(assistantData.species==="dolphin") assistantEmoji.textContent="🐬";
-    else if(assistantData.species==="monkey") assistantEmoji.textContent="🐵";
-    else if(assistantData.species==="dragon") assistantEmoji.textContent="🐉";
-    else assistantEmoji.textContent="🐺";
-
-    logSys("✅ 遊戲啟動成功（版本 " + VERSION + "）");
-    logSys("🌍 星球：" + state.planet);
-
-    loadAds();
-    applyOfflineProgress();
-    updateAutoBtn();
-    updateHUD();
-  }
-
-  // ============================
-  // Simulation
-  // ============================
-  function simulate(dtSec){
-    if(dtSec <= 0) return;
-
-    // time advance
-    state.gameYear += dtSec * YEARS_PER_REAL_SECOND;
-
-    // listening ad
-    if(state.adSongPlaying){
-      state.adSecondsListening += dtSec;
-    }
-
-    // production
-    produceResources(dtSec);
-
-    // robots
-    processRobotMissions();
-
-    // beast tide
-    beastTick(dtSec);
-
-    // AENO mint attempt
-    tryMintAeno(dtSec);
-
-    // AI auto build
-    aiAutoBuild(dtSec);
-  }
-
-  // ============================
-  // Main Loop
-  // ============================
-  let last = performance.now();
-
-  function loop(ts){
-    const dt = (ts - last) / 1000;
-    last = ts;
-
-    simulate(dt);
-
-    render();
-    updateHUD();
-
-    // autosave every 30 seconds
-    if(Math.random() < 0.01){
-      saveGame();
-    }
-
-    requestAnimationFrame(loop);
-  }
-
-  // ============================
-  // Boot Session Auto Login
-  // ============================
-  function boot(){
+  async function boot(){
     resize();
+
+    await loadPlanets();
+
+    // fill planet select UI
+    planetPicker.innerHTML = "";
+    for(const p of PLANETS){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.flag} ${p.name} (${p.language})`;
+      planetPicker.appendChild(opt);
+    }
+
+    // add blackhole option
+    const bh = document.createElement("option");
+    bh.value = "blackhole";
+    bh.textContent = "🕳️ 黑洞孤島（開發者）";
+    planetPicker.appendChild(bh);
 
     const sess = getSession();
     if(sess && sess.username){
@@ -1898,697 +1725,5 @@
   }
 
   boot();
-
-})();
-
-// ================================
-// AENO GAME ROOM SYSTEM (Lobby)
-// Version: 2026-02-18
-// Firebase Realtime Database required
-// ================================
-
-(() => {
-  "use strict";
-
-  // ============================
-  // CONFIG
-  // ============================
-  const ROOM_CONFIG = {
-    maxRoomPlayersLimit: 12,
-    defaultMaxPlayers: 4,
-    roomAutoCleanupHours: 24,
-    roomIdLength: 8,
-  };
-
-  // ============================
-  // UTILITIES
-  // ============================
-  function aenoNow() {
-    return Date.now();
-  }
-
-  function randomRoomId(len = ROOM_CONFIG.roomIdLength) {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let out = "";
-    for (let i = 0; i < len; i++) {
-      out += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return out;
-  }
-
-  async function sha256(text) {
-    const enc = new TextEncoder();
-    const data = enc.encode(text);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  function safeText(str, maxLen = 30) {
-    if (!str) return "";
-    str = String(str).trim();
-    str = str.replace(/[<>]/g, "");
-    if (str.length > maxLen) str = str.slice(0, maxLen);
-    return str;
-  }
-
-  function mustHaveFirebase() {
-    if (!window.firebase || !firebase.database) {
-      throw new Error("Firebase Realtime Database not found.");
-    }
-    if (!firebase.auth || !firebase.auth().currentUser) {
-      throw new Error("User not logged in.");
-    }
-  }
-
-  function getCurrentUser() {
-    mustHaveFirebase();
-    const u = firebase.auth().currentUser;
-    return {
-      uid: u.uid,
-      name: safeText(u.displayName || ("User_" + u.uid.slice(0, 5)), 20),
-    };
-  }
-
-  // ============================
-  // UI (Overlay Lobby Panel)
-  // ============================
-  function createLobbyUI() {
-    if (document.getElementById("aenoLobbyOverlay")) return;
-
-    const overlay = document.createElement("div");
-    overlay.id = "aenoLobbyOverlay";
-    overlay.style.cssText = `
-      position: fixed;
-      left: 0; top: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.75);
-      z-index: 999999;
-      display: none;
-      font-family: Arial, sans-serif;
-      color: white;
-      overflow: auto;
-    `;
-
-    overlay.innerHTML = `
-      <div style="
-        max-width: 720px;
-        margin: 40px auto;
-        background: rgba(15,15,20,0.95);
-        border-radius: 14px;
-        padding: 18px;
-        box-shadow: 0 0 25px rgba(0,0,0,0.7);
-      ">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h2 style="margin:0; font-size:20px;">🚀 AENO Game Room</h2>
-          <button id="aenoLobbyCloseBtn" style="
-            background:#ff3b3b;
-            border:none;
-            color:white;
-            padding:6px 12px;
-            border-radius:8px;
-            cursor:pointer;
-          ">Close</button>
-        </div>
-
-        <hr style="opacity:0.2; margin:12px 0;" />
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button id="aenoLobbyRefreshBtn" style="
-            background:#3b82f6;
-            border:none;
-            color:white;
-            padding:8px 12px;
-            border-radius:10px;
-            cursor:pointer;
-          ">🔄 Refresh</button>
-
-          <button id="aenoLobbyCreateBtn" style="
-            background:#22c55e;
-            border:none;
-            color:white;
-            padding:8px 12px;
-            border-radius:10px;
-            cursor:pointer;
-          ">➕ Create Room</button>
-
-          <input id="aenoLobbyJoinRoomId" placeholder="ROOM ID"
-            style="flex:1; min-width:120px; padding:8px; border-radius:10px; border:none;" />
-
-          <input id="aenoLobbyJoinPassword" placeholder="Password (optional)"
-            style="flex:1; min-width:120px; padding:8px; border-radius:10px; border:none;" />
-
-          <button id="aenoLobbyJoinBtn" style="
-            background:#f59e0b;
-            border:none;
-            color:white;
-            padding:8px 12px;
-            border-radius:10px;
-            cursor:pointer;
-          ">Join</button>
-        </div>
-
-        <div style="margin-top:14px;">
-          <h3 style="margin:0 0 8px 0; font-size:16px;">🌍 Public Rooms</h3>
-          <div id="aenoLobbyRoomsList" style="
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 12px;
-            min-height: 100px;
-          ">Loading...</div>
-        </div>
-
-        <div style="margin-top:16px;">
-          <h3 style="margin:0 0 8px 0; font-size:16px;">🧑‍🚀 Current Room</h3>
-          <div id="aenoLobbyCurrentRoomBox" style="
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 12px;
-            min-height: 80px;
-          ">Not in room.</div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    document.getElementById("aenoLobbyCloseBtn").onclick = () => {
-      overlay.style.display = "none";
-    };
-  }
-
-  function showLobbyUI() {
-    createLobbyUI();
-    const overlay = document.getElementById("aenoLobbyOverlay");
-    overlay.style.display = "block";
-  }
-
-  function setLobbyRoomsList(html) {
-    const el = document.getElementById("aenoLobbyRoomsList");
-    if (el) el.innerHTML = html;
-  }
-
-  function setCurrentRoomBox(html) {
-    const el = document.getElementById("aenoLobbyCurrentRoomBox");
-    if (el) el.innerHTML = html;
-  }
-
-  // ============================
-  // ROOM MANAGER
-  // ============================
-  const RoomManager = {
-    currentRoomId: null,
-    currentRoomRef: null,
-    roomListener: null,
-
-    async createRoom({ isPublic = true, password = "", maxPlayers = ROOM_CONFIG.defaultMaxPlayers } = {}) {
-      mustHaveFirebase();
-
-      maxPlayers = Math.max(2, Math.min(maxPlayers, ROOM_CONFIG.maxRoomPlayersLimit));
-
-      const user = getCurrentUser();
-      const db = firebase.database();
-
-      let roomId = randomRoomId();
-      const roomRef = db.ref("rooms/" + roomId);
-
-      // Ensure unique ID
-      let tries = 0;
-      while (tries < 5) {
-        const snap = await roomRef.get();
-        if (!snap.exists()) break;
-        roomId = randomRoomId();
-        tries++;
-      }
-
-      const finalRoomRef = db.ref("rooms/" + roomId);
-
-      let passwordHash = "";
-      if (password && password.trim().length > 0) {
-        passwordHash = await sha256(password.trim());
-      }
-
-      const roomData = {
-        hostUid: user.uid,
-        hostName: user.name,
-        createdAt: aenoNow(),
-        status: "waiting",
-        isPublic: !!isPublic,
-        maxPlayers,
-        passwordHash,
-        players: {
-          [user.uid]: {
-            name: user.name,
-            ready: true,
-            joinedAt: aenoNow(),
-          }
-        }
-      };
-
-      await finalRoomRef.set(roomData);
-
-      await this.joinRoom(roomId, password);
-
-      return roomId;
-    },
-
-    async joinRoom(roomId, password = "") {
-      mustHaveFirebase();
-
-      roomId = safeText(roomId, 20).toUpperCase();
-      if (!roomId) throw new Error("Invalid roomId.");
-
-      const user = getCurrentUser();
-      const db = firebase.database();
-      const roomRef = db.ref("rooms/" + roomId);
-
-      const snap = await roomRef.get();
-      if (!snap.exists()) throw new Error("Room not found.");
-
-      const room = snap.val();
-
-      // Password check
-      if (room.passwordHash && room.passwordHash.length > 0) {
-        const passwordHash = await sha256(password.trim());
-        if (passwordHash !== room.passwordHash) {
-          throw new Error("Wrong password.");
-        }
-      }
-
-      // Check status
-      if (room.status !== "waiting") {
-        throw new Error("Room already started.");
-      }
-
-      const players = room.players || {};
-      const playerCount = Object.keys(players).length;
-
-      if (!players[user.uid] && playerCount >= (room.maxPlayers || ROOM_CONFIG.defaultMaxPlayers)) {
-        throw new Error("Room is full.");
-      }
-
-      // Join or update player entry
-      await roomRef.child("players/" + user.uid).set({
-        name: user.name,
-        ready: false,
-        joinedAt: aenoNow(),
-      });
-
-      this.currentRoomId = roomId;
-      this.currentRoomRef = roomRef;
-
-      this.listenRoom(roomId);
-    },
-
-    async leaveRoom() {
-      mustHaveFirebase();
-
-      if (!this.currentRoomId || !this.currentRoomRef) return;
-
-      const user = getCurrentUser();
-      const roomRef = this.currentRoomRef;
-
-      const snap = await roomRef.get();
-      if (!snap.exists()) {
-        this.stopListenRoom();
-        this.currentRoomId = null;
-        this.currentRoomRef = null;
-        setCurrentRoomBox("Not in room.");
-        return;
-      }
-
-      const room = snap.val();
-      const players = room.players || {};
-
-      // Remove player
-      await roomRef.child("players/" + user.uid).remove();
-
-      // If host leaving, assign new host or delete room
-      if (room.hostUid === user.uid) {
-        const remaining = Object.keys(players).filter(uid => uid !== user.uid);
-
-        if (remaining.length === 0) {
-          await roomRef.remove();
-        } else {
-          const newHostUid = remaining[0];
-          const newHostName = players[newHostUid]?.name || "Unknown";
-          await roomRef.update({
-            hostUid: newHostUid,
-            hostName: newHostName,
-          });
-        }
-      }
-
-      this.stopListenRoom();
-      this.currentRoomId = null;
-      this.currentRoomRef = null;
-
-      setCurrentRoomBox("Not in room.");
-    },
-
-    async toggleReady() {
-      mustHaveFirebase();
-      if (!this.currentRoomRef) return;
-
-      const user = getCurrentUser();
-      const pRef = this.currentRoomRef.child("players/" + user.uid);
-
-      const snap = await pRef.get();
-      if (!snap.exists()) return;
-
-      const data = snap.val();
-      const newReady = !data.ready;
-
-      await pRef.update({ ready: newReady });
-    },
-
-    async startGame() {
-      mustHaveFirebase();
-      if (!this.currentRoomRef) throw new Error("Not in room.");
-
-      const user = getCurrentUser();
-      const snap = await this.currentRoomRef.get();
-      if (!snap.exists()) throw new Error("Room missing.");
-
-      const room = snap.val();
-
-      if (room.hostUid !== user.uid) {
-        throw new Error("Only host can start.");
-      }
-
-      const players = room.players || {};
-      const uids = Object.keys(players);
-
-      if (uids.length < 2) throw new Error("Need at least 2 players.");
-
-      // Must all ready
-      for (const uid of uids) {
-        if (!players[uid].ready) {
-          throw new Error("All players must be READY.");
-        }
-      }
-
-      await this.currentRoomRef.update({
-        status: "playing",
-        startedAt: aenoNow(),
-      });
-
-      alert("🎮 Game Started! (Now you can teleport to multiplayer world.)");
-
-      // Here you can trigger your actual game start logic:
-      // AENO_MULTIPLAYER.enterMatch(roomId)
-    },
-
-    stopListenRoom() {
-      if (this.roomListener && this.currentRoomRef) {
-        this.currentRoomRef.off("value", this.roomListener);
-      }
-      this.roomListener = null;
-    },
-
-    listenRoom(roomId) {
-      this.stopListenRoom();
-
-      const db = firebase.database();
-      const roomRef = db.ref("rooms/" + roomId);
-
-      this.roomListener = (snap) => {
-        if (!snap.exists()) {
-          setCurrentRoomBox("Room closed.");
-          this.currentRoomId = null;
-          this.currentRoomRef = null;
-          return;
-        }
-
-        const room = snap.val();
-        const players = room.players || {};
-        const playerList = Object.entries(players)
-          .sort((a, b) => (a[1].joinedAt || 0) - (b[1].joinedAt || 0))
-          .map(([uid, p]) => {
-            const isHost = uid === room.hostUid;
-            const readyMark = p.ready ? "✅ READY" : "⏳ NOT READY";
-            return `<div style="padding:4px 0;">
-              ${isHost ? "👑 " : "👤 "}
-              <b>${safeText(p.name, 20)}</b> 
-              <span style="opacity:0.8;">(${readyMark})</span>
-            </div>`;
-          }).join("");
-
-        const info = `
-          <div><b>Room ID:</b> ${roomId}</div>
-          <div><b>Status:</b> ${room.status}</div>
-          <div><b>Host:</b> ${safeText(room.hostName, 20)}</div>
-          <div><b>Players:</b> ${Object.keys(players).length}/${room.maxPlayers || ROOM_CONFIG.defaultMaxPlayers}</div>
-          <hr style="opacity:0.2; margin:10px 0;" />
-          ${playerList || "<i>No players</i>"}
-          <hr style="opacity:0.2; margin:10px 0;" />
-
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button id="aenoRoomReadyBtn" style="
-              background:#22c55e;
-              border:none;
-              color:white;
-              padding:8px 12px;
-              border-radius:10px;
-              cursor:pointer;
-            ">Toggle Ready</button>
-
-            <button id="aenoRoomLeaveBtn" style="
-              background:#ef4444;
-              border:none;
-              color:white;
-              padding:8px 12px;
-              border-radius:10px;
-              cursor:pointer;
-            ">Leave</button>
-
-            <button id="aenoRoomStartBtn" style="
-              background:#3b82f6;
-              border:none;
-              color:white;
-              padding:8px 12px;
-              border-radius:10px;
-              cursor:pointer;
-            ">Start Game</button>
-          </div>
-        `;
-
-        setCurrentRoomBox(info);
-
-        // Attach button handlers
-        setTimeout(() => {
-          const readyBtn = document.getElementById("aenoRoomReadyBtn");
-          const leaveBtn = document.getElementById("aenoRoomLeaveBtn");
-          const startBtn = document.getElementById("aenoRoomStartBtn");
-
-          if (readyBtn) readyBtn.onclick = () => this.toggleReady().catch(e => alert(e.message));
-          if (leaveBtn) leaveBtn.onclick = () => this.leaveRoom().catch(e => alert(e.message));
-          if (startBtn) startBtn.onclick = () => this.startGame().catch(e => alert(e.message));
-        }, 50);
-      };
-
-      roomRef.on("value", this.roomListener);
-
-      this.currentRoomId = roomId;
-      this.currentRoomRef = roomRef;
-    },
-
-    async listPublicRooms() {
-      mustHaveFirebase();
-      const db = firebase.database();
-      const roomsRef = db.ref("rooms");
-
-      const snap = await roomsRef.get();
-      if (!snap.exists()) return [];
-
-      const all = snap.val();
-      const now = aenoNow();
-
-      const rooms = Object.entries(all).map(([roomId, room]) => {
-        const players = room.players ? Object.keys(room.players).length : 0;
-        return {
-          roomId,
-          hostName: room.hostName || "Unknown",
-          status: room.status || "waiting",
-          players,
-          maxPlayers: room.maxPlayers || ROOM_CONFIG.defaultMaxPlayers,
-          createdAt: room.createdAt || 0,
-          isPublic: !!room.isPublic,
-          hasPassword: !!(room.passwordHash && room.passwordHash.length > 0),
-          ageHours: (now - (room.createdAt || now)) / 3600000,
-        };
-      })
-      .filter(r => r.isPublic)
-      .filter(r => r.status === "waiting")
-      .filter(r => r.ageHours < ROOM_CONFIG.roomAutoCleanupHours)
-      .sort((a, b) => b.createdAt - a.createdAt);
-
-      return rooms;
-    },
-
-    async cleanupOldRooms() {
-      // Optional cleanup: delete old rooms
-      // IMPORTANT: Only safe if you trust clients OR do via Cloud Function.
-      try {
-        mustHaveFirebase();
-        const db = firebase.database();
-        const roomsRef = db.ref("rooms");
-
-        const snap = await roomsRef.get();
-        if (!snap.exists()) return;
-
-        const all = snap.val();
-        const now = aenoNow();
-
-        for (const [roomId, room] of Object.entries(all)) {
-          const createdAt = room.createdAt || 0;
-          const ageHours = (now - createdAt) / 3600000;
-
-          if (ageHours > ROOM_CONFIG.roomAutoCleanupHours) {
-            await roomsRef.child(roomId).remove();
-          }
-        }
-      } catch (e) {
-        console.warn("cleanupOldRooms error:", e.message);
-      }
-    }
-  };
-
-  // ============================
-  // UI Bindings
-  // ============================
-  async function refreshLobbyRooms() {
-    try {
-      setLobbyRoomsList("Loading...");
-      const rooms = await RoomManager.listPublicRooms();
-
-      if (!rooms.length) {
-        setLobbyRoomsList("<i>No public rooms.</i>");
-        return;
-      }
-
-      let html = "";
-      for (const r of rooms) {
-        html += `
-          <div style="
-            background: rgba(255,255,255,0.06);
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 8px;
-          ">
-            <div><b>${r.roomId}</b> ${r.hasPassword ? "🔒" : ""}</div>
-            <div style="opacity:0.85;">Host: ${safeText(r.hostName, 20)}</div>
-            <div style="opacity:0.85;">Players: ${r.players}/${r.maxPlayers}</div>
-            <button data-roomid="${r.roomId}" class="aenoQuickJoinBtn"
-              style="
-                margin-top: 6px;
-                background:#f59e0b;
-                border:none;
-                color:white;
-                padding:6px 10px;
-                border-radius:10px;
-                cursor:pointer;
-              "
-            >Join</button>
-          </div>
-        `;
-      }
-
-      setLobbyRoomsList(html);
-
-      setTimeout(() => {
-        document.querySelectorAll(".aenoQuickJoinBtn").forEach(btn => {
-          btn.onclick = async () => {
-            const roomId = btn.getAttribute("data-roomid");
-            const pwd = prompt("Password (leave blank if none):") || "";
-            try {
-              await RoomManager.joinRoom(roomId, pwd);
-            } catch (e) {
-              alert("Join failed: " + e.message);
-            }
-          };
-        });
-      }, 30);
-
-    } catch (e) {
-      setLobbyRoomsList("Error: " + e.message);
-    }
-  }
-
-  function bindLobbyButtons() {
-    const refreshBtn = document.getElementById("aenoLobbyRefreshBtn");
-    const createBtn = document.getElementById("aenoLobbyCreateBtn");
-    const joinBtn = document.getElementById("aenoLobbyJoinBtn");
-
-    if (refreshBtn) refreshBtn.onclick = refreshLobbyRooms;
-
-    if (createBtn) {
-      createBtn.onclick = async () => {
-        try {
-          const isPublic = confirm("Create PUBLIC room? (Cancel = private)");
-          const pwd = prompt("Room password? (leave blank = none)") || "";
-          const maxPlayersStr = prompt("Max players? (2-12)", "4") || "4";
-          const maxPlayers = parseInt(maxPlayersStr, 10);
-
-          const roomId = await RoomManager.createRoom({
-            isPublic,
-            password: pwd,
-            maxPlayers: isNaN(maxPlayers) ? 4 : maxPlayers
-          });
-
-          alert("Room created: " + roomId);
-          refreshLobbyRooms();
-        } catch (e) {
-          alert("Create room failed: " + e.message);
-        }
-      };
-    }
-
-    if (joinBtn) {
-      joinBtn.onclick = async () => {
-        try {
-          const roomId = document.getElementById("aenoLobbyJoinRoomId").value;
-          const pwd = document.getElementById("aenoLobbyJoinPassword").value;
-
-          await RoomManager.joinRoom(roomId, pwd);
-        } catch (e) {
-          alert("Join failed: " + e.message);
-        }
-      };
-    }
-  }
-
-  // ============================
-  // PUBLIC API
-  // ============================
-  window.AENO_LOBBY = {
-    open() {
-      showLobbyUI();
-      bindLobbyButtons();
-      refreshLobbyRooms();
-      RoomManager.cleanupOldRooms(); // optional
-    },
-    close() {
-      const overlay = document.getElementById("aenoLobbyOverlay");
-      if (overlay) overlay.style.display = "none";
-    },
-    createRoom(opts) {
-      return RoomManager.createRoom(opts);
-    },
-    joinRoom(roomId, pwd) {
-      return RoomManager.joinRoom(roomId, pwd);
-    },
-    leaveRoom() {
-      return RoomManager.leaveRoom();
-    },
-    refresh() {
-      return refreshLobbyRooms();
-    },
-    getCurrentRoomId() {
-      return RoomManager.currentRoomId;
-    }
-  };
-
-  console.log("✅ AENO Lobby System loaded. Use AENO_LOBBY.open() to open lobby.");
 
 })();
