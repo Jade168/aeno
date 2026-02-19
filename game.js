@@ -14,7 +14,15 @@
   const randi = (a, b) => Math.floor(rand(a, b + 1));
 
   function now() { return Date.now(); }
-
+function parseJSONSafe(raw){
+  if(!raw) return null;
+  try{
+    return JSON.parse(raw);
+  }catch(e){
+    return null;
+  }
+}
+  
   function formatNum(n){
     if (n >= 1e9) return (n/1e9).toFixed(2)+"B";
     if (n >= 1e6) return (n/1e6).toFixed(2)+"M";
