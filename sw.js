@@ -1,34 +1,36 @@
 // sw.js
-const CACHE_NAME = "aeno-cache-v2026-02-19";
+const CACHE_NAME = "aeno-cache-v1";
 
 const FILES = [
   "./",
   "./index.html",
   "./style.css",
   "./game.js",
-  "./assistantData.js",
-  "./planets.json",
-  "./ads.json"
+  "./characters.js",
+  "./ads.json",
+  "./manifest.json"
 ];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES))
   );
-  self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => k !== CACHE_NAME ? caches.delete(k) : null))
-    )
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(keys.map(k => {
+        if (k !== CACHE_NAME) return caches.delete(k);
+      }));
+    })
   );
-  self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then(res => res || fetch(event.request))
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    caches.match(e.request).then((res) => {
+      return res || fetch(e.request);
+    })
   );
 });
