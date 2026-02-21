@@ -1,1 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AENO Civilization</title>
+<style>
+body { margin:0; overflow:hidden; background:black; }
+</style>
+</head>
+<body>
 
+<script type="module">
+
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000010);
+
+const camera = new THREE.PerspectiveCamera(
+75,
+window.innerWidth/window.innerHeight,
+0.1,
+3000
+);
+camera.position.set(0,60,120);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.enableDamping = true;
+
+/* 光 */
+const ambient = new THREE.AmbientLight(0xffffff,1.5);
+scene.add(ambient);
+
+const sun = new THREE.PointLight(0xffffff,5,2000);
+scene.add(sun);
+
+/* 星星 */
+const starGeo = new THREE.BufferGeometry();
+const vertices = [];
+
+for(let i=0;i<15000;i++){
+vertices.push(
+THREE.MathUtils.randFloatSpread(3000),
+THREE.MathUtils.randFloatSpread(3000),
+THREE.MathUtils.randFloatSpread(3000)
+);
+}
+
+starGeo.setAttribute(
+"position",
+new THREE.Float32BufferAttribute(vertices,3)
+);
+
+const starMat = new THREE.PointsMaterial({size:1});
+const stars = new THREE.Points(starGeo,starMat);
+scene.add(stars);
+
+/* 行星 */
+const planets = [];
+const orbits = [];
+
+for(let i=0;i<20;i++){
+const group = new THREE.Group();
+
+const geo = new THREE.SphereGeometry(
+1.5+Math.random(),
+32,
+32
+);
+
+const mat = new THREE.MeshStandardMaterial({
+color:new THREE.Color(`hsl(${Math.random()*360},70%,50%)`)
+});
+
+const planet = new THREE.Mesh(geo,mat);
+
+const distance = 20+i*6;
+planet.position.x = distance;
+
+group.add(planet);
+scene.add(group);
+
+planets.push(planet);
+orbits.push(group);
+}
+
+/* 黑洞 */
+const bhGeo = new THREE.SphereGeometry(6,32,32);
+const bhMat = new THREE.MeshBasicMaterial({color:0x000000});
+const blackHole = new THREE.Mesh(bhGeo,bhMat);
+scene.add(blackHole);
+
+const diskGeo = new THREE.TorusGeometry(10,2,16,100);
+const diskMat = new THREE.MeshStandardMaterial({
+emissive:0xff3300,
+emissiveIntensity:2
+});
+const disk = new THREE.Mesh(diskGeo,diskMat);
+disk.rotation.x = Math.PI/2;
+scene.add(disk);
+
+const clock = new THREE.Clock();
+
+function animate(){
+requestAnimationFrame(animate);
+const delta = clock.getDelta();
+
+planets.forEach((p,i)=>{
+p.rotation.y += 0.4*delta;
+orbits[i].rotation.y += 0.08*delta/(i+1);
+});
+
+disk.rotation.z += 0.5*delta;
+
+controls.update();
+renderer.render(scene,camera);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
