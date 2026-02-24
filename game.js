@@ -1585,12 +1585,12 @@
     logSys("�黾 1 �𣶹撖行𠯫 = 10 �𦠜�撟湛�峕�梶�𦠜���梶䔄撅𤏪�");
     logSys("��鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥��");
 
-    // 憿舐內��毺�摰�風��甇∟�舘�𦠜��
+    // 顯示星球守護者歡迎訊息
     const welcomeMessages = assistantData.dialogues?.idle || [];
     if(welcomeMessages.length > 0){
-      logSys("����������������������");
+      logSys("───────────");
       logSys(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
-      logSys("����������������������");
+      logSys("───────────");
     }
 
     // 遊戲故事大綱
