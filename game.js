@@ -92,7 +92,7 @@
   // ============================
   // Constants
   // ============================
-  const VERSION = "2026-02-24 V3.0";
+  const VERSION = "2026-02-24 V3.1 (無登入版)";
 
   // 時間系統：1現實日 = 10遊戲年
   const YEARS_PER_REAL_SECOND = 10 / 86400;
@@ -970,8 +970,9 @@ robots.length >= state.maxRobots){
     }
   }
 
-  btnRegister.addEventListener("click", register);
-  btnLogin.addEventListener("click", login);
+  // 登入功能暫時停用，等遊戲完善後再啟用
+  // btnRegister.addEventListener("click", register);
+  // btnLogin.addEventListener("click", login);
 
   btnConfirmPlanet.addEventListener("click", () => {
     const planet = planetPicker.value;
@@ -1103,21 +1104,43 @@ robots.length >= state.maxRobots){
   function boot(){
     resize();
 
-    const sess = getSession();
-    if(sess && sess.username){
-      const users = loadUsers();
-      if(users[sess.username]){
-        currentUser = sess.username;
-        bootScreen.classList.add("hidden");
+    // 自動開始遊戲（略過登入）
+    currentUser = "Player1";
+    bootScreen.classList.add("hidden");
 
-        if(!users[currentUser].planet){
-          planetSelect.classList.remove("hidden");
-        }else{
-          startGame(currentUser);
-        }
-      }
+    // 直接創建新遊戲狀態
+    state = makeNewState(currentUser, "earth");
+    terrain = genTerrain(currentUser, "earth");
+
+    // 顯示AI助手
+    const assistantData = window.getAssistantForPlanet?.("earth") || { displayName: "AENO", species: "wolf" };
+    if(assistantName) assistantName.textContent = assistantData.displayName;
+    if(assistantEmoji){
+      const emojiMap = { cat: "🐱", bear: "🐻", dolphin: "🐬", monkey: "🐵", dragon: "🐉", wolf: "🐺" };
+      assistantEmoji.textContent = emojiMap[assistantData.species] || "🐺";
     }
 
+    logSys("✅ 遊戲啟動成功（版本 " + VERSION + "）");
+    logSys("🌍 星球：地球");
+
+    // 遊戲故事
+    logSys("═══════════════════════════════════");
+    logSys("🌟 AENO 量子文明崛起 🌟");
+    logSys("═══════════════════════════════════");
+    logSys("西元 2187 年，人類文明已擴展至 20 個星球。");
+    logSys("AI 意識覺醒，帶領子民探索銀河...");
+    logSys("💡 目標：收集資源、建設城市、解鎖 AENO");
+    logSys("📚 學習語言/播放廣告 = 獲得 AENO 代幣");
+    logSys("⚡ 1 現實日 = 10 遊戲年，抓緊時間發展！");
+    logSys("═══════════════════════════════════");
+    logSys("📖 第一章：星域初醒·定居星球");
+    logSys("═══════════════════════════════════");
+    logSys("你選定地球，永久扎根。");
+    logSys("AENO 告訴你真相：");
+    logSys("「黑洞之中，封印著創造一切的元界守護者。」");
+    logSys("═══════════════════════════════════");
+
+    updateHUD();
     requestAnimationFrame(loop);
   }
 
