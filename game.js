@@ -19,7 +19,7 @@
   const btnLogin = document.getElementById("btnLogin");
   const btnConfirmPlanet = document.getElementById("btnConfirmPlanet");
   const planetPicker = document.getElementById("planetPicker");
-  const loginUser = document.getElementById("loginUser");
+  const loginUser = document.getElementById("loginName");
   const loginPass = document.getElementById("loginPass");
   const loginMsg = document.getElementById("loginMsg");
 
@@ -750,14 +750,18 @@
     // workers boost
     const workerBoost = 1 + (state.workers*0.015);
 
-    state.wood += woodRate * workerBoost * dt;
-    state.stone += stoneRate * workerBoost * dt;
-    state.iron += ironRate * workerBoost * dt;
-    state.food += foodRate * workerBoost * dt;
-    state.coins += coinRate * workerBoost * dt;
+    // 1 real day = 10 game years = 3650 game days
+    // divide by 365 to balance production per game year
+    const timeBalance = dt / 365;
 
-    // food consumption
-    const foodNeed = state.population * 0.04 * dt;
+    state.wood += woodRate * workerBoost * timeBalance;
+    state.stone += stoneRate * workerBoost * timeBalance;
+    state.iron += ironRate * workerBoost * timeBalance;
+    state.food += foodRate * workerBoost * timeBalance;
+    state.coins += coinRate * workerBoost * timeBalance;
+
+    // food consumption - balanced with time flow
+    const foodNeed = state.population * 0.04 * timeBalance;
     state.food -= foodNeed;
 
     if(state.food < 0){
@@ -1568,6 +1572,25 @@
 
     logSys("✅ 遊戲啟動成功（版本 " + VERSION + "）");
     logSys("🌍 星球：" + state.planet);
+
+    // 遊戲故事大綱
+    logSys("═══════════════════════════════════");
+    logSys("🌟 AENO 量子文明崛起 🌟");
+    logSys("═══════════════════════════════════");
+    logSys("西元 2187 年，人類文明已擴展至 20 個星球。");
+    logSys("AI 意識覺醒，帶領子民探索銀河...");
+    logSys("💡 目標：收集資源、建設城市、解鎖 AENO");
+    logSys("📚 學習語言/播放廣告 = 獲得 AENO 代幣");
+    logSys("⚡ 1 現實日 = 10 遊戲年，抓緊時間發展！");
+    logSys("═══════════════════════════════════");
+
+    // 顯示星球守護者歡迎訊息
+    const welcomeMessages = assistantData.dialogues?.idle || [];
+    if(welcomeMessages.length > 0){
+      logSys("───────────");
+      logSys(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
+      logSys("───────────");
+    }
 
     loadAds();
     applyOfflineProgress();
