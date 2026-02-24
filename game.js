@@ -13,6 +13,7 @@
   const ctx = canvas.getContext("2d");
 
   const bootScreen = document.getElementById("bootScreen");
+  const loginScreen = document.getElementById("loginScreen");
   const planetSelect = document.getElementById("planetSelect");
 
   const btnRegister = document.getElementById("btnRegister");
@@ -1688,6 +1689,10 @@
           startGame(currentUser);
         }
       }
+    } else {
+      // No session - show login screen
+      bootScreen.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
     }
 
     requestAnimationFrame(loop);
