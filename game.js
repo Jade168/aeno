@@ -240,7 +240,7 @@
     }
 
     // animals
-    const animalEmojis = ["🦌","🐗","🐺","🦊","🐍","🦖","🦕","🦁","🐘"];
+    const animalEmojis = ["�陁�","����","��𡉼","�陁�","����","�陁�","�陁�","�陁�","����"];
     for(let i=0;i<22;i++){
       features.animals.push({
         x: rand(-WORLD_SIZE/2, WORLD_SIZE/2),
@@ -348,7 +348,7 @@
     const users = loadUsers();
     users[currentUser].save = state;
     saveUsers(users);
-    logSys("💾 已保存遊戲紀錄");
+    logSys("��𠒣 撌脖�嘥�㗛�𦠜�蝝���");
   }
 
   function loadGame(username){
@@ -362,51 +362,51 @@
   // ============================
   const BUILD_INFO = {
     house: {
-      name:"房屋",
-      emoji:"🏠",
+      name:"��撅�",
+      emoji:"����",
       baseCost:{wood:50,stone:20,iron:0,food:10,coins:80},
       produces:{coins:2},
       popAdd:2
     },
     lumber: {
-      name:"伐木場",
-      emoji:"🪓",
+      name:"隡鞉銁�聦",
+      emoji:"�𡝭�",
       baseCost:{wood:30,stone:30,iron:10,food:0,coins:120},
       produces:{wood:6}
     },
     quarry: {
-      name:"採石場",
-      emoji:"🪨",
+      name:"�繧�𨺗�聦",
+      emoji:"�𡝭�",
       baseCost:{wood:20,stone:40,iron:10,food:0,coins:140},
       produces:{stone:5}
     },
     mine: {
-      name:"礦場",
-      emoji:"⛏️",
+      name:"蝷血聦",
+      emoji:"��𧶏��",
       baseCost:{wood:20,stone:60,iron:0,food:0,coins:160},
       produces:{iron:4}
     },
     farm: {
-      name:"農田",
-      emoji:"🌾",
+      name:"颲脩眎",
+      emoji:"��駠",
       baseCost:{wood:40,stone:20,iron:0,food:0,coins:110},
       produces:{food:6}
     },
     market: {
-      name:"市集",
-      emoji:"🏦",
+      name:"撣���",
+      emoji:"��𡖂",
       baseCost:{wood:60,stone:50,iron:20,food:0,coins:200},
       produces:{coins:6}
     },
     wall: {
-      name:"城牆",
-      emoji:"🛡️",
+      name:"��𡒊�",
+      emoji:"��椘儭�",
       baseCost:{wood:80,stone:120,iron:30,food:0,coins:250},
       produces:{defense:5}
     },
     lab: {
-      name:"研究所",
-      emoji:"🧬",
+      name:"��𠉛弦��",
+      emoji:"�榀�",
       baseCost:{wood:120,stone:80,iron:60,food:0,coins:350},
       produces:{tech:1}
     }
@@ -450,12 +450,12 @@
   function buildAt(type, x, y){
     const cost = getCost(type, 1);
     if(!canAfford(cost)){
-      logSys(`⚠️ 資源不足，無法建造 ${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
+      logSys(`��𩤃�� 鞈��𣂷�滩雲嚗𣬚�⊥�訫遣�� ${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
       return false;
     }
 
     if(!isInTerritory(x,y)){
-      logSys("⚠️ 不是領土範圍，不能建築");
+      logSys("��𩤃�� 銝齿糓��睃�毺���㵪�䔶�滩�賢遣蝭�");
       return false;
     }
 
@@ -467,7 +467,7 @@
       state.workers += 1;
     }
 
-    logSys(`🏗️ 建造成功：${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
+    logSys(`���梹�� 撱粹�䭾�𣂼����${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}`);
     return true;
   }
 
@@ -475,7 +475,7 @@
     const nextLv = b.level + 1;
     const cost = getCost(b.type, nextLv);
     if(!canAfford(cost)){
-      logSys("⚠️ 升級資源不足");
+      logSys("��𩤃�� ����朞���𣂷�滩雲");
       return false;
     }
     payCost(cost);
@@ -490,7 +490,7 @@
       state.wallIntegrity = clamp(state.wallIntegrity + 8, 0, 100);
     }
 
-    logSys(`⬆️ 升級成功：${BUILD_INFO[b.type].emoji}${BUILD_INFO[b.type].name} Lv.${b.level}`);
+    logSys(`漎�儭� ����𡁏�𣂼����${BUILD_INFO[b.type].emoji}${BUILD_INFO[b.type].name} Lv.${b.level}`);
     return true;
   }
 
@@ -501,8 +501,8 @@
   // ============================
   // AENO Hidden Mining Algorithm
   // ============================
-  // IMPORTANT: user要求保密，不可直接顯示公式
-  // 這裡使用字母映射混淆（不顯示實際數字）
+  // IMPORTANT: user閬�瘙�靽嘥�嚗䔶�滚虾�凒�𦻖憿舐內�砍��
+  // �躰ㄐ雿輻鍂摮埈�齿�惩�瘛瑟�嚗��漤＊蝷箏祕��𥟇彍摮梹��
   function hiddenAenoChance(){
     // Inputs:
     // - adSecondsListening
@@ -563,9 +563,9 @@
     state.pronQualified = score >= 40;
 
     if(state.pronQualified){
-      logSys(`📢 發音測試：${score}% ✅ 合格（AENO 掉落機率提升）`);
+      logSys(`��𤙥 �䔄�𨺗皜祈岫嚗�${score}% �� ���聢嚗㇁ENO ��㕑氜璈毺���𣂼���头);
     }else{
-      logSys(`📢 發音測試：${score}% ❌ 未達40%（請再試）`);
+      logSys(`��𤙥 �䔄�𨺗皜祈岫嚗�${score}% ��� �𧊋��40%嚗��见�滩岫嚗头);
     }
   }
 
@@ -582,7 +582,7 @@
 
   function sendRobot(){
     if(state.robots <= state.robotMissions.length){
-      logSys("⚠️ 沒有空閒機器人");
+      logSys("��𩤃�� 瘝埝�厩征��埝�笔膥鈭�");
       return;
     }
 
@@ -597,12 +597,12 @@
       done:false
     });
 
-    logSys(`🚀 機器人已出發探索：${dest}（約 ${duration}s）`);
+    logSys(`��� 璈笔膥鈭箏歇�枂�䔄�䔝蝝ｇ��${dest}嚗�� ${duration}s嚗头);
   }
 
   function recallRobots(){
     state.robotMissions = [];
-    logSys("🛰️ 所有機器人已召回");
+    logSys("��𤌴儭� ����㗇�笔膥鈭箏歇�𡢢���");
   }
 
   function processRobotMissions(){
@@ -629,7 +629,7 @@
         const frag = randi(0, 4);
         state.beastLoot += frag;
 
-        logSys(`🤖 探索完成：${m.dest} +木${lootWood} 石${lootStone} 鐵${lootIron} 糧${lootFood} +金${coins} +碎片${frag}`);
+        logSys(`�鴂� �䔝蝝Ｗ�峕�琜��${m.dest} +�銁${lootWood} �𨺗${lootStone} �閠${lootIron} 蝟�${lootFood} +���${coins} +蝣𡒊��${frag}`);
       }
     }
 
@@ -658,7 +658,7 @@
         state.coins += lootCoins;
         state.beastLoot += lootFrag;
 
-        logSys(`🐺 獸潮來襲！你成功防守，獲得 +金${lootCoins} +碎片${lootFrag}`);
+        logSys(`��𡉼 �桊瞏桐�镼莎�雿䭾�𣂼�罸俈摰��𣬚㬢敺� +���${lootCoins} +蝣𡒊��${lootFrag}`);
       }
     }
   }
@@ -770,7 +770,7 @@
       if(Math.random() < 0.02){
         state.population = Math.max(1, state.population-1);
         state.workers = Math.max(1, state.workers-1);
-        logSys("⚠️ 糧食不足，人口減少");
+        logSys("��𩤃�� 蝟折�煺�滩雲嚗䔶犖�藁皜𥕦��");
       }
     }
 
@@ -796,15 +796,15 @@
       if(adData.defaultVolume != null){
         audio.volume = clamp(adData.defaultVolume, 0, 1);
       }
-      logSys("🎵 已載入廣告歌列表");
+      logSys("��𦄡 撌脰�匧�亙誨��𦠜���𡑒”");
     }catch(e){
-      logSys("⚠️ ads.json 載入失敗（請檢查檔案）");
+      logSys("��𩤃�� ads.json 頛匧�亙仃��梹���𧢲炎�䰻瑼娍����");
     }
   }
 
   function playTrack(){
     if(!adData || !adData.tracks || adData.tracks.length===0){
-      logSys("⚠️ 沒有廣告歌曲");
+      logSys("��𩤃�� 瘝埝�匧誨��𦠜�峕𤩅");
       return;
     }
 
@@ -814,9 +814,9 @@
 
     audio.play().then(()=>{
       state.adSongPlaying = true;
-      logSys(`🎵 播放中：${track.title}`);
+      logSys(`��𦄡 �偘�𦆮銝哨��${track.title}`);
     }).catch(()=>{
-      logSys("⚠️ 播放失敗：瀏覽器禁止自動播放（請再按一次播放）");
+      logSys("��𩤃�� �偘�𦆮憭望�梹�𡁶�讛汗�膥蝳�甇Ｚ䌊��閙偘�𦆮嚗��见�齿�劐�甈⊥偘�𦆮嚗�");
     });
   }
 
@@ -1148,32 +1148,32 @@
           return;
         }
       }
-      logSys("⚠️ 沒有點到建築");
+      logSys("��𩤃�� 瘝埝�厰�𧼮�撱箇��");
       return;
     }
 
     // build mode requires selection
     if(state.buildMode){
       if(!state.selectedBuildType){
-        logSys("⚠️ 先在建築面板選擇建築類型");
+        logSys("��𩤃�� ��銁撱箇�厰𢒰�踎�豢��遣蝭厰�𧼮��");
         return;
       }
 
       if(!isInTerritory(w.x,w.y)){
-        logSys("⚠️ 不是領土範圍，不能建築");
+        logSys("��𩤃�� 銝齿糓��睃�毺���㵪�䔶�滩�賢遣蝭�");
         return;
       }
 
       state.pendingBuildConfirm = {type:state.selectedBuildType, x:w.x, y:w.y};
-      logSys(`📌 已選擇位置，請再次點擊相同位置確認建造：${BUILD_INFO[state.selectedBuildType].emoji}${BUILD_INFO[state.selectedBuildType].name}`);
+      logSys(`���� 撌脤�豢���滨蔭嚗諹�见�齿活暺墧�羓㮾��䔶�滨蔭蝣箄�滚遣�𩤃��${BUILD_INFO[state.selectedBuildType].emoji}${BUILD_INFO[state.selectedBuildType].name}`);
       return;
     }
 
     // normal mode quick build popup simulation
     if(isInTerritory(w.x,w.y)){
-      logSys("📌 提示：你可以切換建築模式，然後點空地建築。");
+      logSys("���� ��鞟內嚗帋�惩虾隞亙���𥕦遣蝭㗇芋撘𧶏�𣬚�嗅�屸�䂿征�𧑐撱箇�剹��");
     }else{
-      logSys("⚠️ 非領土區域");
+      logSys("��𩤃�� ��鮋�睃�笔����");
     }
   });
 
@@ -1246,23 +1246,23 @@
     panelMinimized = !panelMinimized;
     if(panelMinimized){
       mainPanel.style.height = "180px";
-      logSys("📌 面板已縮小");
+      logSys("���� �𢒰�踎撌脩葬撠�");
     }else{
       mainPanel.style.height = "";
-      logSys("📌 面板已還原");
+      logSys("���� �𢒰�踎撌脤�����");
     }
   });
 
   panelHideBtn.addEventListener("click", ()=>{
     mainPanel.classList.add("hidden");
     panelRestoreBtn.classList.remove("hidden");
-    logSys("📌 面板已收起");
+    logSys("���� �𢒰�踎撌脫𤣰韏�");
   });
 
   panelRestoreBtn.addEventListener("click", ()=>{
     mainPanel.classList.remove("hidden");
     panelRestoreBtn.classList.add("hidden");
-    logSys("📌 面板已打開");
+    logSys("���� �𢒰�踎撌脫�㯄��");
   });
 
   // ============================
@@ -1280,8 +1280,8 @@
   assistantTalkBtn.addEventListener("click", ()=>{
     openChat();
     const assistantData = window.getAssistantForPlanet(state.planet);
-    const pool = assistantData.dialogues.idle || ["你好"];
-    addChat("🧠 " + pool[randi(0,pool.length-1)]);
+    const pool = assistantData.dialogues.idle || ["雿惩末"];
+    addChat("�榀� " + pool[randi(0,pool.length-1)]);
   });
 
   assistant.addEventListener("click", ()=>{
@@ -1296,26 +1296,26 @@
     const text = chatInput.value.trim();
     if(!text) return;
     chatInput.value = "";
-    addChat("👤 " + text);
+    addChat("��𪈠 " + text);
 
     const t = text.toLowerCase();
 
-    if(t.includes("巡邏")){
-      addChat("🧠 好！我會安排工人巡邏領土。");
+    if(t.includes("撌⊿��")){
+      addChat("�榀� 憟踝���烐�摰㗇�鍦極鈭箏楚�誯�睃�麄��");
       state.coins += 10;
-    }else if(t.includes("收集")){
-      addChat("🧠 工人開始收集資源。");
+    }else if(t.includes("�𤣰��")){
+      addChat("�榀� 撌乩犖��见�𧢲𤣰��鞈��僐��");
       state.wood += 30;
       state.stone += 20;
       state.food += 20;
-    }else if(t.includes("建造")){
-      addChat("🧠 你可以切換建築模式，再點領土空地建築。");
-    }else if(t.includes("升級")){
-      addChat("🧠 你可以切換升級模式，再點建築升級。");
-    }else if(t.includes("發音") || t.includes("學習")){
+    }else if(t.includes("撱粹��")){
+      addChat("�榀� 雿惩虾隞亙���𥕦遣蝭㗇芋撘𧶏���漤�鮋�睃�毺征�𧑐撱箇�剹��");
+    }else if(t.includes("�����")){
+      addChat("�榀� 雿惩虾隞亙���𥕦���𡁏芋撘𧶏���漤�𧼮遣蝭匧���𠾼��");
+    }else if(t.includes("�䔄�𨺗") || t.includes("摮貊��")){
       doPronunciationMock();
     }else{
-      addChat("🧠 指令收到！未來會加入更多命令。");
+      addChat("�榀� ���誘�𤣰��嚗��𧊋靘�����惩�交凒憭𡁜𦶢隞扎��");
     }
   });
 
@@ -1326,31 +1326,31 @@
     btn.addEventListener("click", ()=>{
       const type = btn.dataset.build;
       state.selectedBuildType = type;
-      logSys(`🏗️ 已選擇建築：${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}（請點領土空地）`);
+      logSys(`���梹�� 撌脤�豢��遣蝭㚁��${BUILD_INFO[type].emoji}${BUILD_INFO[type].name}嚗��钅�鮋�睃�毺征�𧑐嚗头);
     });
   });
 
   btnBuildMode.addEventListener("click", ()=>{
     state.buildMode = true;
     state.upgradeMode = false;
-    logSys("🏗️ 建築模式 ON（點領土空地，雙擊確認）");
+    logSys("���梹�� 撱箇�㗇芋撘� ON嚗��鮋�睃�毺征�𧑐嚗屸�蹱�羓Ⅱ隤㵪��");
   });
 
   btnCancelBuildMode.addEventListener("click", ()=>{
     state.buildMode = false;
     state.pendingBuildConfirm = null;
-    logSys("🏗️ 建築模式 OFF");
+    logSys("���梹�� 撱箇�㗇芋撘� OFF");
   });
 
   btnUpgradeMode.addEventListener("click", ()=>{
     state.upgradeMode = true;
     state.buildMode = false;
-    logSys("⬆️ 升級模式 ON（點建築升級）");
+    logSys("漎�儭� ����𡁏芋撘� ON嚗��𧼮遣蝭匧���𡄯��");
   });
 
   btnCancelUpgradeMode.addEventListener("click", ()=>{
     state.upgradeMode = false;
-    logSys("⬆️ 升級模式 OFF");
+    logSys("漎�儭� ����𡁏芋撘� OFF");
   });
 
   // ============================
@@ -1377,12 +1377,12 @@
     const cost = amt * rate;
 
     if(state.coins < cost){
-      logSys("⚠️ 金幣不足，無法買入");
+      logSys("��𩤃�� ��穃馳銝滩雲嚗𣬚�⊥�閗眺��");
       return;
     }
     state.coins -= cost;
     state[item] += amt;
-    logSys(`🏦 買入成功：${item} +${amt}（花費金幣 ${cost}）`);
+    logSys(`��𡖂 鞎瑕�交�𣂼����${item} +${amt}嚗��鞎駁�穃馳 ${cost}嚗头);
   });
 
   btnSell.addEventListener("click", ()=>{
@@ -1392,12 +1392,12 @@
     const gain = Math.floor(amt * rate * 0.7);
 
     if(state[item] < amt){
-      logSys("⚠️ 資源不足，無法賣出");
+      logSys("��𩤃�� 鞈��𣂷�滩雲嚗𣬚�⊥�閗都�枂");
       return;
     }
     state[item] -= amt;
     state.coins += gain;
-    logSys(`🏦 賣出成功：${item} -${amt}（獲得金幣 ${gain}）`);
+    logSys(`��𡖂 鞈�枂��𣂼����${item} -${amt}嚗�㬢敺烾�穃馳 ${gain}嚗头);
   });
 
   // ============================
@@ -1409,27 +1409,27 @@
 
   btnLoopAd.addEventListener("click", ()=>{
     state.adLoop = !state.adLoop;
-    btnLoopAd.textContent = state.adLoop ? "🔁 Loop: ON" : "🔁 Loop: OFF";
-    logSys("🎵 Loop 設定：" + (state.adLoop ? "ON" : "OFF"));
+    btnLoopAd.textContent = state.adLoop ? "��� Loop: ON" : "��� Loop: OFF";
+    logSys("��𦄡 Loop 閮剖�𡄯��" + (state.adLoop ? "ON" : "OFF"));
   });
 
   // ============================
   // Auto Build
   // ============================
   function updateAutoBtn(){
-    btnAutoToggle.textContent = "自動建造: " + (state.autoBuild ? "ON" : "OFF");
+    btnAutoToggle.textContent = "�䌊��訫遣��: " + (state.autoBuild ? "ON" : "OFF");
   }
 
   btnAutoToggle.addEventListener("click", ()=>{
     state.autoBuild = !state.autoBuild;
     updateAutoBtn();
-    logSys("🤖 自動建造：" + (state.autoBuild ? "ON" : "OFF"));
+    logSys("�鴂� �䌊��訫遣�𩤃��" + (state.autoBuild ? "ON" : "OFF"));
   });
 
   btnAutoStopNow.addEventListener("click", ()=>{
     state.autoBuild = false;
     updateAutoBtn();
-    logSys("🛑 已停止自動建造");
+    logSys("���� 撌脣�𨀣迫�䌊��訫遣��");
   });
 
   document.querySelectorAll(".prioBtn").forEach(btn=>{
@@ -1437,7 +1437,7 @@
       const key = btn.dataset.prio;
       state.autoPriorities[key] = !state.autoPriorities[key];
       btn.style.opacity = state.autoPriorities[key] ? "1" : "0.35";
-      logSys(`🤖 AI優先：${key} = ${state.autoPriorities[key] ? "ON" : "OFF"}`);
+      logSys(`�鴂� AI�芸����${key} = ${state.autoPriorities[key] ? "ON" : "OFF"}`);
     });
   });
 
@@ -1447,13 +1447,13 @@
   btnSaveGame.addEventListener("click", saveGame);
 
   btnResetGame.addEventListener("click", ()=>{
-    if(confirm("確定要重置？此玩家紀錄會清空。")){
+    if(confirm("蝣箏�朞���滨蔭嚗�迨�焵摰嗥�����皜�蝛箝��")){
       const users = loadUsers();
       users[currentUser].save = makeNewState(currentUser, users[currentUser].planet);
       saveUsers(users);
       state = users[currentUser].save;
       terrain = genTerrain(currentUser, state.planet);
-      logSys("🗑️ 已重置遊戲");
+      logSys("���𡢅�� 撌脤�滨蔭�𦠜�");
     }
   });
 
@@ -1464,13 +1464,13 @@
     const u = loginUser.value.trim();
     const p = loginPass.value.trim();
     if(!u || !p){
-      loginMsg.textContent = "⚠️ 請輸入用戶名和密碼";
+      loginMsg.textContent = "��𩤃�� 隢贝撓�亦鍂����滚���蝣�";
       return;
     }
 
     const users = loadUsers();
     if(users[u]){
-      loginMsg.textContent = "⚠️ 用戶已存在";
+      loginMsg.textContent = "��𩤃�� �鍂��撌脣�睃銁";
       return;
     }
 
@@ -1481,7 +1481,7 @@
     };
     saveUsers(users);
 
-    loginMsg.textContent = "✅ 註冊成功，請登入";
+    loginMsg.textContent = "�� 閮餃�𦠜�𣂼���諹�讠蒈��";
   }
 
   function login(){
@@ -1490,7 +1490,7 @@
     const users = loadUsers();
 
     if(!users[u] || users[u].password !== p){
-      loginMsg.textContent = "⚠️ 帳號或密碼錯誤";
+      loginMsg.textContent = "��𩤃�� 撣唾���硋�蝣潮𥲤隤�";
       return;
     }
 
@@ -1514,7 +1514,7 @@
 
     // blackhole restriction (only developer name allow)
     if(planet==="blackhole" && currentUser.toLowerCase()!=="jade" && currentUser.toLowerCase()!=="peter"){
-      alert("黑洞孤島只限開發者使用。");
+      alert("暺烐�𧼮迨撜嗅蘨��鞾�讠䔄��雿輻鍂��");
       return;
     }
 
@@ -1537,7 +1537,7 @@
     const capped = Math.min(diff, OFFLINE_CAP_SECONDS);
 
     if(capped > 10){
-      logSys(`⏳ 離線收益已結算：${Math.floor(capped/60)} 分鐘（最多24小時）`);
+      logSys(`�𢰧 �𣪧蝺𡁏𤣰��𠰴歇蝯鞟�梹��${Math.floor(capped/60)} ����矋���憭�24撠𤩺�嚗头);
     }
 
     // simulate offline
@@ -1563,15 +1563,34 @@
     const assistantData = window.getAssistantForPlanet(state.planet);
     assistantName.textContent = assistantData.displayName;
 
-    if(assistantData.species==="cat") assistantEmoji.textContent="🐱";
-    else if(assistantData.species==="bear") assistantEmoji.textContent="🐻";
-    else if(assistantData.species==="dolphin") assistantEmoji.textContent="🐬";
-    else if(assistantData.species==="monkey") assistantEmoji.textContent="🐵";
-    else if(assistantData.species==="dragon") assistantEmoji.textContent="🐉";
-    else assistantEmoji.textContent="🐺";
+    if(assistantData.species==="cat") assistantEmoji.textContent="��躼";
+    else if(assistantData.species==="bear") assistantEmoji.textContent="��𣸮";
+    else if(assistantData.species==="dolphin") assistantEmoji.textContent="��𨯬";
+    else if(assistantData.species==="monkey") assistantEmoji.textContent="��閠";
+    else if(assistantData.species==="dragon") assistantEmoji.textContent="����";
+    else assistantEmoji.textContent="��𡉼";
 
-    logSys("✅ 遊戲啟動成功（版本 " + VERSION + "）");
-    logSys("🌍 星球：" + state.planet);
+    logSys("�� �𦠜���笔�閙�𣂼������𧋦 " + VERSION + "嚗�");
+    logSys("���� ��毺�嚗�" + state.planet);
+
+    // �𦠜���鈭见之蝬�
+    logSys("��鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥��");
+    logSys("���� AENO ��誩�鞉���𤾸�𥡝絲 ����");
+    logSys("��鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥��");
+    logSys("镼踹�� 2187 撟湛�䔶犖憿墧���𤾸歇�楲撅閗秐 20 �𧢲�毺���");
+    logSys("AI �讛�䁅死�𡜐��葆��睃�鞉�烐䔝蝝ａ�瘝�...");
+    logSys("��働 �𤌍璅辷�𡁏𤣰��鞈��僐��撱箄身��𤾸���閫��� AENO");
+    logSys("���� 摮貊�坿�噼�/�偘�𦆮撱��� = �㬢敺� AENO 隞�馳");
+    logSys("�黾 1 �𣶹撖行𠯫 = 10 �𦠜�撟湛�峕�梶�𦠜���梶䔄撅𤏪�");
+    logSys("��鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥�鐥��");
+
+    // 憿舐內��毺�摰�風��甇∟�舘�𦠜��
+    const welcomeMessages = assistantData.dialogues?.idle || [];
+    if(welcomeMessages.length > 0){
+      logSys("����������������������");
+      logSys(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
+      logSys("����������������������");
+    }
 
     // 遊戲故事大綱
     logSys("═══════════════════════════════════");
@@ -1678,4 +1697,4 @@
 
 })();
 
-沒有連接開源theer.js的3D漫畫程式碼
+瘝埝�厰��𦻖��𧢲�𡺉heer.js��3D瞍怎𧞄蝔见�讐Ⅳ
