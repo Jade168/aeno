@@ -1101,6 +1101,148 @@ robots.length >= state.maxRobots){
     btnResetGame.onclick = resetGame;
   }
 
+  // 獲取更多按鈕
+  const btnSaveNow = document.getElementById("btnSaveNow");
+  const btnAutoBuild = document.getElementById("btnAutoBuild");
+  const btnPlaySong = document.getElementById("btnPlaySong");
+  const btnWatchAd = document.getElementById("btnWatchAd");
+  const btnBeastTest = document.getElementById("btnBeastTest");
+  const btnPronounceTest = document.getElementById("btnPronounceTest");
+  const btnUpgradeSelected = document.getElementById("btnUpgradeSelected");
+  const btnRemoveSelected = document.getElementById("btnRemoveSelected");
+  const btnMakeRobot = document.getElementById("btnMakeRobot");
+  const btnSendRobot = document.getElementById("btnSendRobot");
+  const btnBuy = document.getElementById("btnBuy");
+  const btnSell = document.getElementById("btnSell");
+  const btnLangStart = document.getElementById("btnLangStart");
+  const btnLangSkip = document.getElementById("btnLangSkip");
+
+  // 保存遊戲
+  if(btnSaveNow){
+    btnSaveNow.onclick = () => {
+      saveGame();
+      logSys("💾 已保存");
+    };
+  }
+
+  // 自動建造
+  if(btnAutoBuild){
+    btnAutoBuild.onclick = () => {
+      state.autoBuild = !state.autoBuild;
+      btnAutoBuild.querySelector("span").textContent = state.autoBuild ? "ON" : "OFF";
+      logSys("🤖 自動建造：" + (state.autoBuild ? "ON" : "OFF"));
+    };
+  }
+
+  // 播放廣告歌
+  if(btnPlaySong){
+    btnPlaySong.onclick = () => {
+      state.adSongPlaying = true;
+      state.adSecondsListening = 0;
+      logSys("🎵 廣告播放中...");
+    };
+  }
+
+  // 觀看廣告
+  if(btnWatchAd){
+    btnWatchAd.onclick = () => {
+      state.adSongPlaying = true;
+      logSys("📺 廣告播放中...");
+    };
+  }
+
+  // 測試獸潮
+  if(btnBeastTest){
+    btnBeastTest.onclick = () => {
+      state.lastBeastTide = state.gameYear - 200;
+      logSys("🐺 獸潮測試觸發！");
+    };
+  }
+
+  // 測試發音
+  if(btnPronounceTest){
+    btnPronounceTest.onclick = () => {
+      const langs = Object.keys(LANGUAGE_RESOURCES);
+      const lang = langs[randi(0, langs.length-1)];
+      const wordIndex = randi(0, 4);
+      const result = learnLanguage(lang, wordIndex);
+    };
+  }
+
+  // 升級選中建築
+  if(btnUpgradeSelected){
+    btnUpgradeSelected.onclick = () => {
+      if(state.selectedBuildingIndex !== undefined){
+        upgrade(state.selectedBuildingIndex);
+      } else {
+        logSys("⚠️ 請先點擊建築");
+      }
+    };
+  }
+
+  // 拆除選中
+  if(btnRemoveSelected){
+    btnRemoveSelected.onclick = () => {
+      if(state.selectedBuildingIndex !== undefined){
+        state.buildings.splice(state.selectedBuildingIndex, 1);
+        state.selectedBuildingIndex = undefined;
+        logSys("🧨 建築已拆除");
+      } else {
+        logSys("⚠️ 請先點擊建築");
+      }
+    };
+  }
+
+  // 製造機器人
+  if(btnMakeRobot){
+    btnMakeRobot.onclick = () => {
+      if(state.robots.length < state.maxRobots){
+        state.robots.push({ planet: state.planet, level: 1 });
+        logSys("🤖 機器人製造成功！");
+      } else {
+        logSys("⚠️ 機器人數量已達上限");
+      }
+    };
+  }
+
+  // 派去探索
+  if(btnSendRobot){
+    btnSendRobot.onclick = () => {
+      const planets = Object.keys(PLANETS).filter(p => p !== "blackhole");
+      const dest = planets[randi(0, planets.length-1)];
+      sendRobot(dest);
+    };
+  }
+
+  // 買入
+  if(btnBuy){
+    btnBuy.onclick = () => {
+      logSys("🏦 市場功能待實現");
+    };
+  }
+
+  // 賣出
+  if(btnSell){
+    btnSell.onclick = () => {
+      logSys("🏦 市場功能待實現");
+    };
+  }
+
+  // 語言測試
+  if(btnLangStart){
+    btnLangStart.onclick = () => {
+      const langs = Object.keys(LANGUAGE_RESOURCES);
+      const lang = langs[randi(0, langs.length-1)];
+      learnLanguage(lang, randi(0, 4));
+    };
+  }
+
+  if(btnLangSkip){
+    btnLangSkip.onclick = () => {
+      logSys("⏭️ 跳過測試");
+    };
+  }
+
   function boot(){
     resize();
 
