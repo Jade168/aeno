@@ -33,6 +33,7 @@
   const stoneEl = document.getElementById("stone");
   const ironEl = document.getElementById("iron");
   const foodEl = document.getElementById("food");
+  const gemEl = document.getElementById("gem");
 
   const houseCountEl = document.getElementById("houseCount");
   const robotCountEl = document.getElementById("robotCount");
@@ -283,6 +284,7 @@
       stone: 800,
       iron: 800,
       food: 800,
+      gem: 0,
 
       // people
       population: 4,
@@ -496,6 +498,382 @@
 
   function countBuildings(type){
     return state.buildings.filter(b=>b.type===type).length;
+  }
+
+  // ============================
+  // 科技樹系統 (Tech Tree System)
+  // ============================
+  const TECH_TREE = {
+    basic_farming: {
+      name: "基礎農業",
+      emoji: "🌾",
+      desc: "解鎖農場升級 +20% 產量",
+      cost: {coins: 500, wood: 200},
+      req: [],
+      effect: {farmBoost: 0.2}
+    },
+    mining_tech: {
+      name: "採礦技術",
+      emoji: "⛏️",
+      desc: "解鎖礦場升級 +25% 產量",
+      cost: {coins: 800, iron: 100},
+      req: [],
+      effect: {mineBoost: 0.25}
+    },
+    construction: {
+      name: "建築學",
+      emoji: "🏗️",
+      desc: "建築成本 -15%",
+      cost: {coins: 600, wood: 300, stone: 200},
+      req: ["basic_farming"],
+      effect: {buildCostReduce: 0.15}
+    },
+    market_trade: {
+      name: "市場交易",
+      emoji: "🏪",
+      desc: "交易所稅收 -30%",
+      cost: {coins: 1000, wood: 400},
+      req: ["construction"],
+      effect: {taxReduce: 0.3}
+    },
+    robot_ai: {
+      name: "機器人AI",
+      emoji: "🤖",
+      desc: "機器人探索速度 +30%",
+      cost: {coins: 1500, iron: 300},
+      req: ["mining_tech"],
+      effect: {robotSpeed: 0.3}
+    },
+    defense_sys: {
+      name: "防禦系統",
+      emoji: "🛡️",
+      desc: "城牆強度 +40%",
+      cost: {coins: 1200, stone: 500, iron: 200},
+      req: ["construction"],
+      effect: {wallStrength: 0.4}
+    },
+    beast_armor: {
+      name: "獸潮鎧甲",
+      emoji: "⚔️",
+      desc: "獸潮傷害 -50%",
+      cost: {coins: 2000, iron: 500},
+      req: ["defense_sys"],
+      effect: {beastDmgReduce: 0.5}
+    },
+    energy_grid: {
+      name: "能量網格",
+      emoji: "⚡",
+      desc: "所有建築產量 +15%",
+      cost: {coins: 3000, iron: 600},
+      req: ["robot_ai", "market_trade"],
+      effect: {allProduction: 0.15}
+    },
+    warp_drive: {
+      name: "曲速引擎",
+      emoji: "🚀",
+      desc: "解鎖黑洞探索",
+      cost: {coins: 5000, iron: 800},
+      req: ["energy_grid"],
+      effect: {unlockBlackhole: true}
+    },
+    quantum_comp: {
+      name: "量子計算",
+      emoji: "🔮",
+      desc: "AENO 產量 +50%",
+      cost: {coins: 8000, gem: 10},
+      req: ["warp_drive"],
+      effect: {aenoBoost: 0.5}
+    }
+  };
+
+  function initTechTree(){
+    if(!state.tech) state.tech = {};
+    if(!state.techUnlocked) state.techUnlocked = [];
+    if(state.techUnlocked.length === 0){
+      state.techUnlocked.push("basic_farming");
+    }
+  }
+
+  function hasTech(techId){
+    return state.techUnlocked.includes(techId);
+  }
+
+  function canUnlockTech(techId){
+    const tech = TECH_TREE[techId];
+    if(!tech) return false;
+    if(hasTech(techId)) return false;
+    for(const req of tech.req){
+      if(!hasTech(req)) return false;
+    }
+    return (
+      state.coins >= tech.cost.coins &&
+      state.wood >= (tech.cost.wood || 0) &&
+      state.stone >= (tech.cost.stone || 0) &&
+      state.iron >= (tech.cost.iron || 0)
+    );
+  }
+
+  function unlockTech(techId){
+    const tech = TECH_TREE[techId];
+    if(!canUnlockTech(techId)) return false;
+
+    state.coins -= tech.cost.coins || 0;
+    state.wood -= tech.cost.wood || 0;
+    state.stone -= tech.cost.stone || 0;
+    state.iron -= tech.cost.iron || 0;
+
+    state.techUnlocked.push(techId);
+    logSys("🔬 解鎖科技: " + tech.emoji + tech.name);
+    renderTechTree();
+    return true;
+  }
+
+  function renderTechTree(){
+    const container = document.getElementById("techList");
+    if(!container) return;
+
+    let html = "";
+    for(const [id, tech] of Object.entries(TECH_TREE)){
+      const unlocked = hasTech(id);
+      const available = canUnlockTech(id);
+
+      let status = "🔒";
+      let cls = "techLocked";
+      if(unlocked){
+        status = "✅";
+        cls = "techUnlocked";
+      }else if(available){
+        status = "🔓";
+        cls = "techAvailable";
+      }
+
+      html += '<div class="techItem ' + cls + '" onclick="tryUnlockTech(\'' + id + '\')">';
+      html += '<div class="techIcon">' + tech.emoji + '</div>';
+      html += '<div class="techInfo">';
+      html += '<div class="techName">' + tech.name + ' ' + status + '</div>';
+      html += '<div class="techDesc">' + tech.desc + '</div>';
+      html += '<div class="techCost">';
+      if(tech.cost.coins) html += '💰' + tech.cost.coins + ' ';
+      if(tech.cost.wood) html += '🪵' + tech.cost.wood + ' ';
+      if(tech.cost.stone) html += '🪨' + tech.cost.stone + ' ';
+      if(tech.cost.iron) html += '⛏️' + tech.cost.iron + ' ';
+      html += '</div></div></div>';
+    }
+    container.innerHTML = html;
+  }
+
+  window.tryUnlockTech = function(techId){
+    if(unlockTech(techId)){
+      logSys("科技解鎖成功！");
+    }else{
+      logSys("無法解鎖科技，資源不足或前置條件未滿足");
+    }
+  };
+
+  // ============================
+  // 交易所/股市系統 (Exchange/Stock Market)
+  // ============================
+  const BASE_PRICES = {
+    wood: 8,
+    stone: 12,
+    iron: 18,
+    food: 6,
+    gem: 80
+  };
+
+  function initMarket(){
+    if(!state.marketPrices){
+      state.marketPrices = Object.assign({}, BASE_PRICES);
+    }
+    if(!state.marketTrend){
+      state.marketTrend = {};
+    }
+  }
+
+  function updateMarketPrices(dtSec){
+    if(!state.lastMarketUpdate || nowSec() - state.lastMarketUpdate > 30){
+      for(const item in BASE_PRICES){
+        const change = (Math.random() - 0.5) * 0.1;
+        const base = BASE_PRICES[item];
+        const current = state.marketPrices[item] || base;
+        let newPrice = current * (1 + change);
+        newPrice = Math.max(newPrice, base * 0.5);
+        newPrice = Math.min(newPrice, base * 2);
+        state.marketPrices[item] = Math.round(newPrice * 100) / 100;
+        state.marketTrend[item] = newPrice > current ? "up" : "down";
+      }
+      state.lastMarketUpdate = nowSec();
+    }
+  }
+
+  function getMarketPrice(item){
+    return state.marketPrices[item] || BASE_PRICES[item];
+  }
+
+  function buyResource(item, amount){
+    const price = getMarketPrice(item);
+    const totalCost = price * amount;
+    const tax = totalCost * 0.05;
+
+    if(state.coins < totalCost + tax){
+      logSys("💰 金幣不足，無法購買");
+      return false;
+    }
+
+    state.coins -= (totalCost + tax);
+    state[item] = (state[item] || 0) + amount;
+
+    logSys("🟢 買入 " + amount + " " + item + " @ " + price.toFixed(2) + " (稅:" + tax.toFixed(0) + ")");
+    updateMarketUI();
+    return true;
+  }
+
+  function sellResource(item, amount){
+    if((state[item] || 0) < amount){
+      logSys("💰 " + item + " 數量不足");
+      return false;
+    }
+
+    const price = getMarketPrice(item);
+    const totalGain = price * amount;
+    const tax = totalGain * 0.05;
+
+    state[item] -= amount;
+    state.coins += (totalGain - tax);
+
+    logSys("🔴 賣出 " + amount + " " + item + " @ " + price.toFixed(2) + " (稅:" + tax.toFixed(0) + ")");
+    updateMarketUI();
+    return true;
+  }
+
+  function updateMarketUI(){
+    const priceBox = document.getElementById("marketPriceBox");
+    if(!priceBox) return;
+
+    let html = "";
+    for(const [item, base] of Object.entries(BASE_PRICES)){
+      const current = getMarketPrice(item);
+      const trend = state.marketTrend[item] || "flat";
+      const trendIcon = trend === "up" ? "📈" : trend === "down" ? "📉" : "➡️";
+      const color = current > base ? "#22c55e" : current < base ? "#ef4444" : "#64748b";
+
+      html += '<div style="color:' + color + ';margin:4px 0;">';
+      html += item + ': ' + current.toFixed(2) + ' ' + trendIcon;
+      html += '</div>';
+    }
+    priceBox.innerHTML = html;
+  }
+
+  // ============================
+  // 3D建築進化系統
+  // ============================
+  const BUILDING_3D_MODELS = {
+    house: {
+      baseHeight: 1.2,
+      colors: ["#f97316", "#ea580c", "#c2410c"],
+      levels: [
+        {height: 1.2, roof: "cone"},
+        {height: 1.8, roof: "cone"},
+        {height: 2.5, roof: "flat"}
+      ]
+    },
+    lumber: {
+      baseHeight: 0.8,
+      colors: ["#84cc16", "#65a30d", "#4d7c0f"],
+      levels: [
+        {height: 0.8, style: "simple"},
+        {height: 1.4, style: "extended"},
+        {height: 2.0, style: "industrial"}
+      ]
+    },
+    quarry: {
+      baseHeight: 0.6,
+      colors: ["#94a3b8", "#64748b", "#475569"],
+      levels: [
+        {height: 0.6, piles: 2},
+        {height: 1.2, piles: 4},
+        {height: 2.0, piles: 6}
+      ]
+    },
+    mine: {
+      baseHeight: 0.5,
+      colors: ["#78716c", "#57534e", "#44403c"],
+      levels: [
+        {height: 0.5, shaft: true},
+        {height: 1.0, shaft: true, headframe: true},
+        {height: 1.8, shaft: true, headframe: true, lights: true}
+      ]
+    },
+    farm: {
+      baseHeight: 0.4,
+      colors: ["#22c55e", "#16a34a", "#15803d"],
+      levels: [
+        {height: 0.4, crops: "wheat"},
+        {height: 0.8, crops: "mixed"},
+        {height: 1.5, crops: "all", greenhouse: true}
+      ]
+    },
+    market: {
+      baseHeight: 1.5,
+      colors: ["#eab308", "#ca8a04", "#a16207"],
+      levels: [
+        {height: 1.5, stalls: 2},
+        {height: 2.2, stalls: 4, awning: true},
+        {height: 3.0, stalls: 6, awning: true, sign: true}
+      ]
+    },
+    wall: {
+      baseHeight: 1.0,
+      colors: ["#9ca3af", "#6b7280", "#4b5563"],
+      levels: [
+        {height: 1.0, towers: 0},
+        {height: 2.0, towers: 2, crenel: true},
+        {height: 3.5, towers: 4, crenel: true, gate: true}
+      ]
+    },
+    lab: {
+      baseHeight: 1.8,
+      colors: ["#06b6d4", "#0891b2", "#0e7490"],
+      levels: [
+        {height: 1.8, dome: false},
+        {height: 2.5, dome: true, antenna: false},
+        {height: 3.5, dome: true, antenna: true, lab: true}
+      ]
+    }
+  };
+
+  function getBuilding3DInfo(building){
+    const model = BUILDING_3D_MODELS[building.type];
+    if(!model) return null;
+
+    const levelIndex = Math.min(building.level - 1, model.levels.length - 1);
+    return {
+      levelData: model.levels[levelIndex],
+      level: building.level,
+      color: model.colors[levelIndex]
+    };
+  }
+
+  function getProductionBoost(type){
+    let boost = 1;
+    if(hasTech("basic_farming") && type === "farm"){
+      boost += TECH_TREE.basic_farming.effect.farmBoost;
+    }
+    if(hasTech("mining_tech") && type === "mine"){
+      boost += TECH_TREE.mining_tech.effect.mineBoost;
+    }
+    if(hasTech("energy_grid")){
+      boost += TECH_TREE.energy_grid.effect.allProduction;
+    }
+    return boost;
+  }
+
+  function getBuildCostReduce(){
+    let reduce = 0;
+    if(hasTech("construction")){
+      reduce += TECH_TREE.construction.effect.buildCostReduce;
+    }
+    return reduce;
   }
 
   // ============================
@@ -852,6 +1230,7 @@
     uiStone.textContent = fmt(state.stone);
     uiIron.textContent = fmt(state.iron);
     uiFood.textContent = fmt(state.food);
+    uiGem.textContent = fmt(state.gem || 0);
     uiCoins.textContent = fmt(state.coins);
     uiAeno.textContent = state.aeno.toFixed(4);
   }
@@ -1360,44 +1739,19 @@
   btnRobotRecall.addEventListener("click", recallRobots);
 
   // ============================
-  // Market
+  // Market (使用動態價格)
   // ============================
-  function getRate(item){
-    if(item==="wood") return 2;
-    if(item==="stone") return 3;
-    if(item==="iron") return 5;
-    if(item==="food") return 2;
-    return 3;
-  }
 
   btnBuy.addEventListener("click", ()=>{
     const item = marketItem.value;
     const amt = Math.max(1, parseInt(marketAmount.value||"1"));
-    const rate = getRate(item);
-    const cost = amt * rate;
-
-    if(state.coins < cost){
-      logSys("��𩤃�� ��穃馳銝滩雲嚗𣬚�⊥�閗眺��");
-      return;
-    }
-    state.coins -= cost;
-    state[item] += amt;
-    logSys(`��𡖂 鞎瑕�交�𣂼����${item} +${amt}嚗��鞎駁�穃馳 ${cost}嚗头);
+    buyResource(item, amt);
   });
 
   btnSell.addEventListener("click", ()=>{
     const item = marketItem.value;
     const amt = Math.max(1, parseInt(marketAmount.value||"1"));
-    const rate = getRate(item);
-    const gain = Math.floor(amt * rate * 0.7);
-
-    if(state[item] < amt){
-      logSys("��𩤃�� 鞈��𣂷�滩雲嚗𣬚�⊥�閗都�枂");
-      return;
-    }
-    state[item] -= amt;
-    state.coins += gain;
-    logSys(`��𡖂 鞈�枂��𣂼����${item} -${amt}嚗�㬢敺烾�穃馳 ${gain}嚗头);
+    sellResource(item, amt);
   });
 
   // ============================
@@ -1596,6 +1950,12 @@
     applyOfflineProgress();
     updateAutoBtn();
     updateHUD();
+
+    // 初始化科技樹和市場
+    initTechTree();
+    initMarket();
+    renderTechTree();
+    updateMarketUI();
   }
 
   // ============================
@@ -1606,6 +1966,9 @@
 
     // time advance
     state.gameYear += dtSec * YEARS_PER_REAL_SECOND;
+
+    // 市場價格波動
+    updateMarketPrices(dtSec);
 
     // listening ad
     if(state.adSongPlaying){
